@@ -7,21 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { CalendarDays, Trophy, Users } from 'lucide-react';
-import { format, differenceInDays, startOfWeek, endOfWeek } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { differenceInDays, endOfWeek, startOfWeek } from 'date-fns';
 import { useMemo } from 'react';
-import { recentActivityData, teamMembersData, competitionsData, eventsData } from '@/lib/data';
-import type { TeamEvent, Competition } from '@/lib/data';
+import { competitionsData, eventsData, teamMembersData } from '@/lib/data';
 
 export default function DashboardPage() {
   const now = useMemo(() => new Date(), []);
@@ -29,7 +18,6 @@ export default function DashboardPage() {
   const endOfThisWeek = useMemo(() => endOfWeek(now, { weekStartsOn: 1 }), [now]);
 
   const upcomingEvents = useMemo(() => eventsData.filter(event => new Date(event.date) >= now), [now]);
-  const recentActivity = useMemo(() => [...recentActivityData].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0,5), []);
   const teamMembers = teamMembersData;
   const nextCompetition = useMemo(() => competitionsData.filter(c => new Date(c.date) >= now).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0], [now]);
   
@@ -53,15 +41,6 @@ export default function DashboardPage() {
     if (lastDigit > 1 && lastDigit < 5) return `через ${days} дня`;
     return `через ${days} дней`;
   }
-
-  const badgeVariants: { [key: string]: 'default' | 'secondary' } = {
-    Scheduled: 'default',
-    Completed: 'secondary',
-  };
-  const statusTranslations: { [key: string]: string } = {
-      Scheduled: 'Запланировано',
-      Completed: 'Завершено'
-  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -114,45 +93,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline">Недавняя активность</CardTitle>
-          <CardDescription>
-            Обзор последних событий и новостей команды.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Событие</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead className="text-right">Дата</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentActivity && recentActivity.length > 0 ? (
-                recentActivity.map((activity) => (
-                  <TableRow key={activity.id}>
-                    <TableCell>{activity.title}</TableCell>
-                    <TableCell>
-                      <Badge variant={badgeVariants[activity.status] || 'default'}>{statusTranslations[activity.status] || activity.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{format(new Date(activity.date), 'd MMMM yyyy', { locale: ru })}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
-                    Нет недавней активности.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   );
 }
