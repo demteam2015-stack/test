@@ -17,11 +17,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CreditCard, LogOut, Settings, User as UserIcon, Shield, Repeat } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
+import { useAuth, type UserProfile } from '@/context/auth-context';
 
 export function UserNav() {
   const router = useRouter();
-  const { user, logout, updateUser } = useAuth();
+  const { user, logout, updateUser, isAdmin } = useAuth();
 
   const handleSignOut = () => {
     logout();
@@ -54,9 +54,10 @@ export function UserNav() {
   const userRole = user.role ? roleTranslations[user.role] : 'Неизвестно';
 
   const handleRoleSwitch = (newRole: UserProfile['role']) => {
-      if (user.role === 'admin' && user.role !== newRole) {
+      // Only the permanent admin can switch roles
+      if (isAdmin) {
           updateUser({ role: newRole });
-          // Optional: force a refresh to ensure all components re-evaluate the role
+          // Force a refresh to ensure all components re-evaluate the role
           window.location.reload();
       }
   }
@@ -109,7 +110,7 @@ export function UserNav() {
                 Настройки
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            {user.role === 'admin' && (
+            {isAdmin && (
                 <>
                 <DropdownMenuSeparator />
                 <DropdownMenuSub>

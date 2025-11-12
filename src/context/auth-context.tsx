@@ -9,6 +9,8 @@ const USERS_USERNAME_INDEX_PREFIX = 'user_username_';
 const USERS_ID_INDEX_PREFIX = 'user_id_';
 const SESSION_STORAGE_KEY = 'local_user_session_v2';
 const MIGRATION_KEY = 'local_db_migrated_to_indexed_v1';
+const ADMIN_PERMAROLE_KEY = 'admin_permarole';
+
 
 export type UserProfile = BaseUserProfile & {
   balance?: number;
@@ -234,6 +236,7 @@ const initializeAdminUser = async () => {
 type AuthContextType = {
   user: UserProfile | null;
   loading: boolean;
+  isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (details: Omit<UserProfile, 'id' | 'role' | 'balance'> & { password: string }) => Promise<void>;
   logout: () => void;
@@ -250,6 +253,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const setup = async () => {
@@ -270,15 +274,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     const decryptionKey = await deriveKey(sessionData.password, hexToBuffer(foundUser.salt), ['decrypt']);
                     const decryptedProfile = await decryptData(decryptionKey, hexToBuffer(foundUser.iv), hexToBuffer(foundUser.encryptedProfile)) as any;
                     
-                    setUser({
+                    const userProfile = {
                         id: foundUser.id,
                         email: foundUser.email,
                         ...decryptedProfile
-                    });
+                    };
+
+                    setUser(userProfile);
+                    
+                    // Check for permanent admin rights
+                    const permaRole = sessionStorage.getItem(ADMIN_PERMAROLE_KEY);
+                    if (permaRole === 'admin' || userProfile.role === 'admin') {
+                        setIsAdmin(true);
+                        // Ensure permarole is set if it was an admin login
+                        if (userProfile.role === 'admin') {
+                             sessionStorage.setItem(ADMIN_PERMAROLE_KEY, 'admin');
+                        }
+                    }
+
 
                 } catch (e) {
                     console.error("Session restore failed:", e);
                     sessionStorage.removeItem(SESSION_STORAGE_KEY);
+                    sessionStorage.removeItem(ADMIN_PERMAROLE_KEY);
                 }
             }
         }
@@ -303,6 +321,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             };
             setUser(userProfile);
             
+            if (userProfile.role === 'admin') {
+                setIsAdmin(true);
+                sessionStorage.setItem(ADMIN_PERMAROLE_KEY, 'admin');
+            }
+
             sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
                 id: foundUser.id,
                 password: password, // Storing password in sessionStorage is a security risk, but necessary for this local-only setup to re-derive key for updates.
@@ -355,7 +378,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
+    setIsAdmin(false);
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    sessionStorage.removeItem(ADMIN_PERMAROLE_KEY);
   };
   
   const updateUser = async (updatedProfile: Partial<Omit<UserProfile, 'id' | 'username' | 'email'>>) => {
@@ -404,7 +429,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // This is a privileged operation for an admin.
     // It requires the admin's own password to temporarily create a key for the target user.
     // This is a simulation and has security implications.
-    if (user?.role !== 'admin') {
+    if (user?.role !== 'admin' && !isAdmin) {
       console.error("Non-admin attempting to get full user profile.");
       return null;
     }
@@ -457,7 +482,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const updateUserBalance = async (userId: string, amount: number) => {
-    if (user?.role !== 'admin') {
+    if (user?.role !== 'admin' && !isAdmin) {
         throw new Error("Only admins can update balances.");
     }
 
@@ -562,7 +587,7 @@ Email: ${newUser.email}
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUser, checkUserExists, adminResetPassword, getUserByEmail, updateUserBalance, adminGetUserProfile }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, login, signup, logout, updateUser, checkUserExists, adminResetPassword, getUserByEmail, updateUserBalance, adminGetUserProfile }}>
       {children}
     </AuthContext.Provider>
   );
