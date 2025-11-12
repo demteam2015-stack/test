@@ -1,0 +1,160 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user (athlete, coach, parent, administrator).",
+          "format": "string"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "role",
+        "firstName",
+        "lastName"
+      ]
+    },
+    "Athlete": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Athlete",
+      "type": "object",
+      "description": "Represents an athlete user, extending the base User entity.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Athlete entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:1 Athlete)"
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "description": "Date of birth of the athlete.",
+          "format": "date-time"
+        },
+        "parentUserIds": {
+          "type": "array",
+          "description": "References to Parents. (Relationship: Parent 1:N Athlete)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "dateOfBirth"
+      ]
+    },
+    "Parent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Parent",
+      "type": "object",
+      "description": "Represents a parent user, extending the base User entity.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Parent entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:1 Parent)"
+        },
+        "athleteUserIds": {
+          "type": "array",
+          "description": "References to Athletes. (Relationship: Athlete 1:N Parent)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. The `userId` is the Firebase Authentication UID. This is private data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Authentication UID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/athletes/{athleteId}",
+        "definition": {
+          "entityName": "Athlete",
+          "schema": {
+            "$ref": "#/backend/entities/Athlete"
+          },
+          "description": "Stores athlete profiles. Includes the `userId` field for linking to the corresponding user document. Includes denormalized `parentUserIds` array.",
+          "params": [
+            {
+              "name": "athleteId",
+              "description": "The unique identifier of the athlete profile."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/parents/{parentId}",
+        "definition": {
+          "entityName": "Parent",
+          "schema": {
+            "$ref": "#/backend/entities/Parent"
+          },
+          "description": "Stores parent profiles. Includes the `userId` field for linking to the corresponding user document. Includes denormalized `athleteUserIds` array.",
+          "params": [
+            {
+              "name": "parentId",
+              "description": "The unique identifier of the parent profile."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to support the Demyanenko Team Hub application, focusing on user roles (athlete, parent), registration, and authentication. It prioritizes Authorization Independence, clarity, and scalability. User data is stored in the `/users/{userId}` collection, with separate collections for Athlete and Parent profiles linked to the user ID. This design uses path-based ownership for user-specific data and avoids `get()` calls in security rules, enhancing security and enabling atomic operations. The structure facilitates secure `list` operations and explicit state modeling, ensuring a robust and maintainable application.\n\n**Authorization Independence:** The `Athlete` and `Parent` documents are stored in separate collections and include the `userId` field, which links them to the corresponding user document. This allows security rules to be based solely on the authenticated user's ID and the `userId` field in the `Athlete` and `Parent` documents, without needing to perform `get()` calls to parent documents.\n\n**QAPs Support:**\n*   The segregation of `Athlete` and `Parent` data into separate collections allows for role-based access control. Security rules can be written to restrict access to these collections based on the user's role.\n\n**Invariants Support:**\n*   The `userId` field in the `Athlete` and `Parent` documents ensures the integrity of ownership. Security rules can enforce that only the user with the matching `userId` can modify the corresponding document."
+  }
+}
