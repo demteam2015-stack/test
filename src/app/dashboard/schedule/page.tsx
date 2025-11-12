@@ -70,8 +70,10 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
             setEndTime(eventToEdit.endTime);
             setLocation(eventToEdit.location);
             setNotes(eventToEdit.notes || '');
+        } else {
+            resetForm();
         }
-    }, [eventToEdit, isEditMode]);
+    }, [eventToEdit, isEditMode, isModalOpen]);
 
     const resetForm = () => {
         setTitle('');
@@ -84,7 +86,7 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user || !date || !startTime || !endTime) {
+        if (!user || !date || !startTime || !endTime || !title || !location) {
             toast({ variant: 'destructive', title: 'Ошибка', description: 'Пожалуйста, заполните все обязательные поля.' });
             return;
         }
@@ -104,22 +106,20 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
             const updatedEvent = await updateEvent(eventToEdit.id, eventData);
             if(updatedEvent) {
                 onEventUpdated(updatedEvent);
+                toast({ title: "Событие обновлено", description: "Данные тренировки успешно изменены." });
             }
         } else {
             const newEvent = await createEvent(eventData);
             onEventCreated(newEvent);
+            toast({ title: "Событие создано", description: `Тренировка "${newEvent.title}" была добавлена в расписание.` });
         }
 
         setIsSaving(false);
         setIsModalOpen(false);
-        resetForm();
     };
     
     const handleOpenChange = (open: boolean) => {
         setIsModalOpen(open);
-        if(!open) {
-            resetForm();
-        }
     }
     
     const TriggerButton = isEditMode ? (
@@ -243,6 +243,7 @@ export default function SchedulePage() {
   const handleDelete = async (eventId: string) => {
       await deleteEvent(eventId);
       fetchEvents();
+      toast({ title: "Событие удалено" });
   }
 
   if (!isClient) {
@@ -265,17 +266,30 @@ export default function SchedulePage() {
                     Просмотр и управление вашим расписанием.
                 </p>
             </div>
+            {canManage && <EventForm onEventCreated={handleEventChange} eventToEdit={null} onEventUpdated={handleEventChange}/>}
         </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1">
+             <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                className="rounded-md border"
+                modifiers={{
+                    events: eventDays,
+                }}
+                modifiersClassNames={{
+                    events: 'bg-primary/20 text-primary-foreground font-bold',
+                }}
+                locale={ru}
+             />
+        </div>
         <Card className="lg:col-span-2">
             <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <CardTitle>
-                        События на {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
-                    </CardTitle>
-                    {canManage && <EventForm onEventCreated={handleEventChange} eventToEdit={null} onEventUpdated={handleEventChange}/>}
-                </div>
+                <CardTitle>
+                    События на {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
+                </CardTitle>
             </CardHeader>
             <CardContent className="h-[500px] overflow-y-auto">
                 {dailyEvents.length > 0 ? (
@@ -337,20 +351,6 @@ export default function SchedulePage() {
                 )}
             </CardContent>
         </Card>
-        <div className="lg:col-span-1">
-             <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                className="rounded-md border"
-                modifiers={{
-                    events: eventDays,
-                }}
-                modifiersClassNames={{
-                    events: 'bg-primary/20 text-primary-foreground font-bold',
-                }}
-             />
-        </div>
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 'use client';
 
-import { toast } from "@/hooks/use-toast";
 import { startOfDay } from 'date-fns';
 
 const EVENTS_STORAGE_KEY = 'demyanenko_hub_events';
@@ -55,10 +54,6 @@ export const createEvent = (eventData: Omit<TrainingEvent, 'id'>): Promise<Train
             events.push(newEvent);
             saveEvents(events);
             
-            toast({
-                title: "Событие создано",
-                description: `Тренировка "${newEvent.title}" была добавлена в расписание.`,
-            });
             resolve(newEvent);
         }, 500);
     });
@@ -89,7 +84,6 @@ export const updateEvent = (eventId: string, updatedData: Partial<Omit<TrainingE
         let events = getEvents();
         const eventIndex = events.findIndex(e => e.id === eventId);
         if (eventIndex === -1) {
-            toast({ variant: "destructive", title: "Ошибка", description: "Событие не найдено." });
             resolve(null);
             return;
         }
@@ -98,7 +92,6 @@ export const updateEvent = (eventId: string, updatedData: Partial<Omit<TrainingE
         events[eventIndex] = updatedEvent;
         saveEvents(events);
         
-        toast({ title: "Событие обновлено", description: "Данные тренировки успешно изменены." });
         resolve(updatedEvent);
     });
 }
@@ -111,7 +104,6 @@ export const deleteEvent = (eventId: string): Promise<void> => {
        let requests = getEvents();
        const updatedRequests = requests.filter(r => r.id !== eventId);
        saveEvents(updatedRequests);
-       toast({ title: "Событие удалено" });
        resolve();
     });
 };
