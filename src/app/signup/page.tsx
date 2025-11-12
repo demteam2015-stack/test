@@ -10,12 +10,18 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { Loader } from "lucide-react";
+import { Loader, CalendarIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState('');
@@ -23,7 +29,7 @@ export default function SignupPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [age, setAge] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
   const router = useRouter();
@@ -33,8 +39,18 @@ export default function SignupPage() {
     e.preventDefault();
     setIsLoading(true);
 
+    if (!dateOfBirth) {
+        toast({
+            variant: "destructive",
+            title: "Ошибка регистрации",
+            description: "Пожалуйста, укажите дату рождения.",
+        });
+        setIsLoading(false);
+        return;
+    }
+
     try {
-      await signup({ firstName, lastName, username, email, password, age: Number(age) });
+      await signup({ firstName, lastName, username, email, password, dateOfBirth: dateOfBirth.toISOString() });
       toast({
         title: "Регистрация прошла успешно",
         description: "Теперь вы можете войти в систему.",
@@ -84,29 +100,48 @@ export default function SignupPage() {
                 disabled={isLoading}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
                 <div className="grid gap-2">
-                <Label htmlFor="username">Имя пользователя (логин)</Label>
-                <Input
-                    id="username"
-                    type="text"
-                    placeholder="ivan_ivanov"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    disabled={isLoading}
-                />
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="age">Возраст</Label>
+                    <Label htmlFor="username">Имя пользователя (логин)</Label>
                     <Input
-                        id="age"
-                        type="number"
-                        placeholder="25"
-                        value={age}
-                        onChange={(e) => setAge(e.target.value)}
+                        id="username"
+                        type="text"
+                        placeholder="ivan_ivanov"
+                        required
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
                         disabled={isLoading}
                     />
+                </div>
+                <div className="grid gap-2">
+                    <Label>Дата рождения</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !dateOfBirth && "text-muted-foreground"
+                            )}
+                            disabled={isLoading}
+                            >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateOfBirth ? format(dateOfBirth, 'PPP', { locale: ru}) : <span>Выберите дату</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar
+                            mode="single"
+                            selected={dateOfBirth}
+                            onSelect={setDateOfBirth}
+                            initialFocus
+                            locale={ru}
+                            captionLayout="dropdown-buttons"
+                            fromYear={1950}
+                            toYear={new Date().getFullYear()}
+                            />
+                        </PopoverContent>
+                    </Popover>
                 </div>
             </div>
             <div className="grid gap-2">
