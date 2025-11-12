@@ -281,7 +281,7 @@ export default function TeamPage() {
                                 <p className="font-semibold">{`${athlete.lastName} ${athlete.firstName} ${athlete.middleName || ''}`.trim()}</p>
                                 <div className="text-sm text-muted-foreground space-y-1 mt-1">
                                     <p>Дата рождения: {formatDateOfBirth(athlete.dateOfBirth)}</p>
-                                    {athlete.parentId && <p>Родитель: {athlete.parentId}</p>}
+                                    {athlete.parentId && <p>Email родителя: {athlete.parentId}</p>}
                                 </div>
                               </div>
                             </div>
