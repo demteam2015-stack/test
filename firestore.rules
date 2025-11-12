@@ -119,6 +119,8 @@ service cloud.firestore {
 
     /**
      * @description Publicly readable collections for events, competitions, and team members.
+     * Any signed-in user can read (get and list) these collections.
+     * Writing is disallowed for now.
      */
     match /events/{document=**} {
       allow read: if isSignedIn();
