@@ -24,7 +24,7 @@ export type Journal = {
 
 // --- Helper Functions ---
 
-const getJournal = (): Journal => {
+export const getJournal = (): Journal => {
     if (typeof window === 'undefined') return {};
     try {
         const storedData = localStorage.getItem(JOURNAL_STORAGE_KEY);
