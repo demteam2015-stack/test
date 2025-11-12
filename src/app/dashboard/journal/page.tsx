@@ -129,7 +129,8 @@ export default function JournalPage() {
 
   const fetchData = useCallback(async (date: Date, iso: string) => {
     setIsLoading(true);
-    const dailyEvents = getEventsForDay(date).filter(e => e.type === 'training');
+    // Get all events for the day suitable for attendance tracking (e.g., no holidays)
+    const dailyEvents = getEventsForDay(date).filter(e => e.type !== 'holiday');
     const savedAttendance = await getAttendanceForDay(iso);
 
     setEvents(dailyEvents);
@@ -197,7 +198,7 @@ export default function JournalPage() {
         </div>
         <div className="lg:col-span-2 space-y-6">
             <h2 className="text-xl font-semibold">
-                Тренировки на {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
+                События на {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
             </h2>
             {isLoading ? (
                 <div className="flex items-center justify-center min-h-[300px] border-2 border-dashed rounded-lg">
@@ -217,7 +218,7 @@ export default function JournalPage() {
             ) : (
                 <div className="flex flex-col h-60 items-center justify-center rounded-lg border-2 border-dashed border-border text-center">
                     <CalendarIcon className="h-12 w-12 text-muted-foreground" />
-                    <p className="mt-4 text-muted-foreground">На выбранный день тренировок не запланировано.</p>
+                    <p className="mt-4 text-muted-foreground">На выбранный день нет событий для отметки.</p>
                 </div>
             )}
         </div>
