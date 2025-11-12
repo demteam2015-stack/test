@@ -150,6 +150,56 @@
         }
       },
       "required": ["userId", "joinDate"]
+    },
+    "Plan": {
+      "title": "Plan",
+      "description": "Represents a membership plan.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "price": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isCurrent": {
+          "type": "boolean"
+        },
+        "isPopular": {
+          "type": "boolean"
+        }
+      },
+      "required": ["title", "price", "description", "features"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Represents a payment transaction.",
+      "type": "object",
+      "properties": {
+        "invoice": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "amount": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": ["invoice", "date", "amount", "status"]
     }
   },
   "auth": {
@@ -255,8 +305,42 @@
             }
           ]
         }
+      },
+      {
+        "path": "/plans/{planId}",
+        "definition": {
+          "entityName": "Plan",
+          "schema": {
+            "$ref": "#/backend/entities/Plan"
+          },
+          "description": "Stores membership plans.",
+          "params": [
+            {
+              "name": "planId",
+              "description": "The unique identifier for the plan."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/payments/{paymentId}",
+        "definition": {
+          "entityName": "Payment",
+          "schema": {
+            "$ref": "#/backend/entities/Payment"
+          },
+          "description": "Stores payment history for a user. Should probably be a subcollection under users.",
+          "params": [
+            {
+              "name": "paymentId",
+              "description": "The unique identifier for the payment."
+            }
+          ]
+        }
       }
     ],
     "reasoning": "This Firestore structure is designed to support the Demyanenko Team Hub application, focusing on user roles (athlete, parent), registration, and authentication. It prioritizes Authorization Independence, clarity, and scalability. User data is stored in the `/users/{userId}` collection, with separate collections for Athlete and Parent profiles linked to the user ID. This design uses path-based ownership for user-specific data and avoids `get()` calls in security rules, enhancing security and enabling atomic operations. The structure facilitates secure `list` operations and explicit state modeling, ensuring a robust and maintainable application. The addition of `events`, `competitions`, and `teamMembers` collections allows for dynamic data management for the dashboard and other sections of the app."
   }
 }
+
+    
