@@ -13,7 +13,7 @@ export interface TrainingEvent {
     location: string;
     notes?: string;
     createdBy: string; // username
-    type: 'training' | 'competition' | 'meeting';
+    type: 'training' | 'competition' | 'meeting' | 'holiday';
 }
 
 // --- Helper Functions ---
@@ -49,7 +49,7 @@ export const createEvent = (eventData: Omit<TrainingEvent, 'id'>): Promise<Train
             const events = getEvents();
             const newEvent: TrainingEvent = {
                 ...eventData,
-                id: `event_${Date.now()}`,
+                id: `event_${Date.now()}_${Math.random()}`,
             };
             
             events.push(newEvent);

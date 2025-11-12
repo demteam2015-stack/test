@@ -9,7 +9,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { Calendar as CalendarIcon, PlusCircle, Clock, MapPin, Trash2, Edit, Dumbbell, Trophy, Users, AlertTriangle } from "lucide-react";
+import { Calendar as CalendarIcon, PlusCircle, Clock, MapPin, Trash2, Edit, Dumbbell, Trophy, Users, AlertTriangle, Briefcase, Sun } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { useAuth } from '@/context/auth-context';
@@ -27,6 +27,12 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,19 +58,58 @@ const BulkEventForm = ({ selectedDates, onEventsCreated }: { selectedDates: Date
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [eventType, setEventType] = useState<TrainingEvent['type']>('training');
 
-    const [title, setTitle] = useState('Тренировка');
+    const [title, setTitle] = useState('');
     const [startTime, setStartTime] = useState('18:00');
     const [endTime, setEndTime] = useState('20:00');
     const [location, setLocation] = useState('Стадион "Олимпийский"');
     const [notes, setNotes] = useState('');
 
+    const resetForm = () => {
+        // Defaults are set based on eventType inside handleOpenChange
+    };
+    
+    useEffect(() => {
+        switch(eventType) {
+            case 'training':
+                setTitle('Тренировка');
+                setLocation('Стадион "Олимпийский"');
+                setStartTime('18:00');
+                setEndTime('20:00');
+                break;
+            case 'competition':
+                setTitle('Соревнование');
+                setLocation('Городской стадион');
+                setStartTime('09:00');
+                setEndTime('17:00');
+                break;
+            case 'meeting':
+                setTitle('Собрание');
+                setLocation('Конференц-зал');
+                setStartTime('19:00');
+                setEndTime('20:00');
+                break;
+            case 'holiday':
+                 setTitle('Каникулы / Выходной');
+                 setLocation('');
+                 setStartTime('');
+                 setEndTime('');
+                 break;
+        }
+    }, [eventType]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user || !startTime || !endTime || !title || !location || selectedDates.length === 0) {
-            toast({ variant: 'destructive', title: 'Ошибка', description: 'Пожалуйста, заполните все обязательные поля и выберите хотя бы одну дату.' });
+        if (!user || !title || selectedDates.length === 0) {
+            toast({ variant: 'destructive', title: 'Ошибка', description: 'Пожалуйста, заполните название и выберите хотя бы одну дату.' });
             return;
         }
+        if (eventType !== 'holiday' && (!startTime || !endTime || !location)) {
+            toast({ variant: 'destructive', title: 'Ошибка', description: 'Пожалуйста, заполните все обязательные поля.' });
+            return;
+        }
+
 
         setIsSaving(true);
         
@@ -77,7 +122,7 @@ const BulkEventForm = ({ selectedDates, onEventsCreated }: { selectedDates: Date
                 location,
                 notes,
                 createdBy: user.username,
-                type: 'training', // Default type for now
+                type: eventType,
             };
             return createEvent(eventData);
         });
@@ -88,33 +133,61 @@ const BulkEventForm = ({ selectedDates, onEventsCreated }: { selectedDates: Date
 
         setIsSaving(false);
         setIsModalOpen(false);
-        onEventsCreated(); // Callback to refetch events and clear selection
+        onEventsCreated();
     };
     
     const handleOpenChange = (open: boolean) => {
         setIsModalOpen(open);
         if (!open) {
-            // Reset form on close
-            setTitle('Тренировка');
-            setStartTime('18:00');
-            setEndTime('20:00');
-            setLocation('Стадион "Олимпийский"');
-            setNotes('');
+            resetForm();
         }
+    }
+
+    const openModalWithType = (type: TrainingEvent['type']) => {
+        setEventType(type);
+        setIsModalOpen(true);
     }
     
     return (
         <Dialog open={isModalOpen} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-                <Button disabled={selectedDates.length === 0}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Добавить расписание ({selectedDates.length})
-                </Button>
-            </DialogTrigger>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button disabled={selectedDates.length === 0}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Добавить расписание ({selectedDates.length})
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => openModalWithType('training')}>
+                        <Dumbbell className="mr-2 h-4 w-4" />
+                        Тренировка
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openModalWithType('competition')}>
+                        <Trophy className="mr-2 h-4 w-4" />
+                        Соревнование
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openModalWithType('meeting')}>
+                        <Users className="mr-2 h-4 w-4" />
+                        Собрание
+                    </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => openModalWithType('holiday')}>
+                        <Sun className="mr-2 h-4 w-4" />
+                        Каникулы/Выходной
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Новое расписание</DialogTitle>
+                        <DialogTitle>Новое расписание: {
+                            {
+                                'training': 'Тренировка',
+                                'competition': 'Соревнование',
+                                'meeting': 'Собрание',
+                                'holiday': 'Каникулы/Выходной'
+                            }[eventType]
+                        }</DialogTitle>
                         <DialogDescription>
                            Заполните детали. События будут созданы для всех {selectedDates.length} выбранных дат.
                         </DialogDescription>
@@ -124,20 +197,24 @@ const BulkEventForm = ({ selectedDates, onEventsCreated }: { selectedDates: Date
                             <Label htmlFor="title">Название</Label>
                             <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required disabled={isSaving} />
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="start-time">Начало</Label>
-                                <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} required disabled={isSaving} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="end-time">Окончание</Label>
-                                <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} required disabled={isSaving} />
-                            </div>
-                        </div>
-                         <div className="grid gap-2">
-                            <Label htmlFor="location">Место</Label>
-                            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} required disabled={isSaving} />
-                        </div>
+                        {eventType !== 'holiday' && (
+                            <>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="start-time">Начало</Label>
+                                        <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} required disabled={isSaving} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="end-time">Окончание</Label>
+                                        <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} required disabled={isSaving} />
+                                    </div>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="location">Место</Label>
+                                    <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} required disabled={isSaving} />
+                                </div>
+                            </>
+                        )}
                         <div className="grid gap-2">
                             <Label htmlFor="notes">Заметки</Label>
                             <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} disabled={isSaving} placeholder="Дополнительная информация (необязательно)"/>
@@ -169,6 +246,7 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated, children }: { 
     const [endTime, setEndTime] = useState('');
     const [location, setLocation] = useState('');
     const [notes, setNotes] = useState('');
+    const [eventType, setEventType] = useState<TrainingEvent['type']>('training');
     
     const isEditMode = !!eventToEdit;
 
@@ -180,6 +258,7 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated, children }: { 
             setEndTime(eventToEdit.endTime);
             setLocation(eventToEdit.location);
             setNotes(eventToEdit.notes || '');
+            setEventType(eventToEdit.type)
         }
     }, [eventToEdit, isEditMode, isModalOpen]);
 
@@ -190,14 +269,20 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated, children }: { 
         setEndTime('');
         setLocation('');
         setNotes('');
+        setEventType('training');
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user || !date || !startTime || !endTime || !title || !location) {
+        if (!user || !date || !title) {
             toast({ variant: 'destructive', title: 'Ошибка', description: 'Пожалуйста, заполните все обязательные поля.' });
             return;
         }
+        if (eventType !== 'holiday' && (!startTime || !endTime || !location)) {
+            toast({ variant: 'destructive', title: 'Ошибка', description: 'Пожалуйста, заполните все обязательные поля.' });
+            return;
+        }
+
 
         setIsSaving(true);
         const eventData: Omit<TrainingEvent, 'id'> = {
@@ -208,19 +293,19 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated, children }: { 
             location,
             notes,
             createdBy: user.username,
-            type: 'training', // default type
+            type: eventType,
         };
 
         if(isEditMode && eventToEdit) {
             const updatedEvent = await updateEvent(eventToEdit.id, eventData);
             if(updatedEvent) {
                 onEventUpdated(updatedEvent);
-                toast({ title: "Событие обновлено", description: "Данные тренировки успешно изменены." });
+                toast({ title: "Событие обновлено", description: "Данные события успешно изменены." });
             }
         } else {
             const newEvent = await createEvent(eventData);
             onEventCreated(newEvent);
-            toast({ title: "Событие создано", description: `Тренировка "${newEvent.title}" была добавлена в расписание.` });
+            toast({ title: "Событие создано", description: `Событие "${newEvent.title}" было добавлено в расписание.` });
         }
 
         setIsSaving(false);
@@ -240,12 +325,22 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated, children }: { 
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>{isEditMode ? 'Редактировать тренировку' : 'Новая тренировка'}</DialogTitle>
+                        <DialogTitle>{isEditMode ? 'Редактировать событие' : 'Новое событие'}</DialogTitle>
                         <DialogDescription>
-                           {isEditMode ? 'Измените детали и сохраните.' : 'Заполните данные о новой тренировке.'}
+                           {isEditMode ? 'Измените детали и сохраните.' : 'Заполните данные о новом событии.'}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
+                         <div className="grid gap-2">
+                            <Label>Тип события</Label>
+                            {/* In edit mode, type cannot be changed for simplicity */}
+                             <Input value={{
+                                'training': 'Тренировка',
+                                'competition': 'Соревнование',
+                                'meeting': 'Собрание',
+                                'holiday': 'Каникулы/Выходной'
+                            }[eventType]} disabled />
+                        </div>
                         <div className="grid gap-2">
                             <Label htmlFor="title">Название</Label>
                             <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required disabled={isSaving} />
@@ -277,20 +372,24 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated, children }: { 
                                 </PopoverContent>
                             </Popover>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="start-time">Начало</Label>
-                                <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} required disabled={isSaving} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="end-time">Окончание</Label>
-                                <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} required disabled={isSaving} />
-                            </div>
-                        </div>
-                         <div className="grid gap-2">
-                            <Label htmlFor="location">Место</Label>
-                            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} required disabled={isSaving} />
-                        </div>
+                        {eventType !== 'holiday' && (
+                            <>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="start-time">Начало</Label>
+                                        <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} required disabled={isSaving} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="end-time">Окончание</Label>
+                                        <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} required disabled={isSaving} />
+                                    </div>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="location">Место</Label>
+                                    <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} required disabled={isSaving} />
+                                </div>
+                            </>
+                        )}
                         <div className="grid gap-2">
                             <Label htmlFor="notes">Заметки</Label>
                             <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} disabled={isSaving} />
@@ -359,13 +458,15 @@ export default function SchedulePage() {
   const EventIcon = ({ type }: { type: TrainingEvent['type'] }) => {
     switch (type) {
       case 'training':
-        return <Dumbbell className="h-4 w-4 text-muted-foreground" />;
+        return <Dumbbell className="h-5 w-5 text-muted-foreground" />;
       case 'competition':
-        return <Trophy className="h-4 w-4 text-muted-foreground" />;
+        return <Trophy className="h-5 w-5 text-muted-foreground" />;
       case 'meeting':
-        return <Users className="h-4 w-4 text-muted-foreground" />;
+        return <Users className="h-5 w-5 text-muted-foreground" />;
+      case 'holiday':
+        return <Sun className="h-5 w-5 text-muted-foreground" />;
       default:
-        return <Dumbbell className="h-4 w-4 text-muted-foreground" />;
+        return <Briefcase className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -386,7 +487,7 @@ export default function SchedulePage() {
                     Расписание
                 </h1>
                 <p className="text-muted-foreground">
-                    {canManage ? 'Выберите дни в календаре и добавьте расписание.' : 'Просматривайте расписание тренировок.'}
+                    {canManage ? 'Выберите дни в календаре и добавьте расписание.' : 'Просматривайте расписание команды.'}
                 </p>
             </div>
             {canManage && (
@@ -472,7 +573,7 @@ export default function SchedulePage() {
                                                         <AlertDialogHeader>
                                                         <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
                                                         <AlertDialogDescription>
-                                                            Это действие необратимо. Тренировка будет удалена из расписания навсегда.
+                                                            Это действие необратимо. Событие будет удалено из расписания навсегда.
                                                         </AlertDialogDescription>
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>
@@ -485,19 +586,25 @@ export default function SchedulePage() {
                                         )}
                                     </div>
                                 </CardHeader>
+                                { (event.type !== 'holiday' || event.notes) &&
                                 <CardContent>
-                                    <div className="flex items-center text-sm text-muted-foreground mb-2">
-                                        <Clock className="mr-2 h-4 w-4" />
-                                        <span>{event.startTime} - {event.endTime}</span>
-                                    </div>
-                                    <div className="flex items-center text-sm text-muted-foreground">
-                                        <MapPin className="mr-2 h-4 w-4" />
-                                        <span>{event.location}</span>
-                                    </div>
+                                    {event.type !== 'holiday' && (
+                                    <>
+                                        <div className="flex items-center text-sm text-muted-foreground mb-2">
+                                            <Clock className="mr-2 h-4 w-4" />
+                                            <span>{event.startTime} - {event.endTime}</span>
+                                        </div>
+                                        <div className="flex items-center text-sm text-muted-foreground">
+                                            <MapPin className="mr-2 h-4 w-4" />
+                                            <span>{event.location}</span>
+                                        </div>
+                                    </>
+                                    )}
                                     {event.notes && (
                                         <p className="text-sm bg-muted/50 p-3 rounded-md mt-4">{event.notes}</p>
                                     )}
                                 </CardContent>
+                                }
                                 <CardFooter>
                                      <p className="text-xs text-muted-foreground">Добавил: {event.createdBy}</p>
                                 </CardFooter>
@@ -506,7 +613,7 @@ export default function SchedulePage() {
                     </div>
                 ) : (
                      <div className="flex h-60 items-center justify-center rounded-lg border-2 border-dashed border-border text-center">
-                        <p className="text-muted-foreground">На выбранный день тренировок нет.</p>
+                        <p className="text-muted-foreground">На выбранный день событий нет.</p>
                     </div>
                 )}
             </CardContent>
