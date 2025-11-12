@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { BookUser, Calendar as CalendarIcon, Loader } from "lucide-react";
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { useAuth } from '@/context/auth-context';
 import type { TrainingEvent } from '@/lib/schedule-api';
 import { getEventsForDay } from '@/lib/schedule-api';
@@ -117,7 +116,7 @@ function AttendanceForm({ event, athletes, initialData, onSave, isSaving }: { ev
 export default function JournalPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
+  const [today] = useState<Date>(startOfDay(new Date()));
   const [events, setEvents] = useState<TrainingEvent[]>([]);
   const [attendanceData, setAttendanceData] = useState<AttendanceState>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -125,7 +124,7 @@ export default function JournalPage() {
 
   const canManage = user?.role === 'admin' || user?.role === 'coach';
 
-  const isoDate = useMemo(() => selectedDate.toISOString().split('T')[0], [selectedDate]);
+  const isoDate = useMemo(() => today.toISOString().split('T')[0], [today]);
 
   const fetchData = useCallback(async (date: Date) => {
     setIsLoading(true);
@@ -148,8 +147,8 @@ export default function JournalPage() {
   }, []);
 
   useEffect(() => {
-    fetchData(selectedDate);
-  }, [selectedDate, fetchData]);
+    fetchData(today);
+  }, [today, fetchData]);
 
   const handleSaveAttendance = async (eventId: string, records: { athleteId: string; status: AttendanceStatus }[]) => {
     if (!canManage) return;
@@ -169,12 +168,6 @@ export default function JournalPage() {
     });
     setIsSaving(false);
   };
-  
-  const handleDateSelect = (day: Date | undefined) => {
-      if (day) {
-          setSelectedDate(startOfDay(day));
-      }
-  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -184,54 +177,35 @@ export default function JournalPage() {
             Журнал посещаемости
         </h1>
         <p className="text-muted-foreground">
-          {canManage ? 'Отмечайте присутствие спортсменов на тренировках.' : 'Просмотр посещаемости.'}
+          {canManage ? 'Отмечайте присутствие спортсменов на сегодняшних тренировках.' : 'Просмотр посещаемости.'}
         </p>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        <div className="lg:col-span-1">
-             <Card>
-                <CardHeader>
-                    <CardTitle>Выберите дату</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={handleDateSelect}
-                        className="rounded-md border p-0"
-                        locale={ru}
-                        disabled={isLoading || isSaving}
-                    />
-                </CardContent>
-             </Card>
-        </div>
-        <div className="lg:col-span-2 space-y-6">
-            <h2 className="text-xl font-semibold">
-                События на {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
-            </h2>
-            {isLoading ? (
-                <div className="flex items-center justify-center min-h-[300px] border-2 border-dashed rounded-lg">
-                    <Loader className="h-8 w-8 animate-spin text-primary" />
-                </div>
-            ) : events.length > 0 ? (
-                events.map(event => (
-                    <AttendanceForm 
-                        key={event.id}
-                        event={event}
-                        athletes={teamMembersData}
-                        initialData={attendanceData[event.id] || {}}
-                        onSave={(records) => handleSaveAttendance(event.id, records)}
-                        isSaving={isSaving}
-                    />
-                ))
-            ) : (
-                <div className="flex flex-col h-60 items-center justify-center rounded-lg border-2 border-dashed border-border text-center">
-                    <CalendarIcon className="h-12 w-12 text-muted-foreground" />
-                    <p className="mt-4 text-muted-foreground">На выбранный день нет событий для отметки.</p>
-                </div>
-            )}
-        </div>
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold">
+            События на {format(today, 'd MMMM yyyy', { locale: ru })}
+        </h2>
+        {isLoading ? (
+            <div className="flex items-center justify-center min-h-[300px] border-2 border-dashed rounded-lg">
+                <Loader className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        ) : events.length > 0 ? (
+            events.map(event => (
+                <AttendanceForm 
+                    key={event.id}
+                    event={event}
+                    athletes={teamMembersData}
+                    initialData={attendanceData[event.id] || {}}
+                    onSave={(records) => handleSaveAttendance(event.id, records)}
+                    isSaving={isSaving}
+                />
+            ))
+        ) : (
+            <div className="flex flex-col h-60 items-center justify-center rounded-lg border-2 border-dashed border-border text-center">
+                <CalendarIcon className="h-12 w-12 text-muted-foreground" />
+                <p className="mt-4 text-muted-foreground">На сегодня нет событий для отметки.</p>
+            </div>
+        )}
       </div>
     </div>
   );
