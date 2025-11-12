@@ -5,8 +5,8 @@ import type { TrainingRecommendationsInput } from '@/ai/flows/generate-personali
 import { z } from 'zod';
 
 const recommendationSchema = z.object({
-  athleteId: z.string().min(1, 'Athlete ID is required.'),
-  performanceData: z.string().min(1, 'Performance data is required.'),
+  athleteId: z.string().min(1, 'ID атлета обязательно.'),
+  performanceData: z.string().min(1, 'Данные о производительности обязательны.'),
   attendanceRate: z.number().min(0).max(1),
   includeDietaryTips: z.boolean(),
   includeMentalWellnessTips: z.boolean(),
@@ -33,7 +33,7 @@ export async function getRecommendations(
 
   if (!parsed.success) {
     return {
-      message: 'Invalid form data.',
+      message: 'Неверные данные формы.',
       issues: parsed.error.issues.map((issue) => issue.message),
     };
   }
@@ -66,10 +66,10 @@ export async function getRecommendations(
         recommendations: result.recommendations,
       };
     } else {
-      return { message: 'Failed to get recommendations. The result was empty.' };
+      return { message: 'Не удалось получить рекомендации. Результат пуст.' };
     }
   } catch (error) {
     console.error(error);
-    return { message: 'An unexpected error occurred on the server.' };
+    return { message: 'На сервере произошла непредвиденная ошибка.' };
   }
 }

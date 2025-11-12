@@ -13,39 +13,39 @@ import { Badge } from '@/components/ui/badge';
 
 const athletes = [
   {
-    name: 'Olena Demyanenko',
-    achievements: '5x National Champion, 2x World Medalist',
-    bio: 'A founding member and inspiration to all.',
+    name: 'Олена Демьяненко',
+    achievements: '5-кратная чемпионка страны, 2-кратный призер мира',
+    bio: 'Один из основателей и вдохновитель для всех.',
     imageId: 'athlete-1',
   },
   {
-    name: 'Andriy Shevchenko',
-    achievements: '3x European Champion, Olympic Finalist',
-    bio: 'Known for his powerful technique and sportsmanship.',
+    name: 'Андрей Шевченко',
+    achievements: '3-кратный чемпион Европы, финалист Олимпийских игр',
+    bio: 'Известен своей мощной техникой и спортивным духом.',
     imageId: 'athlete-2',
   },
   {
-    name: 'Yana Klochkova',
-    achievements: '4x Olympic Gold Medalist',
-    bio: 'The "Golden Fish" of Ukrainian sports.',
+    name: 'Яна Клочкова',
+    achievements: '4-кратная олимпийская чемпионка',
+    bio: '"Золотая рыбка" украинского спорта.',
     imageId: 'athlete-3',
   },
   {
-    name: 'Vasyl Lomachenko',
-    achievements: '2x Olympic Gold, Multi-weight World Champion',
-    bio: 'A master of the craft, renowned for his footwork.',
+    name: 'Василий Ломаченко',
+    achievements: '2-кратный олимпийский чемпион, чемпион мира в нескольких весовых категориях',
+    bio: 'Мастер своего дела, известный своей работой ног.',
     imageId: 'athlete-4',
   },
   {
-    name: 'Elina Svitolina',
-    achievements: 'WTA Finals Champion, Olympic Bronze Medalist',
-    bio: 'A formidable force on the court.',
+    name: 'Элина Свитолина',
+    achievements: 'Чемпионка финала WTA, бронзовый призер Олимпийских игр',
+    bio: 'Грозная сила на корте.',
     imageId: 'athlete-6',
   },
    {
-    name: 'Serhiy Bubka',
-    achievements: 'Olympic Gold, 6x World Champion',
-    bio: 'Broke the world record 35 times.',
+    name: 'Сергей Бубка',
+    achievements: 'Олимпийский чемпион, 6-кратный чемпион мира',
+    bio: 'Побил мировой рекорд 35 раз.',
     imageId: 'athlete-5'
    }
 ];
@@ -59,10 +59,10 @@ export default function HallOfFamePage() {
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-3xl font-bold font-headline tracking-tight">
-          Hall of Fame
+          Зал славы
         </h1>
         <p className="text-muted-foreground">
-          Celebrating the legends of the Demyanenko Team.
+          Чествуем легенд команды Демьяненко.
         </p>
       </div>
 
@@ -93,7 +93,7 @@ export default function HallOfFamePage() {
                 <p className="text-sm text-muted-foreground">{athlete.bio}</p>
               </CardContent>
               <CardFooter>
-                 <Badge variant="secondary">Legend</Badge>
+                 <Badge variant="secondary">Легенда</Badge>
               </CardFooter>
             </Card>
           );

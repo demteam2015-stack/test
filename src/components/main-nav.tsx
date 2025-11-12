@@ -22,12 +22,12 @@ import { Logo } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
 
 const links = [
-  { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/dashboard/schedule', label: 'Schedule', icon: Calendar },
-  { href: '/dashboard/recommendations', label: 'AI Coach', icon: BrainCircuit },
-  { href: '/dashboard/payments', label: 'Payments', icon: CreditCard },
-  { href: '/dashboard/competitions', label: 'Competitions', icon: Trophy },
-  { href: '/dashboard/hall-of-fame', label: 'Hall of Fame', icon: Award },
+  { href: '/dashboard', label: 'Панель', icon: Home },
+  { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar },
+  { href: '/dashboard/recommendations', label: 'AI Тренер', icon: BrainCircuit },
+  { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard },
+  { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy },
+  { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award },
 ];
 
 export default function MainNav() {
@@ -38,7 +38,7 @@ export default function MainNav() {
       <SidebarHeader>
         <div className="flex items-center gap-2">
           <Logo className="size-8 text-primary" />
-          <span className="text-lg font-semibold font-headline">Team Hub</span>
+          <span className="text-lg font-semibold font-headline">Центр команды</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -62,7 +62,7 @@ export default function MainNav() {
       <SidebarFooter>
         <Separator className="my-2" />
         <p className="px-3 text-xs text-muted-foreground">
-          © Demyanenko Team
+          © Команда Демьяненко
         </p>
       </SidebarFooter>
     </>

@@ -13,9 +13,9 @@ import { Separator } from "@/components/ui/separator";
 import { Clock, MapPin } from "lucide-react";
 
 const events = [
-    { time: '09:00 - 11:00', title: 'Morning Drills', location: 'Main Arena', type: 'practice' },
-    { time: '13:00 - 14:00', title: 'Strategy Session', location: 'Conference Room A', type: 'meeting' },
-    { time: '16:30 - 18:00', title: 'Strength & Conditioning', location: 'Gym', type: 'practice' },
+    { time: '09:00 - 11:00', title: 'Утренние упражнения', location: 'Главная арена', type: 'тренировка' },
+    { time: '13:00 - 14:00', title: 'Стратегическая сессия', location: 'Конференц-зал A', type: 'собрание' },
+    { time: '16:30 - 18:00', title: 'Силовая и кондиционная подготовка', location: 'Спортзал', type: 'тренировка' },
 ]
 
 export default function SchedulePage() {
@@ -23,12 +23,12 @@ export default function SchedulePage() {
     <div className="grid gap-8 md:grid-cols-3">
       <div className="md:col-span-2 space-y-8">
         <h1 className="text-3xl font-bold font-headline tracking-tight">
-          Training Schedule
+          Расписание тренировок
         </h1>
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>Today's Events</CardTitle>
-            <CardDescription>Here are the scheduled events for today. You are attending 2 out of 3.</CardDescription>
+            <CardTitle>Сегодняшние события</CardTitle>
+            <CardDescription>Вот запланированные на сегодня события. Вы посещаете 2 из 3.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="flow-root">
@@ -47,7 +47,7 @@ export default function SchedulePage() {
                             </p>
                         </div>
                         <div>
-                           <Badge variant={event.type === 'practice' ? 'default' : 'secondary'}>{event.type}</Badge>
+                           <Badge variant={event.type === 'тренировка' ? 'default' : 'secondary'}>{event.type}</Badge>
                         </div>
                     </li>
                 ))}
@@ -55,7 +55,7 @@ export default function SchedulePage() {
             </div>
           </CardContent>
           <CardFooter className="border-t pt-4">
-            <Button>Book a new session</Button>
+            <Button>Записаться на новое занятие</Button>
           </CardFooter>
         </Card>
       </div>
@@ -72,14 +72,14 @@ export default function SchedulePage() {
         </Card>
          <Card>
           <CardHeader>
-            <CardTitle className="text-base">Your Attendance</CardTitle>
+            <CardTitle className="text-base">Ваша посещаемость</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
                 <span className="text-4xl font-bold">92%</span>
-                <span className="text-sm text-muted-foreground">this month</span>
+                <span className="text-sm text-muted-foreground">в этом месяце</span>
             </div>
-             <p className="text-xs text-muted-foreground mt-1">Great job! Consistency is key.</p>
+             <p className="text-xs text-muted-foreground mt-1">Отличная работа! Постоянство - ключ к успеху.</p>
           </CardContent>
         </Card>
       </div>

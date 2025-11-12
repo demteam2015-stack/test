@@ -19,15 +19,15 @@ export default function Error({
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-4">
       <AlertTriangle className="w-16 h-16 text-destructive mb-4" />
-      <h2 className="text-2xl font-headline font-bold mb-2">Something went wrong!</h2>
-      <p className="text-muted-foreground mb-6 max-w-md">We've encountered an unexpected issue. Please try again. If the problem persists, contact support.</p>
+      <h2 className="text-2xl font-headline font-bold mb-2">Что-то пошло не так!</h2>
+      <p className="text-muted-foreground mb-6 max-w-md">Мы столкнулись с непредвиденной проблемой. Пожалуйста, попробуйте еще раз. Если проблема не исчезнет, обратитесь в службу поддержки.</p>
       <Button
         onClick={
           // Attempt to recover by trying to re-render the segment
           () => reset()
         }
       >
-        Try again
+        Попробовать снова
       </Button>
     </div>
   )

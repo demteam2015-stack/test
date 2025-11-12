@@ -21,33 +21,33 @@ import { Check } from "lucide-react";
 
 const plans = [
     {
-        title: "Athlete",
+        title: "Атлет",
         price: "$49",
-        description: "For dedicated athletes focused on growth.",
-        features: ["Access to all training sessions", "Personalized recommendations", "Competition entry"],
+        description: "Для преданных атлетов, нацеленных на рост.",
+        features: ["Доступ ко всем тренировкам", "Персональные рекомендации", "Участие в соревнованиях"],
         isCurrent: false,
     },
     {
-        title: "Pro Athlete",
+        title: "Про Атлет",
         price: "$99",
-        description: "For elite athletes competing at the highest level.",
-        features: ["All Athlete features", "Priority session booking", "Exclusive content access", "Parent/Guardian account"],
+        description: "Для элитных атлетов, соревнующихся на высшем уровне.",
+        features: ["Все функции 'Атлета'", "Приоритетное бронирование занятий", "Эксклюзивный доступ к контенту", "Аккаунт родителя/опекуна"],
         isCurrent: true,
         isPopular: true,
     },
     {
-        title: "Supporter",
+        title: "Болельщик",
         price: "$19",
-        description: "For parents and fans who want to stay connected.",
-        features: ["View schedules", "Receive notifications", "Access to community hub"],
+        description: "Для родителей и фанатов, которые хотят оставаться на связи.",
+        features: ["Просмотр расписаний", "Получение уведомлений", "Доступ к сообществу"],
         isCurrent: false,
     }
 ]
 
 const paymentHistory = [
-    { invoice: "INV-2024-003", date: "2024-07-01", amount: "$99.00", status: "Paid" },
-    { invoice: "INV-2024-002", date: "2024-06-01", amount: "$99.00", status: "Paid" },
-    { invoice: "INV-2024-001", date: "2024-05-01", amount: "$99.00", status: "Paid" },
+    { invoice: "INV-2024-003", date: "2024-07-01", amount: "$99.00", status: "Оплачено" },
+    { invoice: "INV-2024-002", date: "2024-06-01", amount: "$99.00", status: "Оплачено" },
+    { invoice: "INV-2024-001", date: "2024-05-01", amount: "$99.00", status: "Оплачено" },
 ]
 
 export default function PaymentsPage() {
@@ -55,10 +55,10 @@ export default function PaymentsPage() {
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-3xl font-bold font-headline tracking-tight">
-          Billing & Memberships
+          Оплата и членство
         </h1>
         <p className="text-muted-foreground">
-          Manage your subscription and view payment history.
+          Управляйте своей подпиской и просматривайте историю платежей.
         </p>
       </div>
 
@@ -66,9 +66,9 @@ export default function PaymentsPage() {
         {plans.map(plan => (
             <Card key={plan.title} className={`flex flex-col ${plan.isCurrent ? 'border-primary ring-2 ring-primary' : ''}`}>
                 <CardHeader className="relative">
-                    {plan.isPopular && <Badge className="absolute top-[-0.75rem] right-4">Popular</Badge>}
+                    {plan.isPopular && <Badge className="absolute top-[-0.75rem] right-4">Популярный</Badge>}
                     <CardTitle className="font-headline">{plan.title}</CardTitle>
-                    <p className="text-3xl font-bold">{plan.price}<span className="text-sm font-normal text-muted-foreground">/month</span></p>
+                    <p className="text-3xl font-bold">{plan.price}<span className="text-sm font-normal text-muted-foreground">/месяц</span></p>
                     <CardDescription>{plan.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow">
@@ -84,7 +84,7 @@ export default function PaymentsPage() {
                 </CardContent>
                 <CardFooter>
                     <Button className="w-full" disabled={plan.isCurrent} variant={plan.isCurrent ? 'outline' : 'default'}>
-                        {plan.isCurrent ? 'Current Plan' : 'Choose Plan'}
+                        {plan.isCurrent ? 'Текущий план' : 'Выбрать план'}
                     </Button>
                 </CardFooter>
             </Card>
@@ -93,19 +93,19 @@ export default function PaymentsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Payment History</CardTitle>
+          <CardTitle className="font-headline">История платежей</CardTitle>
           <CardDescription>
-            Your recent transactions with the team.
+            Ваши последние транзакции с командой.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead className="text-right">Status</TableHead>
+                <TableHead>Счет</TableHead>
+                <TableHead>Дата</TableHead>
+                <TableHead>Сумма</TableHead>
+                <TableHead className="text-right">Статус</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

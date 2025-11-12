@@ -32,12 +32,12 @@ function SubmitButton() {
       {pending ? (
         <>
           <Loader className="mr-2 h-4 w-4 animate-spin" />
-          Generating...
+          Генерация...
         </>
       ) : (
         <>
           <SparklesIcon className="mr-2 h-4 w-4" />
-          Get Recommendations
+          Получить рекомендации
         </>
       )}
     </Button>
@@ -52,13 +52,13 @@ export default function RecommendationsPage() {
   useEffect(() => {
     if (formState.message === 'success') {
        toast({
-        title: "Recommendations Generated",
-        description: "Your personalized training plan is ready.",
+        title: "Рекомендации сгенерированы",
+        description: "Ваш персональный план тренировок готов.",
       });
     } else if (formState.message && formState.message !== 'success' && formState.message !== '') {
        toast({
         variant: "destructive",
-        title: "An Error Occurred",
+        title: "Произошла ошибка",
         description: formState.message,
       });
     }
@@ -69,28 +69,28 @@ export default function RecommendationsPage() {
       <div className="flex flex-col gap-8">
         <div>
           <h1 className="text-3xl font-bold font-headline tracking-tight">
-            AI Coach
+            AI Тренер
           </h1>
           <p className="text-muted-foreground">
-            Generate personalized training recommendations for athletes.
+            Получайте персональные рекомендации по тренировкам для атлетов.
           </p>
         </div>
 
         <form action={formAction}>
           <Card>
             <CardHeader>
-              <CardTitle>Athlete Information</CardTitle>
+              <CardTitle>Информация об атлете</CardTitle>
               <CardDescription>
-                Fill in the details below to receive AI-powered advice.
+                Заполните детали ниже, чтобы получить советы от AI.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="athleteId">Athlete ID</Label>
-                <Input id="athleteId" name="athleteId" placeholder="e.g., D-12345" required />
+                <Label htmlFor="athleteId">ID Атлета</Label>
+                <Input id="athleteId" name="athleteId" placeholder="например, D-12345" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="performanceData">Performance Data (JSON)</Label>
+                <Label htmlFor="performanceData">Данные о производительности (JSON)</Label>
                 <Textarea
                   id="performanceData"
                   name="performanceData"
@@ -100,7 +100,7 @@ export default function RecommendationsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="attendanceRate">Attendance Rate: {attendance[0] * 100}%</Label>
+                <Label htmlFor="attendanceRate">Посещаемость: {attendance[0] * 100}%</Label>
                 <Input type="hidden" name="attendanceRate" value={attendance[0]} />
                 <Slider
                   id="attendanceRate"
@@ -112,14 +112,14 @@ export default function RecommendationsPage() {
                 />
               </div>
               <div className="space-y-4">
-                 <Label>Additional Preferences</Label>
+                 <Label>Дополнительные предпочтения</Label>
                  <div className="flex items-center space-x-2">
                     <Checkbox id="includeDietaryTips" name="includeDietaryTips" />
-                    <Label htmlFor="includeDietaryTips" className="font-normal">Include Dietary Tips</Label>
+                    <Label htmlFor="includeDietaryTips" className="font-normal">Включить советы по питанию</Label>
                  </div>
                  <div className="flex items-center space-x-2">
                     <Checkbox id="includeMentalWellnessTips" name="includeMentalWellnessTips" />
-                    <Label htmlFor="includeMentalWellnessTips" className="font-normal">Include Mental Wellness Tips</Label>
+                    <Label htmlFor="includeMentalWellnessTips" className="font-normal">Включить советы по ментальному здоровью</Label>
                  </div>
               </div>
             </CardContent>
@@ -135,10 +135,10 @@ export default function RecommendationsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
                 <BrainCircuit className="text-primary"/>
-                Your Personalized Plan
+                Ваш персональный план
             </CardTitle>
             <CardDescription>
-              Recommendations will appear here once generated.
+              Рекомендации появятся здесь после генерации.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -149,8 +149,8 @@ export default function RecommendationsPage() {
             ) : (
                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border text-center h-96">
                     <Lightbulb className="h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-semibold">Awaiting Input</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">Fill out the form to get your recommendations.</p>
+                    <h3 className="mt-4 text-lg font-semibold">Ожидание ввода</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">Заполните форму, чтобы получить рекомендации.</p>
                 </div>
             )}
           </CardContent>

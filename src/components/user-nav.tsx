@@ -25,7 +25,7 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Athlete</p>
+            <p className="text-sm font-medium leading-none">Атлет</p>
             <p className="text-xs leading-none text-muted-foreground">
               athlete@example.com
             </p>
@@ -35,21 +35,21 @@ export function UserNav() {
         <DropdownMenuGroup>
           <DropdownMenuItem>
             <User />
-            Profile
+            Профиль
           </DropdownMenuItem>
           <DropdownMenuItem>
             <CreditCard />
-            Billing
+            Оплата
           </DropdownMenuItem>
           <DropdownMenuItem>
             <Settings />
-            Settings
+            Настройки
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <LogOut />
-          Log out
+          Выйти
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

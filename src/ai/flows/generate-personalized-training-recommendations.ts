@@ -1,48 +1,48 @@
 'use server';
 /**
- * @fileOverview Generates personalized training recommendations for athletes based on their performance data and attendance.
+ * @fileOverview Генерирует персональные рекомендации по тренировкам для спортсменов на основе их данных о производительности и посещаемости.
  *
- * - generatePersonalizedTrainingRecommendations - A function that generates training recommendations.
- * - TrainingRecommendationsInput - The input type for the generatePersonalizedTrainingRecommendations function.
- * - TrainingRecommendationsOutput - The return type for the generatePersonalizedTrainingRecommendations function.
+ * - generatePersonalizedTrainingRecommendations - Функция, которая генерирует рекомендации по тренировкам.
+ * - TrainingRecommendationsInput - Входной тип для функции generatePersonalizedTrainingRecommendations.
+ * - TrainingRecommendationsOutput - Возвращаемый тип для функции generatePersonalizedTrainingRecommendations.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const TrainingRecommendationsInputSchema = z.object({
-  athleteId: z.string().describe('The unique identifier of the athlete.'),
-  performanceData: z.string().describe('The athlete historical performance data, represented as a JSON string.'),
-  attendanceRate: z.number().describe('The attendance rate of the athlete (0 to 1).'),
-  preferences: z.string().describe('The athlete preferences, represented as a JSON string.'),
+  athleteId: z.string().describe('Уникальный идентификатор спортсмена.'),
+  performanceData: z.string().describe('Исторические данные о производительности спортсмена, представленные в виде строки JSON.'),
+  attendanceRate: z.number().describe('Посещаемость спортсмена (от 0 до 1).'),
+  preferences: z.string().describe('Предпочтения спортсмена, представленные в виде строки JSON.'),
 });
 export type TrainingRecommendationsInput = z.infer<typeof TrainingRecommendationsInputSchema>;
 
 const TrainingRecommendationsOutputSchema = z.object({
-  recommendations: z.string().describe('The personalized training recommendations for the athlete.'),
+  recommendations: z.string().describe('Персональные рекомендации по тренировкам для спортсмена.'),
 });
 export type TrainingRecommendationsOutput = z.infer<typeof TrainingRecommendationsOutputSchema>;
 
 
 const incorporateAdditionalInfoTool = ai.defineTool({
   name: 'incorporateAdditionalInfo',
-  description: 'This tool checks athlete preferences to determine if additional information, such as dietary or mental wellness tips, should be included in the training recommendations.',
+  description: 'Этот инструмент проверяет предпочтения спортсмена, чтобы определить, следует ли включать в рекомендации по тренировкам дополнительную информацию, такую как советы по питанию или психическому здоровью.',
   inputSchema: z.object({
-    preferences: z.string().describe('The athlete preferences as a JSON string.'),
-    recommendations: z.string().describe('The current training recommendations.'),
+    preferences: z.string().describe('Предпочтения спортсмена в виде строки JSON.'),
+    recommendations: z.string().describe('Текущие рекомендации по тренировкам.'),
   }),
-  outputSchema: z.string().describe('The updated training recommendations with additional information, if applicable.'),
+  outputSchema: z.string().describe('Обновленные рекомендации по тренировкам с дополнительной информацией, если применимо.'),
 },
 async (input) => {
   const preferences = JSON.parse(input.preferences);
   let recommendations = input.recommendations;
 
   if (preferences.includeDietaryTips) {
-    recommendations += '\n\nDietary Tip: Consider incorporating more protein-rich foods into your diet to support muscle recovery.';
+    recommendations += '\n\nСовет по питанию: Рассмотрите возможность включения в свой рацион большего количества продуктов, богатых белком, для поддержки восстановления мышц.';
   }
 
   if (preferences.includeMentalWellnessTips) {
-    recommendations += '\n\nMental Wellness Tip: Practice mindfulness and meditation to reduce stress and improve focus.';
+    recommendations += '\n\nСовет по психическому здоровью: Практикуйте осознанность и медитацию для снижения стресса и улучшения концентрации.';
   }
 
   return recommendations;
@@ -53,16 +53,16 @@ const trainingRecommendationsPrompt = ai.definePrompt({
   input: {schema: TrainingRecommendationsInputSchema},
   output: {schema: TrainingRecommendationsOutputSchema},
   tools: [incorporateAdditionalInfoTool],
-  prompt: `You are an expert AI training assistant. Your goal is to provide personalized training recommendations to athletes based on their performance data, attendance, and preferences.
+  prompt: `Вы - экспертный AI-ассистент по тренировкам. Ваша цель - предоставлять персонализированные рекомендации по тренировкам для спортсменов на основе их данных о производительности, посещаемости и предпочтений.
 
-  Athlete ID: {{{athleteId}}}
-  Performance Data: {{{performanceData}}}
-  Attendance Rate: {{{attendanceRate}}}
+  ID спортсмена: {{{athleteId}}}
+  Данные о производительности: {{{performanceData}}}
+  Посещаемость: {{{attendanceRate}}}
 
-  Based on this information, provide detailed and actionable training recommendations.
-  Consider the attendance rate when making the recommendations; suggest alternative exercises if attendance is low.
+  На основе этой информации предоставьте подробные и действенные рекомендации по тренировкам.
+  Учитывайте посещаемость при составлении рекомендаций; предлагайте альтернативные упражнения, если посещаемость низкая.
 
-  Then, determine if there is additional information to provide using the incorporateAdditionalInfo tool to determine if additional information, such as dietary or mental wellness tips, should be included in the training recommendations. Pass the preferences \"{{{preferences}}}\" and current recommendations into the tool. Be sure to follow the tool use rules you were provided.
+  Затем определите, есть ли дополнительная информация для предоставления, используя инструмент incorporateAdditionalInfo, чтобы определить, следует ли включать в рекомендации по тренировкам дополнительную информацию, такую как советы по питанию или психическому здоровью. Передайте предпочтения \"{{{preferences}}}\" и текущие рекомендации в инструмент. Обязательно следуйте предоставленным вам правилам использования инструмента.
   `,
 });
 

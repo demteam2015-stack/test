@@ -19,15 +19,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight } from "lucide-react";
 
 const upcoming = [
-    { name: 'Regional Championship', date: '2024-08-15', location: 'Kyiv, Ukraine', status: 'Registered' },
-    { name: 'National Cup', date: '2024-09-05', location: 'Lviv, Ukraine', status: 'Not Registered' },
-    { name: 'International Open', date: '2024-10-20', location: 'Warsaw, Poland', status: 'Pending' },
+    { name: 'Региональный чемпионат', date: '2024-08-15', location: 'Киев, Украина', status: 'Зарегистрирован' },
+    { name: 'Национальный кубок', date: '2024-09-05', location: 'Львов, Украина', status: 'Не зарегистрирован' },
+    { name: 'Международный открытый турнир', date: '2024-10-20', location: 'Варшава, Польша', status: 'В ожидании' },
 ];
 
 const results = [
-    { name: 'City Tournament', date: '2024-06-10', location: 'Odesa, Ukraine', result: '1st Place' },
-    { name: 'Spring Invitational', date: '2024-04-22', location: 'Kharkiv, Ukraine', result: '3rd Place' },
-    { name: 'Winter Classic', date: '2024-02-18', location: 'Dnipro, Ukraine', result: '2nd Place' },
+    { name: 'Городской турнир', date: '2024-06-10', location: 'Одесса, Украина', result: '1-е место' },
+    { name: 'Весенний пригласительный', date: '2024-04-22', location: 'Харьков, Украина', result: '3-е место' },
+    { name: 'Зимняя классика', date: '2024-02-18', location: 'Днепр, Украина', result: '2-е место' },
 ]
 
 export default function CompetitionsPage() {
@@ -35,10 +35,10 @@ export default function CompetitionsPage() {
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-3xl font-bold font-headline tracking-tight">
-          Competitions
+          Соревнования
         </h1>
         <p className="text-muted-foreground">
-          Manage competition registrations and view results.
+          Управляйте регистрациями на соревнования и просматривайте результаты.
         </p>
       </div>
 
@@ -47,12 +47,12 @@ export default function CompetitionsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
                 <div>
-                    <CardTitle className="font-headline">Competition Center</CardTitle>
-                    <CardDescription>Your gateway to competitive events.</CardDescription>
+                    <CardTitle className="font-headline">Центр соревнований</CardTitle>
+                    <CardDescription>Ваш портал в мир соревновательных событий.</CardDescription>
                 </div>
                  <TabsList>
-                    <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-                    <TabsTrigger value="results">Results</TabsTrigger>
+                    <TabsTrigger value="upcoming">Предстоящие</TabsTrigger>
+                    <TabsTrigger value="results">Результаты</TabsTrigger>
                 </TabsList>
             </div>
           </CardHeader>
@@ -61,11 +61,11 @@ export default function CompetitionsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Competition</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+                    <TableHead>Соревнование</TableHead>
+                    <TableHead>Дата</TableHead>
+                    <TableHead>Место</TableHead>
+                    <TableHead>Статус</TableHead>
+                    <TableHead className="text-right">Действие</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -75,13 +75,13 @@ export default function CompetitionsPage() {
                       <TableCell>{comp.date}</TableCell>
                       <TableCell>{comp.location}</TableCell>
                       <TableCell>
-                        <Badge variant={comp.status === 'Registered' ? 'default' : 'outline'}>
+                        <Badge variant={comp.status === 'Зарегистрирован' ? 'default' : 'outline'}>
                             {comp.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button size="sm" variant="outline">
-                          Details
+                          Подробнее
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -94,10 +94,10 @@ export default function CompetitionsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Competition</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead className="text-right">Result</TableHead>
+                    <TableHead>Соревнование</TableHead>
+                    <TableHead>Дата</TableHead>
+                    <TableHead>Место</TableHead>
+                    <TableHead className="text-right">Результат</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
