@@ -9,7 +9,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { Calendar as CalendarIcon, PlusCircle, Clock, MapPin, Trash2, Edit, Dumbbell, Trophy, Users, AlertTriangle, Briefcase, Sun } from "lucide-react";
+import { Calendar as CalendarIcon, PlusCircle, Clock, MapPin, Trash2, Edit, Dumbbell, Trophy, Users, AlertTriangle, Briefcase, Sun, PanelLeft, Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetTrigger } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { useAuth } from '@/context/auth-context';
@@ -470,6 +470,22 @@ export default function SchedulePage() {
     }
   };
 
+  const eventCardClasses = (type: TrainingEvent['type']) => {
+    const baseClass = "border-l-4";
+    switch (type) {
+      case 'training':
+        return `${baseClass} border-l-primary`;
+      case 'competition':
+        return `${baseClass} border-l-yellow-500`;
+      case 'meeting':
+        return `${baseClass} border-l-green-500`;
+      case 'holiday':
+        return `${baseClass} border-l-slate-500`;
+      default:
+        return "";
+    }
+  };
+
   if (!isClient) {
       return (
         <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
@@ -545,7 +561,7 @@ export default function SchedulePage() {
                 {dailyEvents.length > 0 ? (
                     <div className="space-y-4">
                         {dailyEvents.map(event => (
-                            <Card key={event.id}>
+                            <Card key={event.id} className={cn(eventCardClasses(event.type))}>
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
