@@ -480,7 +480,7 @@ export default function SchedulePage() {
 
   return (
     <div className="flex flex-col gap-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col flex-wrap sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
                     <CalendarIcon className="size-8 text-primary"/>
@@ -491,7 +491,7 @@ export default function SchedulePage() {
                 </p>
             </div>
             {canManage && (
-                <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-2">
                      <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="destructive" disabled={allEvents.length === 0}>
