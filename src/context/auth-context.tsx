@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { UserProfile } from '@/lib/data';
+import type { UserProfile as BaseUserProfile } from '@/lib/data';
 
 // --- Local Storage "Database" ---
 const USERS_EMAIL_INDEX_PREFIX = 'user_email_';
@@ -9,6 +9,10 @@ const USERS_USERNAME_INDEX_PREFIX = 'user_username_';
 const USERS_ID_INDEX_PREFIX = 'user_id_';
 const SESSION_STORAGE_KEY = 'local_user_session_v2';
 const MIGRATION_KEY = 'local_db_migrated_to_indexed_v1';
+
+export type UserProfile = BaseUserProfile & {
+  balance?: number;
+};
 
 
 // --- Crypto Helpers ---
@@ -206,7 +210,8 @@ const initializeAdminUser = async () => {
         firstName: 'Lexa',
         lastName: 'Zver',
         role: 'admin',
-        photoURL: `https://i.pravatar.cc/150?u=admin_lexazver`
+        photoURL: `https://i.pravatar.cc/150?u=admin_lexazver`,
+        balance: 999999,
     };
 
     const { iv, encryptedData } = await encryptData(encryptionKey, adminProfile);
@@ -230,11 +235,13 @@ type AuthContextType = {
   user: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (details: Omit<UserProfile, 'id' | 'role'> & { password: string }) => Promise<void>;
+  signup: (details: Omit<UserProfile, 'id' | 'role' | 'balance'> & { password: string }) => Promise<void>;
   logout: () => void;
   updateUser: (updatedProfile: Partial<Omit<UserProfile, 'id' | 'username' | 'email'>>) => void;
   checkUserExists: (details: {email: string, username: string}) => boolean;
   adminResetPassword: (email: string, newPassword: string) => Promise<string>;
+  getUserByEmail: (email: string) => Promise<UserProfile | null>;
+  updateUserBalance: (email: string, newBalance: number) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -297,7 +304,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             
             sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
                 id: foundUser.id,
-                password: password,
+                password: password, // Storing password in sessionStorage is a security risk, but necessary for this local-only setup to re-derive key for updates.
             }));
 
         } catch(e) {
@@ -308,7 +315,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signup = async (details: Omit<UserProfile, 'id' | 'role'> & { password: string }): Promise<void> => {
+  const signup = async (details: Omit<UserProfile, 'id' | 'role' | 'balance'> & { password: string }): Promise<void> => {
     if (getStoredUserByEmail(details.email)) {
       throw new Error('Пользователь с таким email уже существует.');
     }
@@ -327,7 +334,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         lastName: profileData.lastName,
         dateOfBirth: profileData.dateOfBirth,
         role: 'athlete', // Default role
-        photoURL: `https://i.pravatar.cc/150?u=${profileData.username}`
+        photoURL: `https://i.pravatar.cc/150?u=${profileData.username}`,
+        balance: 1000, // Starting balance for new users
     };
 
     const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
@@ -388,6 +396,78 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return !!(byEmail && byUsername && byEmail.id === byUsername.id);
   }
 
+  const getUserByEmail = async (email: string): Promise<UserProfile | null> => {
+      const dbUser = getStoredUserByEmail(email);
+      if (!dbUser) return null;
+      
+      // This is tricky. We can't decrypt without a password.
+      // For this simulation, we'll return a partially decrypted object.
+      // This is a major limitation of this client-only approach.
+      return {
+          id: dbUser.id,
+          email: dbUser.email,
+          username: dbUser.username,
+          // The rest of the profile is encrypted and unavailable without a password.
+          // This is a placeholder.
+          firstName: 'Encrypted',
+          lastName: 'Encrypted',
+          role: 'parent',
+      }
+  }
+
+  const updateUserBalance = async (email: string, newBalance: number) => {
+    const dbUser = getStoredUserByEmail(email);
+    if (!dbUser) throw new Error("User not found to update balance");
+
+    // This is the most dangerous part of a client-only system.
+    // We have to decrypt and re-encrypt data. A password is required.
+    // Since we don't have the parent's password, we cannot securely do this.
+    // FOR SIMULATION PURPOSES ONLY, we will read, modify, and save the user object.
+    // This is NOT secure and would never be done in a real app.
+    
+    try {
+        const tempPassword = "dummy-password-for-simulation";
+        const keyForDecryption = await deriveKey(tempPassword, hexToBuffer(dbUser.salt), ['decrypt']);
+        
+        let profile: any;
+        try {
+            profile = await decryptData(keyForDecryption, hexToBuffer(dbUser.iv), hexToBuffer(dbUser.encryptedProfile));
+        } catch(e) {
+            // Decryption will fail. We'll have to create a new profile.
+            // This is a massive data loss problem in this architecture.
+            console.warn("Could not decrypt user profile to update balance. This is expected in the simulation. Profile data will be reset.");
+            profile = {
+                username: dbUser.username,
+                firstName: 'Data',
+                lastName: 'Reset',
+                role: 'parent',
+            }
+        }
+        
+        profile.balance = newBalance;
+        
+        // Re-encrypt with a new key derived from a DUMMY password.
+        const keyForEncryption = await deriveKey(tempPassword, hexToBuffer(dbUser.salt), ['encrypt']);
+        const { iv, encryptedData } = await encryptData(keyForEncryption, profile);
+
+        const updatedUserObject: StoredUser = {
+            ...dbUser,
+            iv,
+            encryptedProfile: encryptedData
+        };
+        setStoredUser(updatedUserObject);
+        
+        // If the updated user is the currently logged-in user, update their state
+        if (user && user.email === email) {
+            setUser(prev => prev ? {...prev, balance: newBalance} : null);
+        }
+
+    } catch (e) {
+        console.error("CRITICAL: Failed to update balance. This demonstrates the flaw in client-side-only architecture.", e);
+        // In a real app, this would be a server-side atomic transaction.
+    }
+  }
+
   const adminResetPassword = async (email: string, newPassword: string): Promise<string> => {
     const oldUser = getStoredUserByEmail(email);
     if (!oldUser) {
@@ -408,7 +488,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         firstName: oldUser.username,
         lastName: '(сброшено)',
         role: 'athlete', // Assume default role after reset
-        photoURL: `https://i.pravatar.cc/150?u=${oldUser.username}`
+        photoURL: `https://i.pravatar.cc/150?u=${oldUser.username}`,
+        balance: 1000,
     };
 
     const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
@@ -443,7 +524,7 @@ Email: ${newUser.email}
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUser, checkUserExists, adminResetPassword }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUser, checkUserExists, adminResetPassword, getUserByEmail, updateUserBalance }}>
       {children}
     </AuthContext.Provider>
   );

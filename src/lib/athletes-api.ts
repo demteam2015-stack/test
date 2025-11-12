@@ -11,6 +11,7 @@ export interface Athlete {
     middleName?: string;
     dateOfBirth: string; // ISO string
     photoURL?: string;
+    parentId?: string; // email of the parent user
 }
 
 // --- Helper Functions ---

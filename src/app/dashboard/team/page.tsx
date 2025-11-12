@@ -47,6 +47,7 @@ import { Calendar } from '@/components/ui/calendar';
 
 const AthleteForm = ({ onAthleteAdded, onAthleteUpdated, athleteToEdit, children }: { onAthleteAdded: () => void, onAthleteUpdated: () => void, athleteToEdit: Athlete | null, children: React.ReactNode }) => {
     const { toast } = useToast();
+    const { getUserByEmail } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     
@@ -54,6 +55,7 @@ const AthleteForm = ({ onAthleteAdded, onAthleteUpdated, athleteToEdit, children
     const [lastName, setLastName] = useState('');
     const [middleName, setMiddleName] = useState('');
     const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>();
+    const [parentId, setParentId] = useState(''); // email of parent
 
     const isEditMode = !!athleteToEdit;
 
@@ -63,6 +65,7 @@ const AthleteForm = ({ onAthleteAdded, onAthleteUpdated, athleteToEdit, children
             setLastName(athleteToEdit.lastName);
             setMiddleName(athleteToEdit.middleName || '');
             setDateOfBirth(athleteToEdit.dateOfBirth ? new Date(athleteToEdit.dateOfBirth) : undefined);
+            setParentId(athleteToEdit.parentId || '');
         }
     }, [athleteToEdit, isEditMode, isModalOpen]);
 
@@ -71,6 +74,7 @@ const AthleteForm = ({ onAthleteAdded, onAthleteUpdated, athleteToEdit, children
         setLastName('');
         setMiddleName('');
         setDateOfBirth(undefined);
+        setParentId('');
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -81,11 +85,23 @@ const AthleteForm = ({ onAthleteAdded, onAthleteUpdated, athleteToEdit, children
         }
 
         setIsSaving(true);
+        
+        // Validate parent email if provided
+        if (parentId) {
+            const parentUser = await getUserByEmail(parentId);
+            if (!parentUser) {
+                toast({ variant: 'destructive', title: 'Ошибка', description: `Родитель с email "${parentId}" не найден.` });
+                setIsSaving(false);
+                return;
+            }
+        }
+
         const athleteData: Omit<Athlete, 'id'> = {
             firstName,
             lastName,
             middleName,
             dateOfBirth: dateOfBirth.toISOString(),
+            parentId,
         };
 
         if(isEditMode && athleteToEdit) {
@@ -162,6 +178,10 @@ const AthleteForm = ({ onAthleteAdded, onAthleteUpdated, athleteToEdit, children
                                     />
                                 </PopoverContent>
                             </Popover>
+                        </div>
+                         <div className="grid gap-2">
+                            <Label htmlFor="parentId">Email родителя (необязательно)</Label>
+                            <Input id="parentId" type="email" placeholder="parent@example.com" value={parentId} onChange={(e) => setParentId(e.target.value)} disabled={isSaving} />
                         </div>
                     </div>
                     <DialogFooter>
@@ -259,9 +279,10 @@ export default function TeamPage() {
                               </Avatar>
                               <div>
                                 <p className="font-semibold">{`${athlete.lastName} ${athlete.firstName} ${athlete.middleName || ''}`.trim()}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  Дата рождения: {formatDateOfBirth(athlete.dateOfBirth)}
-                                </p>
+                                <div className="text-sm text-muted-foreground space-y-1 mt-1">
+                                    <p>Дата рождения: {formatDateOfBirth(athlete.dateOfBirth)}</p>
+                                    {athlete.parentId && <p>Родитель: {athlete.parentId}</p>}
+                                </div>
                               </div>
                             </div>
                             
