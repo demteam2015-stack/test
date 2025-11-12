@@ -6,6 +6,7 @@
  * associated athlete/parent data.  Only the authenticated user can read or
  * modify their own profile data. Athlete and Parent profiles are linked to
  * user profiles via the 'userId' field, and only the associated user can
+
  * create, update, or delete these profiles. Public collections like events,
  * competitions, and team members are read-only for any authenticated user.
  *
@@ -120,24 +121,33 @@ service cloud.firestore {
      * @description Publicly readable events collection.
      */
     match /events/{eventId} {
-      allow read: if isSignedIn();
+      allow get: if isSignedIn();
       allow write: if false; // To be restricted to admins later
+    }
+    match /events {
+        allow list: if isSignedIn();
     }
 
     /**
      * @description Publicly readable competitions collection.
      */
     match /competitions/{competitionId} {
-      allow read: if isSignedIn();
+      allow get: if isSignedIn();
       allow write: if false; // To be restricted to admins later
+    }
+     match /competitions {
+        allow list: if isSignedIn();
     }
 
     /**
      * @description Publicly readable team members collection.
      */
     match /teamMembers/{memberId} {
-      allow read: if isSignedIn();
+      allow get: if isSignedIn();
       allow write: if false; // To be restricted to admins later
+    }
+     match /teamMembers {
+        allow list: if isSignedIn();
     }
   }
 }
