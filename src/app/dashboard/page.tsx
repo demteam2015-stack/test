@@ -16,65 +16,29 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Trophy, Users, Loader2 } from 'lucide-react';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, where, orderBy, limit } from 'firebase/firestore';
-import { useMemo } from 'react';
-import { format, differenceInDays, addDays } from 'date-fns';
+import { CalendarDays, Trophy, Users } from 'lucide-react';
+import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { Skeleton } from '@/components/ui/skeleton';
 
-interface Event {
-  title: string;
-  status: 'Completed' | 'Scheduled';
-  date: { seconds: number };
-}
+// Static data to replace Firestore calls
+const staticStats = {
+  upcomingPractices: 5,
+  upcomingThisWeek: 2,
+  activeMembers: 28,
+  daysUntilCompetition: 12,
+  nextCompetitionName: 'Региональный чемпионат',
+};
 
-interface Competition {
-  name: string;
-  date: { seconds: number };
-}
+const recentActivity = [
+  { id: '1', title: 'Вечерняя тренировка по технике', status: 'Completed', date: new Date('2024-07-28T18:00:00') },
+  { id: '2', title: 'Утренняя силовая тренировка', status: 'Completed', date: new Date('2024-07-28T09:00:00') },
+  { id: '3', title: 'Собрание команды', status: 'Completed', date: new Date('2024-07-27T19:00:00') },
+  { id: '4', title: 'Открытый ковер', status: 'Scheduled', date: new Date('2024-07-29T17:00:00') },
+  { id: '5', title: 'Тренировка по выносливости', status: 'Scheduled', date: new Date('2024-07-30T09:00:00') },
+].sort((a, b) => b.date.getTime() - a.date.getTime());
+
 
 export default function DashboardPage() {
-  const firestore = useFirestore();
-
-  const eventsQuery = useMemo(() => 
-    query(collection(firestore, 'events'), orderBy('date', 'desc'), limit(5)), 
-    [firestore]
-  );
-  
-  const upcomingEventsQuery = useMemo(() => 
-    query(collection(firestore, 'events'), where('date', '>=', new Date()), where('status', '==', 'Scheduled')), 
-    [firestore]
-  );
-
-  const teamMembersQuery = useMemo(() => 
-    collection(firestore, 'teamMembers'), 
-    [firestore]
-  );
-  
-  const upcomingCompetitionQuery = useMemo(() => 
-    query(collection(firestore, 'competitions'), where('date', '>=', new Date()), orderBy('date', 'asc'), limit(1)),
-    [firestore]
-  );
-
-  const { data: recentActivity, isLoading: isLoadingActivity } = useCollection<Event>(eventsQuery);
-  const { data: upcomingEvents, isLoading: isLoadingUpcomingEvents } = useCollection<Event>(upcomingEventsQuery);
-  const { data: teamMembers, isLoading: isLoadingTeamMembers } = useCollection(teamMembersQuery);
-  const { data: nextCompetition, isLoading: isLoadingCompetition } = useCollection<Competition>(upcomingCompetitionQuery);
-
-  const upcomingPracticesThisWeek = upcomingEvents?.filter(event => {
-    const eventDate = new Date(event.date.seconds * 1000);
-    const today = new Date();
-    const endOfWeek = addDays(today, 7);
-    return eventDate >= today && eventDate <= endOfWeek;
-  }).length || 0;
-
-  const nextCompetitionData = nextCompetition?.[0];
-  const daysUntilCompetition = nextCompetitionData
-    ? differenceInDays(new Date(nextCompetitionData.date.seconds * 1000), new Date())
-    : null;
-
   const renderDays = (days: number | null) => {
     if (days === null) return 'N/A';
     if (days === 0) return 'сегодня';
@@ -116,9 +80,9 @@ export default function DashboardPage() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoadingUpcomingEvents ? <Skeleton className="h-8 w-1/4 mt-1" /> : <div className="text-2xl font-bold">{upcomingEvents?.length || 0}</div>}
+            <div className="text-2xl font-bold">{staticStats.upcomingPractices}</div>
             <p className="text-xs text-muted-foreground">
-              +{upcomingPracticesThisWeek} на этой неделе
+              +{staticStats.upcomingThisWeek} на этой неделе
             </p>
           </CardContent>
         </Card>
@@ -130,7 +94,7 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoadingTeamMembers ? <Skeleton className="h-8 w-1/3 mt-1" /> : <div className="text-2xl font-bold">+{teamMembers?.length || 0}</div>}
+            <div className="text-2xl font-bold">+{staticStats.activeMembers}</div>
             <p className="text-xs text-muted-foreground">
               Участников в команде
             </p>
@@ -142,8 +106,8 @@ export default function DashboardPage() {
             <Trophy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-             {isLoadingCompetition ? <Skeleton className="h-8 w-1/2 mt-1" /> : <div className="text-2xl font-bold">{renderDays(daysUntilCompetition)}</div>}
-            <p className="text-xs text-muted-foreground">{nextCompetitionData?.name || 'Нет предстоящих соревнований'}</p>
+             <div className="text-2xl font-bold">{renderDays(staticStats.daysUntilCompetition)}</div>
+            <p className="text-xs text-muted-foreground">{staticStats.nextCompetitionName}</p>
           </CardContent>
         </Card>
       </div>
@@ -165,22 +129,14 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoadingActivity ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
-                  </TableRow>
-                ))
-              ) : recentActivity && recentActivity.length > 0 ? (
-                recentActivity.map((activity) => (
+              {recentActivity.length > 0 ? (
+                recentActivity.slice(0, 5).map((activity) => (
                   <TableRow key={activity.id}>
                     <TableCell>{activity.title}</TableCell>
                     <TableCell>
                       <Badge variant={badgeVariants[activity.status] || 'default'}>{statusTranslations[activity.status] || activity.status}</Badge>
                     </TableCell>
-                    <TableCell className="text-right">{format(new Date(activity.date.seconds * 1000), 'd MMMM yyyy', { locale: ru })}</TableCell>
+                    <TableCell className="text-right">{format(activity.date, 'd MMMM yyyy', { locale: ru })}</TableCell>
                   </TableRow>
                 ))
               ) : (
