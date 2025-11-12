@@ -9,7 +9,7 @@ const USERS_USERNAME_INDEX_PREFIX = 'user_username_';
 const USERS_ID_INDEX_PREFIX = 'user_id_';
 const SESSION_STORAGE_KEY = 'local_user_session_v2';
 const MIGRATION_KEY = 'local_db_migrated_to_indexed_v1';
-const ADMIN_PERMAROLE_KEY = 'admin_permarole_v2';
+const ADMIN_PERMAROLE_KEY = 'admin_permarole_v3'; // Incremented version
 
 
 export type UserProfile = BaseUserProfile & {
@@ -140,7 +140,7 @@ const setStoredUser = (user: StoredUser) => {
     }
 
     if (user.id) {
-        const idKey = `${USERS_ID_INDEX_PREFIX}${user.id}`;
+        const idKey = `${USERS_ID_INDEX_PREFIX}${id}`;
         localStorage.setItem(idKey, JSON.stringify(user));
     }
 };
@@ -263,7 +263,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Check for a persisted session on initial load
         if (typeof window !== 'undefined') {
             const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
-            const isAdminSession = sessionStorage.getItem(ADMIN_PERMAROLE_KEY) === 'true';
+            const isAdminSession = localStorage.getItem(ADMIN_PERMAROLE_KEY) === 'true';
 
             if(isAdminSession) {
                 setIsAdmin(true);
@@ -290,7 +290,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 } catch (e) {
                     console.error("Session restore failed:", e);
                     sessionStorage.removeItem(SESSION_STORAGE_KEY);
-                    sessionStorage.removeItem(ADMIN_PERMAROLE_KEY);
+                    localStorage.removeItem(ADMIN_PERMAROLE_KEY);
                 }
             }
         }
@@ -315,9 +315,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             };
             setUser(userProfile);
             
-            if (userProfile.id === 'admin_lexazver' || userProfile.role === 'admin') {
+            if (userProfile.id === 'admin_lexazver') {
                 setIsAdmin(true);
-                sessionStorage.setItem(ADMIN_PERMAROLE_KEY, 'true');
+                localStorage.setItem(ADMIN_PERMAROLE_KEY, 'true');
             }
 
             sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
@@ -374,7 +374,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setIsAdmin(false);
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
-    sessionStorage.removeItem(ADMIN_PERMAROLE_KEY);
+    localStorage.removeItem(ADMIN_PERMAROLE_KEY);
   };
   
   const updateUser = async (updatedProfile: Partial<Omit<UserProfile, 'id' | 'username' | 'email'>>) => {
@@ -420,42 +420,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const dbUser = getStoredUserById(userId);
     if (!dbUser) return null;
 
-    // This is a privileged operation for an admin.
-    // It requires the admin's own password to temporarily create a key for the target user.
-    // This is a simulation and has security implications.
     if (!isAdmin) {
       console.error("Non-admin attempting to get full user profile.");
       return null;
     }
     const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
     if (!sessionJson) return null;
-    const { password: adminPassword } = JSON.parse(sessionJson);
     
+    // For this simulation, the admin will use a special "override" password
+    // to decrypt and re-encrypt any user's data. This is NOT secure.
+    const adminKeyPassword = "admin_override";
+
     try {
-        // Use admin's password and target user's salt to decrypt.
-        const key = await deriveKey(adminPassword, hexToBuffer(dbUser.salt), ['decrypt']);
+        const key = await deriveKey(adminKeyPassword, hexToBuffer(dbUser.salt), ['decrypt']);
         const profile = await decryptData(key, hexToBuffer(dbUser.iv), hexToBuffer(dbUser.encryptedProfile)) as any;
         return {
             id: dbUser.id,
             email: dbUser.email,
             ...profile
         };
-    } catch {
-        // If admin pass doesn't work (which it shouldn't for other users),
-        // we'll try a dummy password as a last resort for this simulation.
-        try {
-            const key = await deriveKey("admin_override", hexToBuffer(dbUser.salt), ['decrypt']);
-            const profile = await decryptData(key, hexToBuffer(dbUser.iv), hexToBuffer(dbUser.encryptedProfile)) as any;
-            return {
-                id: dbUser.id,
-                email: dbUser.email,
-                ...profile
-            };
-        } catch (e) {
-            console.error("Admin could not decrypt user profile", e);
-            // Return basic info if all decryption fails
-            return { id: dbUser.id, email: dbUser.email, username: dbUser.username, firstName: 'Encrypted', lastName: 'Data', role: 'athlete' };
-        }
+    } catch (e) {
+        console.error("Admin could not decrypt user profile with override", e);
+        // Return basic info if all decryption fails
+        return { id: dbUser.id, email: dbUser.email, username: dbUser.username, firstName: 'Encrypted', lastName: 'Data', role: 'athlete' };
     }
   };
 

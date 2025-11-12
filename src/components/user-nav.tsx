@@ -98,16 +98,16 @@ export function UserNav() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
-                <UserIcon />
-                Профиль
+                <UserIcon className="mr-2 h-4 w-4" />
+                <span>Профиль</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push('/dashboard/payments')}>
-                <CreditCard />
-                Оплата
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Оплата</span>
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Settings />
-                Настройки
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Настройки</span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             {isAdmin && (
@@ -115,8 +115,8 @@ export function UserNav() {
                 <DropdownMenuSeparator />
                 <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
-                        <Repeat />
-                        Переключить роль
+                        <Repeat className="mr-2 h-4 w-4" />
+                        <span>Переключить роль</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
                         <DropdownMenuSubContent>
@@ -137,8 +137,8 @@ export function UserNav() {
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>
-              <LogOut />
-              Выйти
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Выйти</span>
             </DropdownMenuItem>
           </>
       </DropdownMenuContent>
