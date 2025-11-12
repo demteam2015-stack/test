@@ -12,7 +12,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { BrainCircuit, Lightbulb, ServerCrash, Loader } from 'lucide-react';
+import { MessageSquare, Lightbulb, ServerCrash, Loader } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { getFeedback, type FeedbackInput } from '@/ai/flows/feedback-flow';
 
@@ -45,11 +45,11 @@ export default function RecommendationsPage() {
       <div className="flex flex-col gap-8">
         <div>
           <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
-            <BrainCircuit className="h-8 w-8 text-primary"/>
-            Обратная связь
+            <MessageSquare className="h-8 w-8 text-primary"/>
+            Чат с тренером
           </h1>
           <p className="text-muted-foreground">
-            Оставьте отзыв, и AI-тренер его проанализирует.
+            Задайте вопрос или поделитесь мыслями. Тренер (AI) проанализирует и даст совет.
           </p>
         </div>
       </div>
@@ -58,17 +58,17 @@ export default function RecommendationsPage() {
         <form onSubmit={handleSubmit}>
             <Card>
                 <CardHeader>
-                    <CardTitle>Форма обратной связи</CardTitle>
+                    <CardTitle>Новое сообщение</CardTitle>
                     <CardDescription>
-                        Опишите ваши впечатления, проблемы или предложения. AI проанализирует ваш отзыв и даст развернутый ответ.
+                        Опишите ваши впечатления, проблемы или задайте вопрос. Тренер проанализирует ваше сообщение и даст развернутый ответ.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid w-full gap-2">
-                        <Label htmlFor="feedback-input">Ваш отзыв</Label>
+                        <Label htmlFor="feedback-input">Ваше сообщение</Label>
                         <Textarea 
                             id="feedback-input" 
-                            placeholder="Например: 'Последние тренировки кажутся слишком интенсивными, я не успеваю восстанавливаться.' или 'Предлагаю добавить больше упражнений на гибкость.'" 
+                            placeholder="Например: 'Тренер, последние тренировки кажутся слишком интенсивными, я не успеваю восстанавливаться.' или 'У меня вопрос по технике выполнения...'." 
                             rows={5}
                             value={feedback}
                             onChange={(e) => setFeedback(e.target.value)}
@@ -79,7 +79,7 @@ export default function RecommendationsPage() {
                 <CardFooter>
                     <Button type="submit" disabled={loading || !feedback}>
                         {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                        {loading ? 'Анализ...' : 'Отправить на анализ AI'}
+                        {loading ? 'Анализ...' : 'Отправить тренеру'}
                     </Button>
                 </CardFooter>
             </Card>
@@ -98,18 +98,18 @@ export default function RecommendationsPage() {
         <Card className="min-h-[300px]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-                <BrainCircuit className="text-primary"/>
-                Анализ и рекомендации AI
+                <MessageSquare className="text-primary"/>
+                Ответ тренера
             </CardTitle>
             <CardDescription>
-              Ответ AI появится здесь после анализа вашего отзыва.
+              Ответ появится здесь после анализа вашего сообщения.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border text-center h-60">
                     <Loader className="h-12 w-12 text-muted-foreground animate-spin" />
-                    <h3 className="mt-4 text-lg font-semibold">Анализирую ваш отзыв...</h3>
+                    <h3 className="mt-4 text-lg font-semibold">Анализирую ваше сообщение...</h3>
                     <p className="mt-2 text-sm text-muted-foreground">Пожалуйста, подождите.</p>
                 </div>
             ) : response ? (
@@ -120,7 +120,7 @@ export default function RecommendationsPage() {
                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border text-center h-60">
                     <Lightbulb className="h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-semibold">Ожидание ввода</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">Заполните форму выше и отправьте на анализ.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Напишите сообщение тренеру в форме выше.</p>
                 </div>
             )}
           </CardContent>
