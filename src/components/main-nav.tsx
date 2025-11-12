@@ -22,21 +22,27 @@ import {
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/context/auth-context';
 
-const allLinks = [
+const baseLinks = [
   { href: '/dashboard', label: 'Панель', icon: Home },
   { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar },
   { href: '/dashboard/recommendations', label: 'AI Тренер', icon: BrainCircuit },
   { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard },
   { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy },
   { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award },
-  // These routes are commented out as they are not yet implemented
-  // { href: '/dashboard/users', label: 'Пользователи', icon: Users },
-  // { href: '/dashboard/admin-panel', label: 'Админ-панель', icon: ShieldCheck },
+];
+
+const adminLinks = [
+  { href: '/dashboard/users', label: 'Пользователи', icon: Users },
+  { href: '/dashboard/admin-panel', label: 'Админ-панель', icon: ShieldCheck },
 ];
 
 export default function MainNav() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  
+  const allLinks = user?.role === 'admin' ? [...baseLinks, ...adminLinks] : baseLinks;
 
   return (
     <>

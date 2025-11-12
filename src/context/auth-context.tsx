@@ -9,6 +9,30 @@ const SESSION_STORAGE_KEY = 'local_user_session';
 
 type StoredUser = Omit<UserProfile, 'id'> & { passwordHash: string; id: string; };
 
+const simpleHash = async (password: string): Promise<string> => {
+    // This is not secure. For demo only.
+    return `hashed_${password}`;
+}
+
+// Function to initialize the database with an admin user if it's empty
+const initializeUsers = async () => {
+    if (typeof window === 'undefined') return;
+    const usersJson = localStorage.getItem(USERS_STORAGE_KEY);
+    if (!usersJson || JSON.parse(usersJson).length === 0) {
+        const adminPasswordHash = await simpleHash('password');
+        const adminUser: StoredUser = {
+            id: 'admin_lexazver',
+            email: 'lexazver@example.com',
+            firstName: 'Lexa',
+            lastName: 'Zver',
+            passwordHash: adminPasswordHash,
+            role: 'admin',
+            photoURL: `https://i.pravatar.cc/150?u=admin_lexazver`
+        };
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([adminUser]));
+    }
+};
+
 const getStoredUsers = (): StoredUser[] => {
   if (typeof window === 'undefined') return [];
   const usersJson = localStorage.getItem(USERS_STORAGE_KEY);
@@ -19,13 +43,6 @@ const setStoredUsers = (users: StoredUser[]) => {
   if (typeof window === 'undefined') return;
   localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
 };
-
-// A very simple hashing function for demonstration purposes.
-// In a real app, use a robust library like bcrypt.
-const simpleHash = async (password: string): Promise<string> => {
-    // This is not secure. For demo only.
-    return `hashed_${password}`;
-}
 
 // --- Auth Context ---
 
@@ -45,14 +62,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for a persisted session on initial load
-    if (typeof window !== 'undefined') {
-        const sessionJson = localStorage.getItem(SESSION_STORAGE_KEY);
-        if (sessionJson) {
-            setUser(JSON.parse(sessionJson));
+    const setup = async () => {
+        await initializeUsers();
+        // Check for a persisted session on initial load
+        if (typeof window !== 'undefined') {
+            const sessionJson = localStorage.getItem(SESSION_STORAGE_KEY);
+            if (sessionJson) {
+                setUser(JSON.parse(sessionJson));
+            }
         }
+        setLoading(false);
     }
-    setLoading(false);
+    setup();
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
