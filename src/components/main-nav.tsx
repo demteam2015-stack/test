@@ -23,21 +23,28 @@ import {
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
-
-const navLinks = [
-  { href: '/dashboard', label: 'Панель', icon: Home },
-  { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar },
-  { href: '/dashboard/team', label: 'Команда', icon: Users },
-  { href: '/dashboard/journal', label: 'Журнал', icon: BookUser },
-  { href: '/dashboard/reports', label: 'Отчеты', icon: BarChart },
-  { href: '/dashboard/recommendations', label: 'Обратная связь', icon: BrainCircuit },
-  { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard },
-  { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy },
-  { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award },
-];
+import { useAuth } from '@/context/auth-context';
 
 export default function MainNav() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  
+  const isManager = user?.role === 'admin' || user?.role === 'coach';
+
+  const navLinks = [
+    { href: '/dashboard', label: 'Панель', icon: Home, roles: ['admin', 'coach', 'parent', 'athlete'] },
+    { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar, roles: ['admin', 'coach', 'parent', 'athlete'] },
+    { href: '/dashboard/team', label: 'Команда', icon: Users, roles: ['admin', 'coach', 'parent', 'athlete'] },
+    { href: '/dashboard/journal', label: 'Журнал', icon: BookUser, roles: ['admin', 'coach'] },
+    { href: '/dashboard/reports', label: 'Отчеты', icon: BarChart, roles: ['admin', 'coach', 'athlete', 'parent'] },
+    { href: '/dashboard/recommendations', label: 'Обратная связь', icon: BrainCircuit, roles: ['admin', 'coach', 'parent', 'athlete'] },
+    { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard, roles: ['admin', 'coach', 'parent', 'athlete'] },
+    { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete'] },
+    { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award, roles: ['admin', 'coach', 'parent', 'athlete'] },
+    { href: '/dashboard/users', label: 'Администрирование', icon: Users, roles: ['admin'] },
+  ];
+
+  if (!user) return null;
 
   return (
     <>
@@ -49,7 +56,7 @@ export default function MainNav() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {navLinks.map((link) => (
+          {navLinks.filter(link => link.roles.includes(user.role)).map((link) => (
             <SidebarMenuItem key={link.href}>
               <SidebarMenuButton
                 asChild

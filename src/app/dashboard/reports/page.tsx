@@ -17,8 +17,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart, Loader, Users, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
-import { getJournal, type Journal, type AttendanceStatus } from '@/lib/journal-api';
+import { BarChart, Loader, Users, TrendingUp, TrendingDown, Wallet, User as UserIcon } from 'lucide-react';
+import { getJournal } from '@/lib/journal-api';
 import { getAthletes, type Athlete } from '@/lib/athletes-api';
 import { getPayments, type Payment } from '@/lib/payments-api';
 import { useAuth } from '@/context/auth-context';
@@ -37,15 +37,26 @@ export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [attendanceReport, setAttendanceReport] = useState<AttendanceReport[]>([]);
   const [financialReport, setFinancialReport] = useState({ income: 0, expenses: 0, net: 0 });
+  const [userAthleteProfile, setUserAthleteProfile] = useState<Athlete | null>(null);
 
-  const canView = user?.role === 'admin' || user?.role === 'coach';
+  const isManager = user?.role === 'admin' || user?.role === 'coach';
 
   const generateReports = useCallback(async () => {
     setIsLoading(true);
 
-    // --- Generate Attendance Report ---
-    const journal: Journal = await getJournal();
+    const journal = await getJournal();
     const athletes: Athlete[] = await getAthletes();
+    const payments: Payment[] = await getPayments();
+    
+    // --- Find athlete profile for current user if they are an athlete ---
+    if (user?.role === 'athlete' || user?.role === 'parent') {
+        // Simple link by name for this simulation. In a real app, use IDs.
+        const currentUserAthlete = athletes.find(a => 
+            a.firstName === user.firstName && a.lastName === user.lastName
+        );
+        setUserAthleteProfile(currentUserAthlete || null);
+    }
+    
     const attendanceMap = new Map<string, { present: number; absent: number; excused: number }>();
 
     athletes.forEach(athlete => {
@@ -67,60 +78,61 @@ export default function ReportsPage() {
 
     const reportData: AttendanceReport[] = athletes.map(athlete => {
         const stats = attendanceMap.get(athlete.id)!;
-        const total = stats.present + stats.absent + stats.excused;
+        const totalTrainingsWithStatus = stats.present + stats.absent + stats.excused;
+        const totalAttendance = stats.present + stats.absent;
         return {
             athleteId: athlete.id,
             name: `${athlete.lastName} ${athlete.firstName}`,
             ...stats,
-            total,
+            total: totalTrainingsWithStatus,
+            // Calculate percentage based on attended vs missed (excused not counted against)
+            attendancePercentage: totalAttendance > 0 ? (stats.present / totalAttendance) * 100 : 0
         };
     }).sort((a,b) => a.name.localeCompare(b.name));
+    
     setAttendanceReport(reportData);
 
-    // --- Generate Financial Report ---
-    const payments: Payment[] = await getPayments();
-    let income = 0;
-    let expenses = 0;
+    // --- Generate Financial Report (only for managers) ---
+    if(isManager) {
+        let income = 0;
+        let expenses = 0;
 
-    payments.forEach(payment => {
-        const amount = parseFloat(payment.amount);
-        if (isNaN(amount)) return;
+        payments.forEach(payment => {
+            const amount = parseFloat(payment.amount);
+            if (isNaN(amount)) return;
 
-        if (payment.status === 'Оплачено') {
-            if (amount > 0) {
-                income += amount;
-            } else {
-                expenses += Math.abs(amount); // Expenses are stored as negative
+            if (payment.status === 'Оплачено') {
+                 // Use amount directly, positive is income, negative is expense
+                if (amount > 0) {
+                    income += amount;
+                } else {
+                    expenses += Math.abs(amount);
+                }
             }
-        }
-    });
+        });
 
-    setFinancialReport({ income, expenses, net: income - expenses });
+        // The logic for expenses from `deductFromBalance` creates negative payments.
+        // We'll calculate expenses based on these negative payments.
+        const allExpenses = payments
+            .filter(p => p.status === 'Оплачено' && parseFloat(p.amount) < 0)
+            .reduce((acc, p) => acc + Math.abs(parseFloat(p.amount)), 0);
+
+        setFinancialReport({ income, expenses: allExpenses, net: income - allExpenses });
+    }
 
     setIsLoading(false);
-  }, []);
+  }, [user, isManager]);
 
   useEffect(() => {
-    if (canView) {
+    if (user) {
       generateReports();
     }
-  }, [canView, generateReports]);
-
-  if (!canView) {
-    return (
-       <div className="flex flex-col gap-8">
-          <div>
-              <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
-                  <BarChart className="size-8 text-primary"/>
-                  Отчеты
-              </h1>
-              <p className="text-muted-foreground">
-                  У вас нет прав для просмотра этой страницы.
-              </p>
-          </div>
-       </div>
-    );
-  }
+  }, [user, generateReports]);
+  
+  const userReport = useMemo(() => {
+    if (!userAthleteProfile) return null;
+    return attendanceReport.find(r => r.athleteId === userAthleteProfile.id);
+  }, [userAthleteProfile, attendanceReport]);
 
   if (isLoading) {
     return (
@@ -130,18 +142,7 @@ export default function ReportsPage() {
     );
   }
 
-  return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
-            <BarChart className="size-8 text-primary"/>
-            Отчеты
-        </h1>
-        <p className="text-muted-foreground">
-          Анализ посещаемости и финансовых потоков.
-        </p>
-      </div>
-
+  const renderManagerView = () => (
       <Tabs defaultValue="attendance">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="attendance">
@@ -181,7 +182,7 @@ export default function ReportsPage() {
                         <TableCell className="text-center">{row.absent}</TableCell>
                         <TableCell className="text-center">{row.excused}</TableCell>
                         <TableCell className="text-center font-bold">
-                            {row.present > 0 ? `${((row.present / (row.present + row.absent)) * 100).toFixed(0)}%` : '0%'}
+                            {`${(row.attendancePercentage || 0).toFixed(0)}%`}
                         </TableCell>
                       </TableRow>
                     ))
@@ -257,6 +258,86 @@ export default function ReportsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+  );
+  
+  const renderAthleteView = () => (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><UserIcon className="size-5"/>Моя посещаемость</CardTitle>
+          <CardDescription>
+            Ваша персональная статистика посещений тренировок.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+           {userReport ? (
+             <div className="grid gap-4 md:grid-cols-4">
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Посещено</CardTitle>
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-green-500">
+                            {userReport.present}
+                        </div>
+                    </CardContent>
+                 </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Пропущено</CardTitle>
+                        <TrendingDown className="h-4 w-4 text-red-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-red-500">
+                            {userReport.absent}
+                        </div>
+                    </CardContent>
+                 </Card>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Уваж. причина</CardTitle>
+                        <UserIcon className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-muted-foreground">
+                            {userReport.excused}
+                        </div>
+                    </CardContent>
+                 </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Процент посещений</CardTitle>
+                        <BarChart className="h-4 w-4 text-primary" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-primary">
+                            {`${(userReport.attendancePercentage || 0).toFixed(0)}%`}
+                        </div>
+                    </CardContent>
+                 </Card>
+             </div>
+           ) : (
+             <div className="flex h-40 items-center justify-center rounded-lg border-2 border-dashed border-border text-center">
+                <p className="text-muted-foreground">Данных о вашей посещаемости пока нет.</p>
+            </div>
+           )}
+        </CardContent>
+      </Card>
+  );
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div>
+        <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+            <BarChart className="size-8 text-primary"/>
+            Отчеты
+        </h1>
+        <p className="text-muted-foreground">
+          {isManager ? 'Анализ посещаемости и финансовых потоков.' : 'Ваша персональная статистика.'}
+        </p>
+      </div>
+
+      {isManager ? renderManagerView() : renderAthleteView()}
     </div>
   );
 }
