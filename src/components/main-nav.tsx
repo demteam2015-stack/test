@@ -22,24 +22,20 @@ import {
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
-import { userProfileData } from '@/lib/data';
 
 const allLinks = [
-  { href: '/dashboard', label: 'Панель', icon: Home, roles: ['athlete', 'coach', 'parent', 'admin'] },
-  { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar, roles: ['athlete', 'coach', 'parent'] },
-  { href: '/dashboard/recommendations', label: 'AI Тренер', icon: BrainCircuit, roles: ['athlete', 'coach'] },
-  { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard, roles: ['athlete', 'parent'] },
-  { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy, roles: ['athlete', 'coach', 'parent'] },
-  { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award, roles: ['athlete', 'coach', 'parent', 'admin'] },
-  { href: '/dashboard/users', label: 'Пользователи', icon: Users, roles: ['admin'] },
-  { href: '/dashboard/admin-panel', label: 'Админ-панель', icon: ShieldCheck, roles: ['admin'] },
+  { href: '/dashboard', label: 'Панель', icon: Home },
+  { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar },
+  { href: '/dashboard/recommendations', label: 'AI Тренер', icon: BrainCircuit },
+  { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard },
+  { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy },
+  { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award },
+  { href: '/dashboard/users', label: 'Пользователи', icon: Users },
+  { href: '/dashboard/admin-panel', label: 'Админ-панель', icon: ShieldCheck },
 ];
 
 export default function MainNav() {
   const pathname = usePathname();
-  const userRole = userProfileData.role;
-
-  const links = allLinks.filter(link => userRole && link.roles.includes(userRole));
 
   return (
     <>
@@ -51,7 +47,7 @@ export default function MainNav() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {links.map((link) => (
+          {allLinks.map((link) => (
             <SidebarMenuItem key={link.href}>
               <SidebarMenuButton
                 asChild
