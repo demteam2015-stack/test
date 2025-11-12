@@ -21,6 +21,7 @@ export default function SignupPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
@@ -32,7 +33,7 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      await signup({ firstName, lastName, username, password });
+      await signup({ firstName, lastName, username, email, password });
       toast({
         title: "Регистрация прошла успешно",
         description: "Теперь вы можете войти в систему.",
@@ -69,6 +70,18 @@ export default function SignupPage() {
                 <Label htmlFor="last-name">Фамилия</Label>
                 <Input id="last-name" placeholder="Иванов" required value={lastName} onChange={(e) => setLastName(e.target.value)} disabled={isLoading} />
               </div>
+            </div>
+             <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="email@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="username">Имя пользователя (логин)</Label>

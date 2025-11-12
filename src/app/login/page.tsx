@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -30,7 +30,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(username, password);
+      await login(email, password);
       toast({
         title: "Вход выполнен успешно",
         description: "Добро пожаловать!",
@@ -40,7 +40,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "Ошибка входа",
-        description: error.message || "Неверный логин или пароль.",
+        description: error.message || "Неверный email или пароль.",
       });
     } finally {
       setIsLoading(false);
@@ -59,14 +59,14 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="username">Имя пользователя (логин)</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                type="text"
-                placeholder="например, alex_zver"
+                id="email"
+                type="email"
+                placeholder="email@example.com"
                 required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
               />
             </div>

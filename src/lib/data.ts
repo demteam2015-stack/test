@@ -5,17 +5,18 @@
 export interface UserProfile {
   id: string;
   username: string;
+  email: string;
   role: 'athlete' | 'coach' | 'parent' | 'admin';
   firstName: string;
   lastName: string;
   photoURL?: string;
-  email?: string; // Email is now optional
 }
 
 // This is now a default/template user, not the logged in user.
 export const userProfileData: UserProfile = {
   id: 'static-user-01',
   username: 'athlete_user',
+  email: 'athlete@example.com',
   role: 'athlete',
   firstName: 'Алексей',
   lastName: 'Демьяненко',

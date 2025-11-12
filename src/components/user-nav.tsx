@@ -71,7 +71,7 @@ export function UserNav() {
                   {getFullName(user.firstName, user.lastName)}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {user.username}
+                  {user.email}
                 </p>
               </div>
             </DropdownMenuLabel>

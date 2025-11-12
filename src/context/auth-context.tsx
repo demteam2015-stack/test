@@ -88,6 +88,7 @@ const decryptData = async (key: CryptoKey, iv: ArrayBuffer, encryptedData: Array
 // --- User Storage ---
 type StoredUser = {
   id: string;
+  email: string;
   username: string;
   salt: string; // hex
   iv: string; // hex
@@ -103,6 +104,7 @@ const initializeUsers = async () => {
         const encryptionKey = await deriveKey('password', salt, ['encrypt']);
         
         const adminProfile = {
+            username: 'lexazver',
             firstName: 'Lexa',
             lastName: 'Zver',
             role: 'admin',
@@ -113,6 +115,7 @@ const initializeUsers = async () => {
 
         const adminUser: StoredUser = {
             id: 'admin_lexazver',
+            email: 'lexazver@example.com',
             username: 'lexazver',
             salt: bufferToHex(salt),
             iv: iv,
@@ -138,10 +141,10 @@ const setStoredUsers = (users: StoredUser[]) => {
 type AuthContextType = {
   user: UserProfile | null;
   loading: boolean;
-  login: (username: string, password: string) => Promise<void>;
-  signup: (details: Omit<UserProfile, 'id' | 'role' | 'email'> & { password: string }) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (details: Omit<UserProfile, 'id' | 'role'> & { password: string }) => Promise<void>;
   logout: () => void;
-  updateUser: (updatedProfile: Partial<Omit<UserProfile, 'id' | 'username'>>) => void;
+  updateUser: (updatedProfile: Partial<Omit<UserProfile, 'id' | 'username' | 'email'>>) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -164,7 +167,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     
                     setUser({
                         id: sessionData.id,
-                        username: sessionData.username,
+                        email: sessionData.email,
                         ...decryptedProfile
                     });
 
@@ -179,19 +182,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setup();
   }, []);
 
-  const login = async (username: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string): Promise<void> => {
     const users = getStoredUsers();
-    const foundUser = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
     if (foundUser) {
         try {
             const salt = hexToBuffer(foundUser.salt);
             const key = await deriveKey(password, salt, ['decrypt']);
-            const profile = await decryptData(key, hexToBuffer(foundUser.iv), hexToBuffer(foundUser.encryptedProfile)) as Omit<UserProfile, 'id' | 'username'>;
+            const profile = await decryptData(key, hexToBuffer(foundUser.iv), hexToBuffer(foundUser.encryptedProfile)) as Omit<UserProfile, 'id' | 'email'>;
             
             const userProfile: UserProfile = {
                 id: foundUser.id,
-                username: foundUser.username,
+                email: foundUser.email,
                 ...profile
             };
             setUser(userProfile);
@@ -199,7 +202,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // Store session data needed for re-hydration, including password for key derivation
             sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
                 id: foundUser.id,
-                username: foundUser.username,
+                email: foundUser.email,
                 password: password, // Storing password in sessionStorage is a necessary trade-off for this architecture
                 salt: foundUser.salt,
                 iv: foundUser.iv,
@@ -214,8 +217,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signup = async (details: Omit<UserProfile, 'id' | 'role' | 'email'> & { password: string }): Promise<void> => {
+  const signup = async (details: Omit<UserProfile, 'id' | 'role'> & { password: string }): Promise<void> => {
     const users = getStoredUsers();
+    if (users.some(u => u.email.toLowerCase() === details.email.toLowerCase())) {
+      throw new Error('Пользователь с таким email уже существует.');
+    }
     if (users.some(u => u.username.toLowerCase() === details.username.toLowerCase())) {
       throw new Error('Пользователь с таким именем уже существует.');
     }
@@ -226,6 +232,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const encryptionKey = await deriveKey(password, salt, ['encrypt']);
 
     const profileToEncrypt = {
+        username: profileData.username,
         firstName: profileData.firstName,
         lastName: profileData.lastName,
         role: 'athlete', // Default role
@@ -236,6 +243,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const newUser: StoredUser = {
       id: `user_${Date.now()}`,
+      email: details.email,
       username: details.username,
       salt: bufferToHex(salt),
       iv: iv,
@@ -250,7 +258,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
   };
   
-  const updateUser = async (updatedProfile: Partial<Omit<UserProfile, 'id' | 'username'>>) => {
+  const updateUser = async (updatedProfile: Partial<Omit<UserProfile, 'id' | 'username' | 'email'>>) => {
     if(!user) return;
 
     // Get password from session to re-derive key
