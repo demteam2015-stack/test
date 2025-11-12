@@ -16,7 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,16 +25,19 @@ import { Loader } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { createResetRequest } from "@/lib/reset-api";
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordUsername, setForgotPasswordUsername] = useState('');
   const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { login } = useAuth();
+  const { login, checkUserExists } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -61,19 +63,27 @@ export default function LoginPage() {
     }
   };
 
-  const handleForgotPasswordSubmit = (e: FormEvent) => {
+  const handleForgotPasswordSubmit = async (e: FormEvent) => {
       e.preventDefault();
       setIsForgotPasswordLoading(true);
-      // Имитируем сетевую задержку
-      setTimeout(() => {
-          setIsForgotPasswordLoading(false);
-          setIsModalOpen(false);
-          toast({
-              title: "Инструкции отправлены",
-              description: `Если аккаунт с email ${forgotPasswordEmail} существует, на него будет отправлено письмо.`,
+
+      const userExists = checkUserExists({email: forgotPasswordEmail, username: forgotPasswordUsername});
+      if (!userExists) {
+           toast({
+              variant: "destructive",
+              title: "Пользователь не найден",
+              description: `Аккаунт с указанными данными не существует.`,
           });
-          setForgotPasswordEmail('');
-      }, 1500);
+          setIsForgotPasswordLoading(false);
+          return;
+      }
+      
+      await createResetRequest(forgotPasswordEmail, forgotPasswordUsername);
+      
+      setIsForgotPasswordLoading(false);
+      setIsModalOpen(false);
+      setForgotPasswordEmail('');
+      setForgotPasswordUsername('');
   }
 
   return (
@@ -111,34 +121,48 @@ export default function LoginPage() {
                             Забыли пароль?
                          </button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogContent className="sm:max-w-md">
                          <form onSubmit={handleForgotPasswordSubmit}>
                             <DialogHeader>
-                                <DialogTitle>Восстановить пароль</DialogTitle>
+                                <DialogTitle>Запрос на сброс пароля</DialogTitle>
                                 <DialogDescription>
-                                    Введите ваш email, и мы отправим вам инструкции по восстановлению пароля.
+                                    Введите email и имя пользователя. Ваш запрос будет отправлен администратору на рассмотрение.
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="forgot-password-email" className="text-right">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="forgot-password-email">
                                         Email
                                     </Label>
                                     <Input
                                         id="forgot-password-email"
                                         type="email"
+                                        placeholder="Ваш email"
                                         value={forgotPasswordEmail}
                                         onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                                        className="col-span-3"
+                                        required
+                                        disabled={isForgotPasswordLoading}
+                                    />
+                                </div>
+                                 <div className="grid gap-2">
+                                    <Label htmlFor="forgot-password-username">
+                                        Имя пользователя (логин)
+                                    </Label>
+                                    <Input
+                                        id="forgot-password-username"
+                                        type="text"
+                                        placeholder="Ваш логин"
+                                        value={forgotPasswordUsername}
+                                        onChange={(e) => setForgotPasswordUsername(e.target.value)}
                                         required
                                         disabled={isForgotPasswordLoading}
                                     />
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button type="submit" disabled={isForgotPasswordLoading}>
+                                <Button type="submit" disabled={isForgotPasswordLoading} className="w-full">
                                     {isForgotPasswordLoading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                                    Отправить инструкции
+                                    Отправить запрос администратору
                                 </Button>
                             </DialogFooter>
                          </form>
