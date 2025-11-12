@@ -11,12 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth, useUser } from '@/firebase';
-import { CreditCard, LogOut, Settings, User as UserIcon } from 'lucide-react';
+import { useAuth, useUserProfile } from '@/firebase';
+import { CreditCard, LogOut, Settings, User as UserIcon, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Skeleton } from './ui/skeleton';
 
 export function UserNav() {
-  const { user } = useUser();
+  const { user } = useUserProfile();
   const auth = useAuth();
   const router = useRouter();
 
@@ -25,26 +26,43 @@ export function UserNav() {
     router.push('/login');
   };
 
-  const getInitials = (name: string | null | undefined) => {
-    if (!name) return 'U';
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('');
+  const getInitials = (firstName?: string, lastName?: string) => {
+    if (!firstName || !lastName) return 'U';
+    return `${firstName[0]}${lastName[0]}`;
   };
+
+  const getFullName = (firstName?: string, lastName?: string) => {
+    if (!firstName || !lastName) return 'Атлет';
+    return `${firstName} ${lastName}`;
+  }
+
+  const roleTranslations: { [key: string]: string } = {
+    athlete: 'Спортсмен',
+    coach: 'Тренер',
+    parent: 'Родитель',
+    admin: 'Администратор',
+  };
+
+  const userRole = user?.role ? roleTranslations[user.role] : 'Загрузка...';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-9 w-9">
-            <AvatarImage
-              src={user?.photoURL ?? `https://i.pravatar.cc/150?u=${user?.uid}`}
-              alt={user?.displayName ?? 'User'}
-            />
-            <AvatarFallback>
-              {getInitials(user?.displayName)}
-            </AvatarFallback>
+           <Avatar className="h-9 w-9">
+            {user ? (
+              <>
+                <AvatarImage
+                  src={user?.photoURL ?? `https://i.pravatar.cc/150?u=${user?.id}`}
+                  alt={getFullName(user?.firstName, user?.lastName)}
+                />
+                <AvatarFallback>
+                  {getInitials(user?.firstName, user?.lastName)}
+                </AvatarFallback>
+              </>
+            ) : (
+              <Skeleton className="h-9 w-9 rounded-full" />
+            )}
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -54,20 +72,25 @@ export function UserNav() {
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">
-                  {user.displayName || 'Атлет'}
+                  {getFullName(user.firstName, user.lastName)}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user.email}
                 </p>
               </div>
             </DropdownMenuLabel>
+             <DropdownMenuSeparator />
+              <div className="flex items-center px-2 py-1.5 text-xs text-muted-foreground">
+                <Shield className="mr-2 h-4 w-4" />
+                <span>{userRole}</span>
+              </div>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
                 <UserIcon />
                 Профиль
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/dashboard/payments')}>
                 <CreditCard />
                 Оплата
               </DropdownMenuItem>
