@@ -15,7 +15,9 @@ const recommendationSchema = z.object({
 export type FormState = {
   message: string;
   recommendations?: string;
-  fields?: Record<string, string>;
+  fields?: {
+    performanceData?: string;
+  };
   issues?: string[];
 };
 
@@ -35,6 +37,16 @@ export async function getRecommendations(
     return {
       message: 'Неверные данные формы.',
       issues: parsed.error.issues.map((issue) => issue.message),
+    };
+  }
+
+  // Validate that performanceData is valid JSON
+  try {
+    JSON.parse(parsed.data.performanceData);
+  } catch (e) {
+    return {
+      message: 'Неверные данные формы.',
+      issues: ['Данные о производительности должны быть в формате JSON.'],
     };
   }
 
@@ -64,6 +76,9 @@ export async function getRecommendations(
       return {
         message: 'success',
         recommendations: result.recommendations,
+        fields: {
+          performanceData: parsed.data.performanceData,
+        }
       };
     } else {
       return { message: 'Не удалось получить рекомендации. Результат пуст.' };

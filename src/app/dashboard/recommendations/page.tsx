@@ -19,8 +19,21 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { useEffect, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { BrainCircuit, Lightbulb, Loader, ServerCrash } from 'lucide-react';
+import { BrainCircuit, Lightbulb, Loader, ServerCrash, BarChart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Bar,
+  BarChart as RechartsBarChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 const initialState: FormState = {
   message: '',
@@ -45,28 +58,44 @@ function SubmitButton() {
   );
 }
 
+type PerformanceData = {
+  metric: string;
+  value: number;
+}[];
+
 export default function RecommendationsPage() {
   const [formState, formAction] = useActionState(getRecommendations, initialState);
   const [attendance, setAttendance] = useState([0.9]);
+  const [chartData, setChartData] = useState<PerformanceData | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     if (formState.message === 'success') {
-       toast({
+      toast({
         title: "Рекомендации сгенерированы",
         description: "Ваш персональный план тренировок готов.",
       });
+      try {
+        if (formState.fields?.performanceData) {
+          const parsedData = JSON.parse(formState.fields.performanceData);
+          setChartData(parsedData);
+        }
+      } catch (e) {
+        console.error("Failed to parse performance data for chart", e);
+        setChartData(null);
+      }
     } else if (formState.message && formState.message !== 'success' && formState.message !== '') {
-       toast({
+      toast({
         variant: "destructive",
         title: "Произошла ошибка",
         description: formState.message,
       });
+      setChartData(null);
     }
   }, [formState, toast]);
 
   return (
-    <div className="grid gap-8 md:grid-cols-2">
+    <div className="grid gap-8 lg:grid-cols-2">
       <div className="flex flex-col gap-8">
         <div>
           <h1 className="text-3xl font-bold font-headline tracking-tight">
@@ -88,15 +117,16 @@ export default function RecommendationsPage() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="athleteId">ID Атлета</Label>
-                <Input id="athleteId" name="athleteId" placeholder="например, D-12345" required />
+                <Input id="athleteId" name="athleteId" placeholder="например, D-12345" defaultValue="D-12345" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="performanceData">Данные о производительности (JSON)</Label>
                 <Textarea
                   id="performanceData"
                   name="performanceData"
-                  placeholder='{ "sprint_100m": "11.5s", "long_jump": "7.2m", "last_competition_result": "2nd" }'
+                  placeholder='[{"metric": "Спринт 100м (с)", "value": 11.5}, {"metric": "Прыжок в длину (м)", "value": 7.2}]'
                   className="min-h-32 font-code"
+                  defaultValue='[{"metric": "Спринт 100м (с)", "value": 11.5}, {"metric": "Прыжок в длину (м)", "value": 7.2}, {"metric": "Подтягивания", "value": 15}]'
                   required
                 />
               </div>
@@ -115,11 +145,11 @@ export default function RecommendationsPage() {
               <div className="space-y-4">
                  <Label>Дополнительные предпочтения</Label>
                  <div className="flex items-center space-x-2">
-                    <Checkbox id="includeDietaryTips" name="includeDietaryTips" />
+                    <Checkbox id="includeDietaryTips" name="includeDietaryTips" defaultChecked />
                     <Label htmlFor="includeDietaryTips" className="font-normal">Включить советы по питанию</Label>
                  </div>
                  <div className="flex items-center space-x-2">
-                    <Checkbox id="includeMentalWellnessTips" name="includeMentalWellnessTips" />
+                    <Checkbox id="includeMentalWellnessTips" name="includeMentalWellnessTips" defaultChecked/>
                     <Label htmlFor="includeMentalWellnessTips" className="font-normal">Включить советы по ментальному здоровью</Label>
                  </div>
               </div>
@@ -132,7 +162,7 @@ export default function RecommendationsPage() {
       </div>
 
       <div className="space-y-8">
-        <Card className="min-h-[600px]">
+        <Card className="min-h-[300px]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
                 <BrainCircuit className="text-primary"/>
@@ -148,7 +178,7 @@ export default function RecommendationsPage() {
                 {formState.recommendations}
               </div>
             ) : (
-                 <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border text-center h-96">
+                 <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border text-center h-60">
                     <Lightbulb className="h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-semibold">Ожидание ввода</h3>
                     <p className="mt-2 text-sm text-muted-foreground">Заполните форму, чтобы получить рекомендации.</p>
@@ -156,6 +186,46 @@ export default function RecommendationsPage() {
             )}
           </CardContent>
         </Card>
+        
+        {chartData && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart className="text-primary" />
+                Визуализация производительности
+              </CardTitle>
+              <CardDescription>
+                Диаграмма ваших последних показателей.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={{
+                  value: {
+                    label: "Значение",
+                    color: "hsl(var(--chart-1))",
+                  },
+                }} className="h-[250px] w-full">
+                <RechartsBarChart data={chartData} layout="vertical" margin={{ left: 20 }}>
+                  <YAxis
+                    dataKey="metric"
+                    type="category"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={10}
+                    width={140}
+                    className="text-xs"
+                  />
+                  <XAxis dataKey="value" type="number" hide />
+                   <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent indicator="dot" />}
+                  />
+                  <Bar dataKey="value" fill="var(--color-value)" radius={5} />
+                </RechartsBarChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
