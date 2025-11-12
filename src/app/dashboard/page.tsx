@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getAthletes } from '@/lib/athletes-api';
 import { getAllEvents } from '@/lib/schedule-api';
+import { MotivationalQuote } from '@/components/motivational-quote';
 
 const getAllStoredUsers = (): UserProfile[] => {
   if (typeof window === 'undefined') return [];
@@ -287,6 +288,9 @@ function AthleteDashboard() {
                 <p className="text-xs text-muted-foreground">{nextCompetition?.name || 'Нет предстоящих соревнований'}</p>
             </CardContent>
             </Card>
+             <div className="md:col-span-2 lg:col-span-1">
+                <MotivationalQuote />
+            </div>
         </div>
          <Card>
             <CardHeader>
