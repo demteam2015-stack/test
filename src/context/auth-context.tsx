@@ -9,7 +9,7 @@ const USERS_USERNAME_INDEX_PREFIX = 'user_username_';
 const USERS_ID_INDEX_PREFIX = 'user_id_';
 const SESSION_STORAGE_KEY = 'local_user_session_v2';
 const MIGRATION_KEY = 'local_db_migrated_to_indexed_v1';
-const ADMIN_PERMAROLE_KEY = 'admin_permarole';
+const ADMIN_PERMAROLE_KEY = 'admin_permarole_v2';
 
 
 export type UserProfile = BaseUserProfile & {
@@ -263,6 +263,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Check for a persisted session on initial load
         if (typeof window !== 'undefined') {
             const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
+            const isAdminSession = sessionStorage.getItem(ADMIN_PERMAROLE_KEY) === 'true';
+
+            if(isAdminSession) {
+                setIsAdmin(true);
+            }
+
             if (sessionJson) {
                 try {
                     const sessionData = JSON.parse(sessionJson);
@@ -281,18 +287,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     };
 
                     setUser(userProfile);
-                    
-                    // Check for permanent admin rights
-                    const permaRole = sessionStorage.getItem(ADMIN_PERMAROLE_KEY);
-                    if (permaRole === 'admin' || userProfile.role === 'admin') {
-                        setIsAdmin(true);
-                        // Ensure permarole is set if it was an admin login
-                        if (userProfile.role === 'admin') {
-                             sessionStorage.setItem(ADMIN_PERMAROLE_KEY, 'admin');
-                        }
-                    }
-
-
                 } catch (e) {
                     console.error("Session restore failed:", e);
                     sessionStorage.removeItem(SESSION_STORAGE_KEY);
@@ -321,9 +315,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             };
             setUser(userProfile);
             
-            if (userProfile.role === 'admin') {
+            if (userProfile.id === 'admin_lexazver' || userProfile.role === 'admin') {
                 setIsAdmin(true);
-                sessionStorage.setItem(ADMIN_PERMAROLE_KEY, 'admin');
+                sessionStorage.setItem(ADMIN_PERMAROLE_KEY, 'true');
             }
 
             sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
@@ -429,7 +423,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // This is a privileged operation for an admin.
     // It requires the admin's own password to temporarily create a key for the target user.
     // This is a simulation and has security implications.
-    if (user?.role !== 'admin' && !isAdmin) {
+    if (!isAdmin) {
       console.error("Non-admin attempting to get full user profile.");
       return null;
     }
@@ -482,7 +476,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const updateUserBalance = async (userId: string, amount: number) => {
-    if (user?.role !== 'admin' && !isAdmin) {
+    if (!isAdmin) {
         throw new Error("Only admins can update balances.");
     }
 
