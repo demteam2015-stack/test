@@ -140,7 +140,7 @@ const setStoredUser = (user: StoredUser) => {
     }
 
     if (user.id) {
-        const idKey = `${USERS_ID_INDEX_PREFIX}${id}`;
+        const idKey = `${USERS_ID_INDEX_PREFIX}${user.id}`;
         localStorage.setItem(idKey, JSON.stringify(user));
     }
 };
@@ -159,7 +159,7 @@ const deleteStoredUser = (user: StoredUser) => {
     }
 
     if (user.id) {
-        const idKey = `${USERS_ID_INDEX_PREFIX}${id}`;
+        const idKey = `${USERS_ID_INDEX_PREFIX}${user.id}`;
         localStorage.removeItem(idKey);
     }
 }
@@ -290,13 +290,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     if (userProfile.id === 'admin_lexazver') {
                         setIsAdmin(true);
                         // If the decrypted role is not admin (from a previous temporary switch),
-                        // but we know this is the admin user, let's respect the stateful role if it exists,
-                        // otherwise default to admin.
-                        if (user?.role) {
-                            userProfile.role = user.role;
-                        } else {
-                            userProfile.role = 'admin';
-                        }
+                        // but we know this is the admin user, we honor the role from the decrypted profile
+                        // to persist the emulated role across page reloads.
                     }
 
                     setUser(userProfile);
@@ -320,20 +315,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             const salt = hexToBuffer(foundUser.salt);
             const key = await deriveKey(password, salt, ['decrypt']);
-            const profile = await decryptData(key, hexToBuffer(foundUser.iv), hexToBuffer(foundUser.encryptedProfile)) as Omit<UserProfile, 'id' | 'email'>;
+            let profile = await decryptData(key, hexToBuffer(foundUser.iv), hexToBuffer(foundUser.encryptedProfile)) as Omit<UserProfile, 'id' | 'email'>;
+            
+            // Force admin role if it's the admin user logging in for the first time in a session
+            if (foundUser.id === 'admin_lexazver') {
+                profile.role = 'admin';
+                setIsAdmin(true);
+                localStorage.setItem(ADMIN_PERMAROLE_KEY, 'true');
+            }
             
             const userProfile: UserProfile = {
                 id: foundUser.id,
                 email: foundUser.email,
                 ...profile
             };
-            
-            // Force admin role if it's the admin user
-            if (userProfile.id === 'admin_lexazver') {
-                userProfile.role = 'admin';
-                setIsAdmin(true);
-                localStorage.setItem(ADMIN_PERMAROLE_KEY, 'true');
-            }
 
             setUser(userProfile);
             
@@ -415,13 +410,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     let newProfileData = { ...currentProfile, ...updatedProfile };
 
-    // For the permanent admin, we NEVER persist a role change to the encrypted data.
-    // The role is only changed in the React state.
+    // When the permanent admin switches roles, we update the state and the encrypted data
+    // to persist the emulated role. The isAdmin flag ensures they can always switch back.
     if (isAdmin && dbUser.id === 'admin_lexazver' && updatedProfile.role) {
-        newProfileData.role = 'admin'; // Always keep 'admin' in the encrypted blob
-        setUser(prevUser => prevUser ? {...prevUser, ...updatedProfile} : null);
+      setUser(prevUser => prevUser ? { ...prevUser, ...updatedProfile } : null);
+    } else {
+      setUser({ ...user, ...newProfileData });
     }
-    
+
     const { iv, encryptedData } = await encryptData(key, newProfileData);
 
     const updatedUserObject: StoredUser = {
@@ -431,11 +427,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     
     setStoredUser(updatedUserObject);
-
-    // If it's not the admin role switch case, update the state normally.
-    if (!(isAdmin && dbUser.id === 'admin_lexazver' && updatedProfile.role)) {
-        setUser({ ...user, ...newProfileData });
-    }
   };
   
   const checkUserExists = (details: {email: string, username: string}): boolean => {
