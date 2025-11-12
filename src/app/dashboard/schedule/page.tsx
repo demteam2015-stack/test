@@ -261,15 +261,17 @@ export default function SchedulePage() {
                     Просмотр и управление вашим расписанием.
                 </p>
             </div>
-            {canManage && <EventForm onEventCreated={handleEventChange} eventToEdit={null} onEventUpdated={handleEventChange}/>}
         </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>
-                    События на {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
-                </CardTitle>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <CardTitle>
+                        События на {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
+                    </CardTitle>
+                    {canManage && <EventForm onEventCreated={handleEventChange} eventToEdit={null} onEventUpdated={handleEventChange}/>}
+                </div>
             </CardHeader>
             <CardContent className="h-[500px] overflow-y-auto">
                 {dailyEvents.length > 0 ? (
