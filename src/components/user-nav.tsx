@@ -1,3 +1,5 @@
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,48 +11,83 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CreditCard, LogOut, Settings, User } from 'lucide-react';
+import { useAuth, useUser } from '@/firebase';
+import { CreditCard, LogOut, Settings, User as UserIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export function UserNav() {
+  const { user } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = () => {
+    auth.signOut();
+    router.push('/login');
+  };
+
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('');
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-9 w-9">
-            <AvatarImage src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="@user" />
-            <AvatarFallback>U</AvatarFallback>
+            <AvatarImage
+              src={user?.photoURL ?? `https://i.pravatar.cc/150?u=${user?.uid}`}
+              alt={user?.displayName ?? 'User'}
+            />
+            <AvatarFallback>
+              {getInitials(user?.displayName)}
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Атлет</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              athlete@example.com
-            </p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <User />
-            Профиль
+        {user ? (
+          <>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">
+                  {user.displayName || 'Атлет'}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {user.email}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                <UserIcon />
+                Профиль
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <CreditCard />
+                Оплата
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings />
+                Настройки
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut}>
+              <LogOut />
+              Выйти
+            </DropdownMenuItem>
+          </>
+        ) : (
+          <DropdownMenuItem onClick={() => router.push('/login')}>
+            <LogOut />
+            Войти
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <CreditCard />
-            Оплата
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings />
-            Настройки
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <LogOut />
-          Выйти
-        </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
