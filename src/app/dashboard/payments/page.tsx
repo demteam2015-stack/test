@@ -24,6 +24,7 @@ import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { paymentHistoryData } from "@/lib/data";
 import type { Payment } from "@/lib/data";
+import { Label } from '@/components/ui/label';
 
 const COACH_PHONE_NUMBER = '+380 XX XXX-XX-XX'; // Placeholder
 
