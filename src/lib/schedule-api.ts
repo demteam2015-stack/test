@@ -108,3 +108,13 @@ export const deleteEvent = (eventId: string): Promise<void> => {
        resolve();
     });
 };
+
+/**
+ * Deletes all events from storage.
+ */
+export const clearAllEvents = (): Promise<void> => {
+    return new Promise((resolve) => {
+       saveEvents([]);
+       resolve();
+    });
+};

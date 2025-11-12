@@ -9,12 +9,12 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { Calendar as CalendarIcon, PlusCircle, Clock, MapPin, Trash2, Edit, Dumbbell, Trophy, Users } from "lucide-react";
+import { Calendar as CalendarIcon, PlusCircle, Clock, MapPin, Trash2, Edit, Dumbbell, Trophy, Users, AlertTriangle } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { useAuth } from '@/context/auth-context';
 import type { TrainingEvent } from '@/lib/schedule-api';
-import { getAllEvents, createEvent, deleteEvent, updateEvent } from '@/lib/schedule-api';
+import { getAllEvents, createEvent, deleteEvent, updateEvent, clearAllEvents } from '@/lib/schedule-api';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import {
@@ -350,6 +350,12 @@ export default function SchedulePage() {
       toast({ title: "Событие удалено" });
   }
 
+  const handleClearAll = async () => {
+      await clearAllEvents();
+      fetchEvents();
+      toast({ title: "Расписание очищено", description: "Все события были удалены." });
+  }
+
   const EventIcon = ({ type }: { type: TrainingEvent['type'] }) => {
     switch (type) {
       case 'training':
@@ -383,7 +389,31 @@ export default function SchedulePage() {
                     {canManage ? 'Выберите дни в календаре и добавьте расписание.' : 'Просматривайте расписание тренировок.'}
                 </p>
             </div>
-            {canManage && <BulkEventForm selectedDates={selectedDates || []} onEventsCreated={handleEventsChange}/>}
+            {canManage && (
+                <div className="flex flex-col sm:flex-row gap-2">
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" disabled={allEvents.length === 0}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Очистить все
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Вы уверены, что хотите очистить все расписание?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Это действие необратимо. Все созданные события будут удалены навсегда.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Отмена</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90">Да, удалить все</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                    <BulkEventForm selectedDates={selectedDates || []} onEventsCreated={handleEventsChange}/>
+                </div>
+            )}
         </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
