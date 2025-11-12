@@ -8,7 +8,6 @@ import {
   CreditCard,
   Home,
   Trophy,
-  Users,
   BrainCircuit,
 } from 'lucide-react';
 import {
@@ -21,7 +20,6 @@ import {
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/context/auth-context';
 
 const navLinks = [
   { href: '/dashboard', label: 'Панель', icon: Home },
