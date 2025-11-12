@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useFormStatus } from 'react';
 import { getRecommendations, type FormState } from './actions';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,7 +45,7 @@ function SubmitButton() {
 }
 
 export default function RecommendationsPage() {
-  const [formState, formAction] = useFormState(getRecommendations, initialState);
+  const [formState, formAction] = useActionState(getRecommendations, initialState);
   const [attendance, setAttendance] = useState([0.9]);
   const { toast } = useToast();
 
