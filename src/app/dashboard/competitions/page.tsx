@@ -1,9 +1,7 @@
-
 'use client';
 
-import { useCollection, type WithId } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { competitionsData } from '@/lib/data';
+import type { Competition } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,79 +22,22 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowRight, Trophy } from 'lucide-react';
 import { useMemo } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
-
-// Define the type for a competition, matching docs/backend.json
-interface Competition {
-  name: string;
-  date: string; // Keep as ISO string for easier sorting
-  location: string;
-  status: 'Предстоящий' | 'Завершенный';
-  result?: string;
-  registrationStatus?: 'Зарегистрирован' | 'Не зарегистрирован' | 'В ожидании';
-}
-
-const CompetitionRowSkeleton = () => (
-  <TableRow>
-    <TableCell>
-      <Skeleton className="h-4 w-40" />
-    </TableCell>
-    <TableCell>
-      <Skeleton className="h-4 w-24" />
-    </TableCell>
-    <TableCell>
-      <Skeleton className="h-4 w-32" />
-    </TableCell>
-    <TableCell>
-      <Skeleton className="h-6 w-28 rounded-full" />
-    </TableCell>
-    <TableCell className="text-right">
-      <Skeleton className="h-9 w-28 ml-auto" />
-    </TableCell>
-  </TableRow>
-);
-
-const ResultRowSkeleton = () => (
-    <TableRow>
-      <TableCell>
-        <Skeleton className="h-4 w-40" />
-      </TableCell>
-      <TableCell>
-        <Skeleton className="h-4 w-24" />
-      </TableCell>
-      <TableCell>
-        <Skeleton className="h-4 w-32" />
-      </TableCell>
-      <TableCell className="text-right">
-        <Skeleton className="h-5 w-20 ml-auto" />
-      </TableCell>
-    </TableRow>
-  );
-
 
 export default function CompetitionsPage() {
-  const firestore = useFirestore();
-
-  const competitionsQuery = useMemo(
-    () => collection(firestore, 'competitions'),
-    [firestore]
-  );
-  const { data: competitions, isLoading, error } = useCollection<Competition>(competitionsQuery);
-
   const upcoming = useMemo(
     () =>
-      competitions
-        ?.filter((c) => c.status === 'Предстоящий')
+      competitionsData
+        .filter((c) => c.status === 'Предстоящий')
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) || [],
-    [competitions]
+    []
   );
 
   const results = useMemo(
     () =>
-      competitions
-        ?.filter((c) => c.status === 'Завершенный')
+      competitionsData
+        .filter((c) => c.status === 'Завершенный')
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) || [],
-    [competitions]
+    []
   );
   
   const formatDate = (dateString: string) => {
@@ -118,7 +59,6 @@ export default function CompetitionsPage() {
           Управляйте регистрациями на соревнования и просматривайте результаты.
         </p>
       </div>
-      {error && <div className="text-destructive">Ошибка загрузки соревнований: {error.message}. Убедитесь, что у вас есть права на чтение.</div>}
       <Card>
         <Tabs defaultValue="upcoming">
           <CardHeader>
@@ -148,39 +88,31 @@ export default function CompetitionsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isLoading ? (
-                    <>
-                        <CompetitionRowSkeleton />
-                        <CompetitionRowSkeleton />
-                        <CompetitionRowSkeleton />
-                    </>
-                  ) : (
-                    upcoming.map((comp) => (
-                      <TableRow key={comp.id}>
-                        <TableCell className="font-medium">{comp.name}</TableCell>
-                        <TableCell>{formatDate(comp.date)}</TableCell>
-                        <TableCell>{comp.location}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              comp.registrationStatus === 'Зарегистрирован'
-                                ? 'default'
-                                : 'outline'
-                            }
-                          >
-                            {comp.registrationStatus || 'N/A'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button size="sm" variant="outline">
-                            Подробнее
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                   {!isLoading && upcoming.length === 0 && (
+                  {upcoming.map((comp) => (
+                    <TableRow key={comp.id}>
+                      <TableCell className="font-medium">{comp.name}</TableCell>
+                      <TableCell>{formatDate(comp.date)}</TableCell>
+                      <TableCell>{comp.location}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            comp.registrationStatus === 'Зарегистрирован'
+                              ? 'default'
+                              : 'outline'
+                          }
+                        >
+                          {comp.registrationStatus || 'N/A'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" variant="outline">
+                          Подробнее
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                   {upcoming.length === 0 && (
                      <TableRow>
                         <TableCell colSpan={5} className="h-24 text-center">
                             Нет предстоящих соревнований.
@@ -201,25 +133,17 @@ export default function CompetitionsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                   {isLoading ? (
-                    <>
-                        <ResultRowSkeleton />
-                        <ResultRowSkeleton />
-                        <ResultRowSkeleton />
-                    </>
-                   ) : (
-                    results.map((comp) => (
-                        <TableRow key={comp.id}>
-                        <TableCell className="font-medium">{comp.name}</TableCell>
-                        <TableCell>{formatDate(comp.date)}</TableCell>
-                        <TableCell>{comp.location}</TableCell>
-                        <TableCell className="text-right font-bold text-primary">
-                            {comp.result || '-'}
-                        </TableCell>
-                        </TableRow>
-                    ))
-                   )}
-                   {!isLoading && results.length === 0 && (
+                  {results.map((comp) => (
+                      <TableRow key={comp.id}>
+                      <TableCell className="font-medium">{comp.name}</TableCell>
+                      <TableCell>{formatDate(comp.date)}</TableCell>
+                      <TableCell>{comp.location}</TableCell>
+                      <TableCell className="text-right font-bold text-primary">
+                          {comp.result || '-'}
+                      </TableCell>
+                      </TableRow>
+                  ))}
+                   {results.length === 0 && (
                      <TableRow>
                         <TableCell colSpan={4} className="h-24 text-center">
                             Нет результатов.

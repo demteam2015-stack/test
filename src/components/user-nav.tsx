@@ -11,20 +11,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth, useUserProfile } from '@/firebase';
 import { CreditCard, LogOut, Settings, User as UserIcon, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Skeleton } from './ui/skeleton';
+import { userProfileData } from '@/lib/data';
 
 export function UserNav() {
-  const { user } = useUserProfile();
-  const auth = useAuth();
   const router = useRouter();
 
   const handleSignOut = () => {
-    auth.signOut();
-    router.push('/login');
+    // In a real app, this would sign the user out.
+    // Since this is a static app, we'll just navigate to a simulated login.
+    alert("Вы вышли из системы (симуляция).");
+    router.push('/');
   };
+
+  const user = userProfileData;
 
   const getInitials = (firstName?: string, lastName?: string) => {
     if (!firstName || !lastName) return 'U';
@@ -43,31 +44,24 @@ export function UserNav() {
     admin: 'Администратор',
   };
 
-  const userRole = user?.role ? roleTranslations[user.role] : 'Загрузка...';
+  const userRole = user.role ? roleTranslations[user.role] : 'Неизвестно';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
            <Avatar className="h-9 w-9">
-            {user ? (
-              <>
-                <AvatarImage
-                  src={user?.photoURL ?? `https://i.pravatar.cc/150?u=${user?.id}`}
-                  alt={getFullName(user?.firstName, user?.lastName)}
-                />
-                <AvatarFallback>
-                  {getInitials(user?.firstName, user?.lastName)}
-                </AvatarFallback>
-              </>
-            ) : (
-              <Skeleton className="h-9 w-9 rounded-full" />
-            )}
+              <AvatarImage
+                src={user.photoURL ?? `https://i.pravatar.cc/150?u=${user.id}`}
+                alt={getFullName(user.firstName, user.lastName)}
+              />
+              <AvatarFallback>
+                {getInitials(user.firstName, user.lastName)}
+              </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        {user ? (
           <>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
@@ -105,12 +99,6 @@ export function UserNav() {
               Выйти
             </DropdownMenuItem>
           </>
-        ) : (
-          <DropdownMenuItem onClick={() => router.push('/login')}>
-            <LogOut />
-            Войти
-          </DropdownMenuItem>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

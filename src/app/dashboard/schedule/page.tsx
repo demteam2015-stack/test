@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Badge } from "@/components/ui/badge";
@@ -13,62 +12,31 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Clock, MapPin } from "lucide-react";
-import { useCollection, useFirestore } from "@/firebase";
-import { collection, query, where, orderBy } from "firebase/firestore";
 import { useMemo } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
-
-interface Event {
-    title: string;
-    status: 'Scheduled' | 'Completed';
-    date: string; // ISO string
-    location: string;
-    type: 'тренировка' | 'собрание';
-}
-
-const EventSkeleton = () => (
-    <li className="flex items-center space-x-4 p-4">
-        <div className="min-w-0 flex-1 space-y-2">
-            <Skeleton className="h-5 w-48" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-24" />
-        </div>
-        <div>
-           <Skeleton className="h-6 w-20 rounded-full" />
-        </div>
-    </li>
-);
-
+import { eventsData } from "@/lib/data";
+import type { Event } from "@/lib/data";
 
 export default function SchedulePage() {
-  const firestore = useFirestore();
-  
   const todayStart = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    return d.toISOString();
+    return d;
   }, []);
 
   const todayEnd = useMemo(() => {
     const d = new Date();
     d.setHours(23, 59, 59, 999);
-    return d.toISOString();
+    return d;
   }, []);
 
-
-  const eventsQuery = useMemo(() => {
-    if (!firestore) return null;
-    return query(
-        collection(firestore, 'events'),
-        where('date', '>=', todayStart),
-        where('date', '<=', todayEnd),
-        orderBy('date', 'asc')
-    );
-  }, [firestore, todayStart, todayEnd]);
-
-  const { data: events, isLoading, error } = useCollection<Event>(eventsQuery);
+  const events = useMemo(() => {
+    return eventsData
+        .filter(event => {
+            const eventDate = new Date(event.date);
+            return eventDate >= todayStart && eventDate <= todayEnd
+        })
+        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  }, [todayStart, todayEnd]);
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('ru-RU', {
@@ -92,20 +60,13 @@ export default function SchedulePage() {
           <CardHeader>
             <CardTitle>Сегодняшние события</CardTitle>
             <CardDescription>
-                {isLoading ? 'Загрузка событий...' : `Вот запланированные на сегодня события. Всего: ${events?.length || 0}.`}
+                {`Вот запланированные на сегодня события. Всего: ${events.length}.`}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            {error && <p className="text-destructive p-4">Ошибка загрузки расписания: {error.message}</p>}
             <div className="flow-root">
               <ul className="-my-4 divide-y divide-border">
-                {isLoading ? (
-                    <>
-                        <EventSkeleton />
-                        <EventSkeleton />
-                        <EventSkeleton />
-                    </>
-                ) : events && events.length > 0 ? (
+                {events && events.length > 0 ? (
                     events.map(event => (
                         <li key={event.id} className="flex items-center space-x-4 p-4">
                             <div className="min-w-0 flex-1">

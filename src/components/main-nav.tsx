@@ -19,11 +19,10 @@ import {
   SidebarMenuButton,
   SidebarContent,
   SidebarFooter,
-  SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
-import { useUserProfile } from '@/firebase';
+import { userProfileData } from '@/lib/data';
 
 const allLinks = [
   { href: '/dashboard', label: 'Панель', icon: Home, roles: ['athlete', 'coach', 'parent', 'admin'] },
@@ -38,9 +37,7 @@ const allLinks = [
 
 export default function MainNav() {
   const pathname = usePathname();
-  const { data: userProfile, isLoading } = useUserProfile();
-
-  const userRole = userProfile?.role || null;
+  const userRole = userProfileData.role;
 
   const links = allLinks.filter(link => userRole && link.roles.includes(userRole));
 
@@ -54,28 +51,20 @@ export default function MainNav() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {isLoading ? (
-            <>
-              <SidebarMenuSkeleton showIcon />
-              <SidebarMenuSkeleton showIcon />
-              <SidebarMenuSkeleton showIcon />
-            </>
-          ) : (
-            links.map((link) => (
-              <SidebarMenuItem key={link.href}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === link.href}
-                  tooltip={{ children: link.label, side:'right', align: 'center'}}
-                >
-                  <Link href={link.href}>
-                    <link.icon />
-                    <span>{link.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))
-          )}
+          {links.map((link) => (
+            <SidebarMenuItem key={link.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === link.href}
+                tooltip={{ children: link.label, side:'right', align: 'center'}}
+              >
+                <Link href={link.href}>
+                  <link.icon />
+                  <span>{link.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
