@@ -26,34 +26,14 @@ const generateSalt = (): ArrayBuffer => {
     return window.crypto.getRandomValues(new Uint8Array(16)).buffer;
 }
 
-// Generates a "pepper" from browser fingerprint
-const getBrowserPepper = async (): Promise<ArrayBuffer> => {
-    const encoder = new TextEncoder();
-    const fingerprint = [
-        navigator.userAgent,
-        screen.width,
-        screen.height,
-        new Date().getTimezoneOffset()
-    ].join('|');
-    
-    return window.crypto.subtle.digest('SHA-256', encoder.encode(fingerprint));
-}
-
-
 // Derives a key from a password and salt using PBKDF2
 const deriveKey = async (password: string, salt: ArrayBuffer, usage: KeyUsage[]): Promise<CryptoKey> => {
     const encoder = new TextEncoder();
-    const pepper = await getBrowserPepper();
-    
-    // Combine password and pepper
     const passwordBuffer = encoder.encode(password);
-    const combinedBuffer = new Uint8Array(passwordBuffer.length + pepper.byteLength);
-    combinedBuffer.set(new Uint8Array(passwordBuffer), 0);
-    combinedBuffer.set(new Uint8Array(pepper), passwordBuffer.length);
 
     const baseKey = await window.crypto.subtle.importKey(
         'raw',
-        combinedBuffer,
+        passwordBuffer,
         { name: 'PBKDF2' },
         false,
         ['deriveKey']
@@ -325,5 +305,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
-    
