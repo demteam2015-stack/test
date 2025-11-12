@@ -13,6 +13,7 @@ import {
   Users,
   BarChart,
   User,
+  GraduationCap,
 } from 'lucide-react';
 import {
   SidebarHeader,
@@ -39,6 +40,7 @@ export default function MainNav() {
     { href: '/dashboard/team', label: 'Команда', icon: Users, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/journal', label: 'Журнал', icon: BookUser, roles: ['admin', 'coach'] },
     { href: '/dashboard/reports', label: 'Отчеты', icon: BarChart, roles: ['admin', 'coach', 'athlete', 'parent'] },
+    { href: '/dashboard/education', label: 'Обучение', icon: GraduationCap, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/recommendations', label: 'Обратная связь', icon: BrainCircuit, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete'] },

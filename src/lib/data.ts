@@ -118,3 +118,52 @@ export const paymentHistoryData: Payment[] = [
     { id: 'pay2', invoice: 'INV-002', date: new Date(new Date().setMonth(new Date().getMonth() -2)).toISOString(), amount: '₴1000', status: 'Оплачено'},
     { id: 'pay3', invoice: 'INV-003', date: new Date(new Date().setMonth(new Date().getMonth() -3)).toISOString(), amount: '₴500', status: 'Оплачено'},
 ];
+
+
+// --- EDUCATIONAL MATERIALS ---
+export interface EducationalMaterial {
+  id: string;
+  title: string;
+  type: 'video' | 'quiz';
+  description: string;
+  duration?: string; // e.g., "15 мин"
+  questionCount?: number;
+}
+
+export const educationalMaterialsData: EducationalMaterial[] = [
+  {
+    id: 'edu1',
+    title: 'Техника базовых ударов',
+    type: 'video',
+    description: 'Разбор и демонстрация основных ударов руками и ногами. Постановка правильной техники.',
+    duration: '25 мин'
+  },
+  {
+    id: 'edu2',
+    title: 'Тест по правилам соревнований',
+    type: 'quiz',
+    description: 'Проверьте свои знания основных правил и положений соревнований по нашему виду спорта.',
+    questionCount: 20
+  },
+  {
+    id: 'edu3',
+    title: 'Основы защиты',
+    type: 'video',
+    description: 'Изучение базовых блоков, уклонов и перемещений для эффективной защиты в поединке.',
+    duration: '18 мин'
+  },
+  {
+    id: 'edu4',
+    title: 'Принципы правильного питания',
+    type: 'video',
+    description: 'Рекомендации по диете и питанию для поддержания формы и быстрого восстановления.',
+    duration: '30 мин'
+  },
+  {
+    id: 'edu5',
+    title: 'Викторина: История единоборств',
+    type: 'quiz',
+    description: 'Интересные факты и вопросы о развитии мировых боевых искусств.',
+    questionCount: 15
+  }
+];
