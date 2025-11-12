@@ -21,6 +21,7 @@ service cloud.firestore {
       allow write: if request.auth.uid == resource.data.userId;
     }
 
+    // Public collections readable by any signed-in user
     match /events/{eventId} {
       allow read: if isSignedIn();
       allow write: if false; // For now, only admins can write
@@ -31,10 +32,22 @@ service cloud.firestore {
       allow write: if false; // For now, only admins can write
     }
 
-    // This rule allows any authenticated user to read the list of competitions.
     match /competitions/{competitionId} {
+      allow read: if isSignedIn();
+      allow write: if false; // For now, only admins can write
+    }
+    
+    match /plans/{planId} {
+      allow read: if isSignedIn();
+      allow write: if false; // For now, only admins can write
+    }
+
+    match /payments/{paymentId} {
+      // In a real app, this would be a subcollection under a user
       allow read: if isSignedIn();
       allow write: if false; // For now, only admins can write
     }
   }
 }
+
+    
