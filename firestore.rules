@@ -120,7 +120,7 @@ service cloud.firestore {
     /**
      * @description Publicly readable events collection.
      */
-    match /events/{eventId} {
+    match /events/{document=**} {
       allow read: if isSignedIn();
       allow write: if false; // To be restricted to admins later
     }
@@ -128,7 +128,7 @@ service cloud.firestore {
     /**
      * @description Publicly readable competitions collection.
      */
-    match /competitions/{competitionId} {
+    match /competitions/{document=**} {
       allow read: if isSignedIn();
       allow write: if false; // To be restricted to admins later
     }
@@ -136,7 +136,7 @@ service cloud.firestore {
     /**
      * @description Publicly readable team members collection.
      */
-    match /teamMembers/{memberId} {
+    match /teamMembers/{document=**} {
       allow read: if isSignedIn();
       allow write: if false; // To be restricted to admins later
     }
