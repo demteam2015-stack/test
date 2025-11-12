@@ -19,11 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, Copy, RefreshCw, Edit, Trash2, Loader, CalendarIcon } from "lucide-react";
+import { CreditCard, Copy, RefreshCw, Edit, Trash2, Loader, CalendarIcon, PlusCircle, User } from "lucide-react";
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
-import { getPayments, updatePayment, type Payment } from '@/lib/payments-api';
+import { getPayments, updatePayment, addPayment, type Payment } from '@/lib/payments-api';
 import { getConfigValue, setConfigValue } from '@/lib/config-api';
 import {
   Dialog,
@@ -47,6 +47,33 @@ const REQUISITES_KEY = 'payment_requisites';
 const DEFAULT_REQUISITES = '+380 XX XXX-XX-XX';
 const BASE_AMOUNT_KEY = 'payment_base_amount';
 const DEFAULT_BASE_AMOUNT = '1000';
+
+// --- Utility function to get all users ---
+const getAllStoredUsers = (): UserProfile[] => {
+    if (typeof window === 'undefined') return [];
+    const users: UserProfile[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('user_id_')) {
+            try {
+                const storedUser = JSON.parse(localStorage.getItem(key) || '');
+                // We only need basic info for the dropdown
+                users.push({
+                    id: storedUser.id,
+                    email: storedUser.email,
+                    username: storedUser.username,
+                    firstName: 'N/A',
+                    lastName: 'N/A',
+                    role: 'athlete'
+                });
+            } catch (e) {
+                console.error(`Failed to parse user data for key ${key}:`, e);
+            }
+        }
+    }
+    return users.sort((a,b) => a.username.localeCompare(b.username));
+};
+
 
 const RequisitesForm = ({ onUpdate, currentRequisites }: { onUpdate: (newRequisites: string) => void, currentRequisites: string }) => {
     const { toast } = useToast();
@@ -165,6 +192,7 @@ const AmountForm = ({ onUpdate, currentAmount }: { onUpdate: (newAmount: string)
 
 const PaymentForm = ({ onPaymentUpdated, paymentToEdit, children }: { onPaymentUpdated: () => void, paymentToEdit: Payment, children: React.ReactNode }) => {
     const { toast } = useToast();
+    const { updateUserBalance } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     
@@ -195,7 +223,7 @@ const PaymentForm = ({ onPaymentUpdated, paymentToEdit, children }: { onPaymentU
             status,
         };
 
-        await updatePayment(paymentToEdit.id, paymentData);
+        await updatePayment(paymentToEdit.id, paymentData, updateUserBalance);
         toast({ title: "Платёж обновлён" });
         onPaymentUpdated();
         setIsSaving(false);
@@ -218,6 +246,10 @@ const PaymentForm = ({ onPaymentUpdated, paymentToEdit, children }: { onPaymentU
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                             <Label>Пользователь</Label>
+                             <Input value={`${paymentToEdit.userName} (${paymentToEdit.userId})`} disabled />
+                        </div>
                         <div className="grid gap-2">
                             <Label>Дата платежа</Label>
                             <Popover>
@@ -276,6 +308,76 @@ const PaymentForm = ({ onPaymentUpdated, paymentToEdit, children }: { onPaymentU
     );
 };
 
+const CreatePaymentForm = ({ onPaymentCreated }: { onPaymentCreated: () => void }) => {
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [isSaving, setIsSaving] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    const [amount, setAmount] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const parsedAmount = parseFloat(amount);
+        if (!user || isNaN(parsedAmount) || parsedAmount <= 0) {
+            toast({ variant: 'destructive', title: 'Ошибка', description: 'Пожалуйста, введите корректную сумму.' });
+            return;
+        }
+
+        setIsSaving(true);
+        
+        const paymentData: Omit<Payment, 'id'> = {
+            date: new Date().toISOString(),
+            amount: parsedAmount.toFixed(2),
+            status: 'В ожидании',
+            userId: user.id,
+            userName: user.username,
+            invoice: `INV-${Date.now()}`
+        };
+
+        await addPayment(paymentData);
+        toast({ title: "Заявка на оплату создана", description: "Администратор скоро подтвердит ваш платёж." });
+        onPaymentCreated();
+        setIsSaving(false);
+        setIsModalOpen(false);
+        setAmount('');
+    };
+
+    return (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogTrigger asChild>
+                 <Button>
+                    <PlusCircle className="mr-2 h-4 w-4"/>
+                    Я оплатил, создать заявку
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <form onSubmit={handleSubmit}>
+                    <DialogHeader>
+                        <DialogTitle>Новая заявка на оплату</DialogTitle>
+                        <DialogDescription>
+                           Введите точную сумму, которую вы перевели. Это поможет администратору быстрее найти и подтвердить ваш платёж.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="create-amount">Сумма перевода (руб.)</Label>
+                            <Input id="create-amount" type="number" value={amount} onChange={e => setAmount(e.target.value)} required disabled={isSaving} placeholder="1000.47" />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild><Button type="button" variant="outline" disabled={isSaving}>Отмена</Button></DialogClose>
+                        <Button type="submit" disabled={isSaving || !amount}>
+                            {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                            Создать заявку
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 
 export default function PaymentsPage() {
   const { user } = useAuth();
@@ -290,10 +392,11 @@ export default function PaymentsPage() {
 
   const fetchPayments = useCallback(async () => {
     setIsLoading(true);
-    const payments = await getPayments();
+    // Pass user ID to seed initial data if needed
+    const payments = await getPayments(user?.id); 
     setPaymentHistory(payments);
     setIsLoading(false);
-  }, []);
+  }, [user?.id]);
 
   const fetchConfig = useCallback(() => {
     setPaymentRequisites(getConfigValue(REQUISITES_KEY, DEFAULT_REQUISITES));
@@ -301,9 +404,11 @@ export default function PaymentsPage() {
   }, []);
 
   useEffect(() => {
-    fetchPayments();
-    fetchConfig();
-  }, [fetchPayments, fetchConfig]);
+    if (user) {
+        fetchPayments();
+        fetchConfig();
+    }
+  }, [user, fetchPayments, fetchConfig]);
 
   const generateSuggestedAmount = useCallback(() => {
     const randomCents = Math.floor(Math.random() * 99) + 1;
@@ -346,7 +451,6 @@ export default function PaymentsPage() {
 
   const handleConfigUpdate = () => {
     fetchConfig();
-    // We need to regenerate the suggested amount in case the base amount was changed
     generateSuggestedAmount();
   }
 
@@ -355,7 +459,7 @@ export default function PaymentsPage() {
         <CardHeader>
           <CardTitle className="font-headline">История платежей</CardTitle>
           <CardDescription>
-            Просмотр всех транзакций в системе. Администратор может подтверждать получение оплаты здесь.
+            Просмотр всех транзакций в системе. Подтвердите получение оплаты здесь.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -367,7 +471,7 @@ export default function PaymentsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Счет</TableHead>
+                  <TableHead>Пользователь</TableHead>
                   <TableHead>Дата</TableHead>
                   <TableHead>Сумма</TableHead>
                   <TableHead>Статус</TableHead>
@@ -378,7 +482,7 @@ export default function PaymentsPage() {
                 {paymentHistory && paymentHistory.length > 0 ? (
                   paymentHistory.map(payment => (
                     <TableRow key={payment.id}>
-                      <TableCell className="font-medium">{payment.invoice}</TableCell>
+                      <TableCell className="font-medium">{payment.userName || payment.userId}</TableCell>
                       <TableCell>{formatDate(payment.date)}</TableCell>
                       <TableCell>{payment.amount} руб.</TableCell>
                       <TableCell>
@@ -414,7 +518,7 @@ export default function PaymentsPage() {
         <div className="space-y-8">
             <Card>
                 <CardHeader>
-                  <CardTitle className="font-headline">История платежей</CardTitle>
+                  <CardTitle className="font-headline">История моих платежей</CardTitle>
                   <CardDescription>
                     Ваши последние транзакции по абонементам.
                   </CardDescription>
@@ -435,11 +539,26 @@ export default function PaymentsPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
+                          {paymentHistory.filter(p => p.userId === user?.id).length > 0 ? (
+                             paymentHistory.filter(p => p.userId === user?.id).map(payment => (
+                                <TableRow key={payment.id}>
+                                <TableCell className="font-medium">{payment.invoice}</TableCell>
+                                <TableCell>{formatDate(payment.date)}</TableCell>
+                                <TableCell>{payment.amount} руб.</TableCell>
+                                <TableCell className="text-right">
+                                    <Badge variant={statusBadgeVariant(payment.status)} className={payment.status === 'Оплачено' ? 'text-green-600 bg-green-100 dark:text-green-300 dark:bg-green-900/50' : ''}>
+                                        {payment.status}
+                                    </Badge>
+                                </TableCell>
+                                </TableRow>
+                             ))
+                          ) : (
                            <TableRow>
                               <TableCell colSpan={4} className="h-24 text-center">
                                 История платежей пока пуста.
                               </TableCell>
                             </TableRow>
+                          )}
                         </TableBody>
                       </Table>
                    )}
@@ -483,7 +602,8 @@ export default function PaymentsPage() {
                      <p className="text-xs text-muted-foreground mt-1">Нажмите, чтобы скопировать или сгенерировать новую сумму.</p>
                 </div>
                 <Separator />
-                <p className="text-sm text-muted-foreground">После совершения перевода, администратор подтвердит оплату, и ваш абонемент будет активирован. Вы увидите обновленный статус в истории платежей.</p>
+                <p className="text-sm text-muted-foreground">После совершения перевода, создайте заявку на оплату, чтобы администратор мог подтвердить её. Вы увидите обновленный статус в истории платежей.</p>
+                <CreatePaymentForm onPaymentCreated={fetchPayments} />
             </CardContent>
         </Card>
     </div>
@@ -507,6 +627,7 @@ export default function PaymentsPage() {
                 {renderAdminOrCoachView()}
             </div>
             <div className="lg:col-span-1">
+                {/* Manager can see the parent view for context */}
                 {renderParentAthleteView()}
             </div>
         </div>
@@ -515,5 +636,3 @@ export default function PaymentsPage() {
     </div>
   );
 }
-
-    
