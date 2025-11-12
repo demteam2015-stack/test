@@ -1,138 +1,40 @@
-/**
- * @fileoverview Firestore Security Rules for Demyanenko Team Hub.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user profiles and
- * associated athlete/parent data.  Only the authenticated user can read or
- * modify their own profile data. Athlete and Parent profiles are linked to
- * user profiles via the 'userId' field, and only the associated user can
 
- * create, update, or delete these profiles. Public collections like events,
- * competitions, and team members are read-only for any authenticated user.
- *
- * Data Structure:
- * - /users/{userId}: Stores user profiles, where userId is the Firebase Auth UID.
- * - /athletes/{athleteId}: Stores athlete profiles, linked to user profiles via the 'userId' field.
- * - /parents/{parentId}: Stores parent profiles, linked to user profiles via the 'userId' field.
- * - /events/{eventId}: Stores team events. Read-only for authenticated users.
- * - /competitions/{competitionId}: Stores team competitions. Read-only for authenticated users.
- * - /teamMembers/{memberId}: Stores active team members. Read-only for authenticated users.
- *
- * Key Security Decisions:
- * - Users can only manage their own profiles.
- * - Athlete and Parent profiles are only manageable by the linked user.
- * - Public data collections are readable by any authenticated user but writable only by admins (future rule).
- * - Listing of users, athletes, and parents is restricted to prevent information leakage.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // isSignedIn() verifies that the request has valid authentication credentials.
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * @description Secure user profiles stored under /users/{userId}.
-     * @path /users/{userId}
-     * @allow (get, create, update, delete, list): If the request is made by the user with the matching userId.
-     * @deny (get, create, update, delete, list): If the request is made by a different user or an unauthenticated user.
-     * @principle Enforces document ownership for all operations.
-     */
     match /users/{userId} {
-      // isOwner(userId) verifies that the authenticated user's UID matches the
-      // document's userId.
-      function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      // isExistingOwner(userId) verifies that the authenticated user is the owner
-      // of an existing document.
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-      }
-
-      allow get: if isOwner(userId);
-      allow list: if false; // Listing users is generally not allowed
-
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id; // Enforce immutability of userId
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if request.auth.uid == userId;
     }
 
-    /**
-     * @description Secure athlete profiles stored under /athletes/{athleteId}.
-     * @path /athletes/{athleteId}
-     * @allow (get, create, update, delete): If the request is made by the user associated with the athlete profile (userId in the document matches the authenticated user's UID).
-     * @deny (get, create, update, delete): If the request is made by a different user or an unauthenticated user.
-     * @principle Enforces document ownership for writes, with public reads.
-     */
     match /athletes/{athleteId} {
-      // isAthleteOwner(userId) verifies that the authenticated user's UID matches the
-      // athlete document's userId.
-      function isAthleteOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      // isExistingAthleteOwner(userId) verifies that the authenticated user is the owner
-      // of an existing athlete document.
-      function isExistingAthleteOwner(userId) {
-        return isAthleteOwner(userId) && resource != null;
-      }
-
-      allow get: if true;
-      allow list: if false; // Listing athletes is generally not allowed
-
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isExistingAthleteOwner(resource.data.userId) && request.resource.data.userId == resource.data.userId; // Enforce immutability of userId
-      allow delete: if isExistingAthleteOwner(resource.data.userId);
+      allow read: if isSignedIn();
+      allow write: if request.auth.uid == resource.data.userId;
     }
 
-    /**
-     * @description Secure parent profiles stored under /parents/{parentId}.
-     * @path /parents/{parentId}
-     * @allow (get, create, update, delete): If the request is made by the user associated with the parent profile (userId in the document matches the authenticated user's UID).
-     * @deny (get, create, update, delete): If the request is made by a different user or an unauthenticated user.
-     * @principle Enforces document ownership for writes, with public reads.
-     */
     match /parents/{parentId} {
-      // isParentOwner(userId) verifies that the authenticated user's UID matches the
-      // parent document's userId.
-      function isParentOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
-      }
-
-      // isExistingParentOwner(userId) verifies that the authenticated user is the owner
-      // of an existing parent document.
-      function isExistingParentOwner(userId) {
-        return isParentOwner(userId) && resource != null;
-      }
-
-      allow get: if true;
-      allow list: if false; // Listing parents is generally not allowed
-
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isExistingParentOwner(resource.data.userId) && request.resource.data.userId == resource.data.userId; // Enforce immutability of userId
-      allow delete: if isExistingParentOwner(resource.data.userId);
+      allow read: if isSignedIn();
+      allow write: if request.auth.uid == resource.data.userId;
     }
 
-    /**
-     * @description Publicly readable collections for events, competitions, and team members.
-     * Any user (authenticated or not) can read these collections.
-     * Writing is disallowed for now.
-     */
-    match /events/{document=**} {
-      allow read: if true;
-      allow write: if false; 
+    match /events/{eventId} {
+      allow read: if isSignedIn();
+      allow write: if false; // For now, only admins can write
     }
-    match /competitions/{document=**} {
-      allow read: if true;
-      allow write: if false; 
+
+    match /teamMembers/{memberId} {
+      allow read: if isSignedIn();
+      allow write: if false; // For now, only admins can write
     }
-    match /teamMembers/{document=**} {
-      allow read: if true;
-      allow write: if false;
+
+    // This rule allows any authenticated user to read the list of competitions.
+    match /competitions/{competitionId} {
+      allow read: if isSignedIn();
+      allow write: if false; // For now, only admins can write
     }
   }
 }
