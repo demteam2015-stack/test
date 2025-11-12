@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { useAuth } from '@/context/auth-context';
 import type { TrainingEvent } from '@/lib/schedule-api';
-import { getAllEvents, getEventsForDay, createEvent, deleteEvent, updateEvent } from '@/lib/schedule-api';
+import { getAllEvents, createEvent, deleteEvent, updateEvent } from '@/lib/schedule-api';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import {
@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { startOfDay } from 'date-fns';
 
 const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCreated: (event: TrainingEvent) => void, eventToEdit: TrainingEvent | null, onEventUpdated: (event: TrainingEvent) => void }) => {
     const { user } = useAuth();
@@ -225,14 +226,17 @@ export default function SchedulePage() {
   }, []);
 
   const dailyEvents = useMemo(() => {
-    return getEventsForDay(selectedDate);
+    const dayStart = startOfDay(selectedDate);
+    return allEvents
+        .filter(event => startOfDay(new Date(event.date)).getTime() === dayStart.getTime())
+        .sort((a,b) => a.startTime.localeCompare(b.startTime));
   }, [selectedDate, allEvents]);
   
   const eventDays = useMemo(() => {
       return allEvents.map(e => new Date(e.date));
   }, [allEvents]);
 
-  const handleEventChange = (event: TrainingEvent) => {
+  const handleEventChange = () => {
       fetchEvents();
   }
   
