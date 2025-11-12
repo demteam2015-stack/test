@@ -74,6 +74,7 @@ export interface Athlete {
     middleName: string;
     dateOfBirth: string; // ISO string
     photoURL: string;
+    parentId?: string;
 }
 
 export const teamMembersData: Athlete[] = [
