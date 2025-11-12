@@ -122,14 +122,21 @@ const getStoredUserById = (id: string): StoredUser | null => {
 
 const setStoredUser = (user: StoredUser) => {
     if (typeof window === 'undefined') return;
-    const emailKey = `${USERS_EMAIL_INDEX_PREFIX}${user.email.toLowerCase()}`;
-    const usernameKey = `${USERS_USERNAME_INDEX_PREFIX}${user.username.toLowerCase()}`;
-    const idKey = `${USERS_ID_INDEX_PREFIX}${user.id}`;
-    const userJson = JSON.stringify(user);
 
-    localStorage.setItem(emailKey, userJson);
-    localStorage.setItem(usernameKey, userJson);
-    localStorage.setItem(idKey, userJson);
+    if (user.email) {
+        const emailKey = `${USERS_EMAIL_INDEX_PREFIX}${user.email.toLowerCase()}`;
+        localStorage.setItem(emailKey, JSON.stringify(user));
+    }
+    
+    if (user.username) {
+        const usernameKey = `${USERS_USERNAME_INDEX_PREFIX}${user.username.toLowerCase()}`;
+        localStorage.setItem(usernameKey, JSON.stringify(user));
+    }
+
+    if (user.id) {
+        const idKey = `${USERS_ID_INDEX_PREFIX}${user.id}`;
+        localStorage.setItem(idKey, JSON.stringify(user));
+    }
 };
 
 
