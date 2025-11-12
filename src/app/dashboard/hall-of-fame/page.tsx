@@ -54,11 +54,9 @@ export default function HallOfFamePage() {
   
   // Combine image data with athlete-specific details
   const athletes = useMemo(() => {
-    return Object.keys(athleteDetails)
-      .map(id => {
-        const imgData = PlaceHolderImages.find(img => img.id === id);
-        const details = athleteDetails[id];
-        if (!imgData || !details) return null;
+    return PlaceHolderImages.filter(img => img.id.startsWith('athlete-')).map(imgData => {
+        const details = athleteDetails[imgData.id];
+        if (!details) return null;
         return {
           ...imgData,
           ...details,
@@ -81,7 +79,7 @@ export default function HallOfFamePage() {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {athletes.map((athlete) => (
             <Card key={athlete.id} className="flex flex-col overflow-hidden">
-                <div className="aspect-square relative">
+                <div className="aspect-w-1 aspect-h-1 relative">
                     <Image
                       src={athlete.imageUrl}
                       alt={athlete.name}

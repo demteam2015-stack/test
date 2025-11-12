@@ -18,6 +18,7 @@ import {
 import { CreditCard, LogOut, Settings, User as UserIcon, Shield, Repeat } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth, type UserProfile } from '@/context/auth-context';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export function UserNav() {
   const router = useRouter();
@@ -65,6 +66,20 @@ export function UserNav() {
       }
   }
 
+  const getAvatarUrl = (userId: string) => {
+      const userImage = PlaceHolderImages.find(img => img.id === `user-${userId.substring(0, 4)}`);
+      if (userImage) return userImage.imageUrl;
+
+      // Fallback to a random athlete image if no specific user image is found
+      const athleteImages = PlaceHolderImages.filter(img => img.id.startsWith('athlete-'));
+      if(athleteImages.length > 0) {
+        // Simple hash function to pick a consistent image based on ID
+        const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return athleteImages[hash % athleteImages.length].imageUrl;
+      }
+      return `https://i.pravatar.cc/150?u=${userId}`;
+  }
+
 
   return (
     <DropdownMenu>
@@ -72,7 +87,7 @@ export function UserNav() {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
            <Avatar className="h-9 w-9">
               <AvatarImage
-                src={user.photoURL ?? `https://i.pravatar.cc/150?u=${user.id}`}
+                src={user.photoURL ?? getAvatarUrl(user.id)}
                 alt={getFullName(user.firstName, user.lastName)}
               />
               <AvatarFallback>

@@ -2,39 +2,39 @@
   "placeholderImages": [
     {
       "id": "athlete-1",
-      "description": "Champion athlete portrait",
-      "imageUrl": "https://images.unsplash.com/photo-1663576748730-3d420fb1d9ac?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxhdGhsZXRlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYyODY5ODI1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Portrait of a female athlete looking determined.",
+      "imageUrl": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhdGhsZXRlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYzOTYxNzcyfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "athlete portrait"
     },
     {
       "id": "athlete-2",
-      "description": "Athlete celebrating victory",
-      "imageUrl": "https://images.unsplash.com/photo-1762709753416-c3370a10ce82?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhdGhsZXRlJTIwd2lubmluZ3xlbnwwfHx8fDE3NjI5NTA1MDB8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "athlete winning"
+      "description": "Male athlete mid-action, focused and powerful.",
+      "imageUrl": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhdGhsZXRlJTIwaW4lMjBhY3Rpb258ZW58MHx8fHwxNzYzOTYxODQyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "athlete action"
     },
     {
       "id": "athlete-3",
-      "description": "Focused athlete during competition",
-      "imageUrl": "https://images.unsplash.com/photo-1760114852702-9c65fe257a52?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhdGhsZXRlJTIwY29tcGV0aXRpb258ZW58MHx8fHwxNzYyOTUwNTAwfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "athlete competition"
+      "description": "Female swimmer with goggles, ready to compete.",
+      "imageUrl": "https://images.unsplash.com/photo-1576652857592-a160893a7428?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzd2ltbWVyJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYzOTYxODgyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "swimmer portrait"
     },
     {
       "id": "athlete-4",
-      "description": "Athlete posing with a medal",
-      "imageUrl": "https://images.unsplash.com/photo-1622102686103-dd4ea18f1d0e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxhdGhsZXRlJTIwbWVkYWx8ZW58MHx8fHwxNzYyOTUwNTAxfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "athlete medal"
+      "description": "Male boxer with hands wrapped, looking intense.",
+      "imageUrl": "https://images.unsplash.com/photo-1594894823467-9103a873b455?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxib3hlciUyMHBvcnRyYWl0fGVufDB8fHx8MTc2Mzk2MTkwMHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "boxer portrait"
     },
     {
       "id": "athlete-5",
-      "description": "Team photo of athletes",
-      "imageUrl": "https://images.unsplash.com/photo-1502904550040-7534597429ae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzcG9ydHMlMjB0ZWFtfGVufDB8fHx8MTc2Mjk1MDUwMHww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "sports team"
+      "description": "Male basketball player holding a ball, smiling.",
+      "imageUrl": "https://images.unsplash.com/photo-1558006518-9717572754d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxiYXNrZXRiYWxsJTIwcGxheWVyJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzYzOTYxOTMxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "basketball player"
     },
     {
       "id": "athlete-6",
-      "description": "Athlete in training",
-      "imageUrl": "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhdGhsZXRlJTIwdHJhaW5pbmd8ZW58MHx8fHwxNzYyODk3OTA3fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "athlete training"
+      "description": "Female tennis player serving the ball.",
+      "imageUrl": "https://images.unsplash.com/photo-1554068884-65b1bdf692b8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0ZW5uaXMlMjBwbGF5ZXIlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM5NjE5NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tennis player"
     }
   ]
 }
