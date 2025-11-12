@@ -121,33 +121,24 @@ service cloud.firestore {
      * @description Publicly readable events collection.
      */
     match /events/{eventId} {
-      allow get: if isSignedIn();
+      allow read: if isSignedIn();
       allow write: if false; // To be restricted to admins later
-    }
-    match /events {
-        allow list: if isSignedIn();
     }
 
     /**
      * @description Publicly readable competitions collection.
      */
     match /competitions/{competitionId} {
-      allow get: if isSignedIn();
+      allow read: if isSignedIn();
       allow write: if false; // To be restricted to admins later
-    }
-     match /competitions {
-        allow list: if isSignedIn();
     }
 
     /**
      * @description Publicly readable team members collection.
      */
     match /teamMembers/{memberId} {
-      allow get: if isSignedIn();
+      allow read: if isSignedIn();
       allow write: if false; // To be restricted to admins later
-    }
-     match /teamMembers {
-        allow list: if isSignedIn();
     }
   }
 }
