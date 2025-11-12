@@ -93,9 +93,6 @@ export default function SchedulePage() {
               </ul>
             </div>
           </CardContent>
-          <CardFooter className="border-t pt-4">
-            <Button>Записаться на новое занятие</Button>
-          </CardFooter>
         </Card>
       </div>
 

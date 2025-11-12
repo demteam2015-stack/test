@@ -188,6 +188,16 @@ function AthleteDashboard() {
             </CardContent>
             </Card>
         </div>
+         <Card>
+            <CardHeader>
+                <CardTitle>Быстрые действия</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <Button>
+                    Записаться на новое занятие
+                </Button>
+            </CardContent>
+        </Card>
     </div>
   )
 }
