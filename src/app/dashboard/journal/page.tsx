@@ -129,8 +129,8 @@ export default function JournalPage() {
 
   const fetchData = useCallback(async (date: Date, iso: string) => {
     setIsLoading(true);
-    // Get all events for the day suitable for attendance tracking (e.g., no holidays)
-    const dailyEvents = getEventsForDay(date).filter(e => e.type !== 'holiday');
+    // Get all events for the day suitable for attendance tracking
+    const dailyEvents = getEventsForDay(date).filter(e => e.type === 'training' || e.type === 'competition' || e.type === 'meeting');
     const savedAttendance = await getAttendanceForDay(iso);
 
     setEvents(dailyEvents);
