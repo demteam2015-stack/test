@@ -9,7 +9,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -23,7 +22,7 @@ import {
 import { Check, CreditCard, Copy, RefreshCw, Banknote } from "lucide-react";
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { plansData, paymentHistoryData } from "@/lib/data";
+import { paymentHistoryData } from "@/lib/data";
 import type { Payment } from "@/lib/data";
 
 const COACH_PHONE_NUMBER = '+380 XX XXX-XX-XX'; // Placeholder
@@ -75,35 +74,6 @@ export default function PaymentsPage() {
 
   const renderAdminOrCoachView = () => (
     <>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {plansData.map(plan => (
-            <Card key={plan.id} className={`flex flex-col ${plan.isCurrent ? 'border-primary ring-2 ring-primary' : ''}`}>
-                <CardHeader className="relative">
-                    {plan.isPopular && <Badge className="absolute top-[-0.75rem] right-4">Популярный</Badge>}
-                    <CardTitle className="font-headline">{plan.title}</CardTitle>
-                    <p className="text-3xl font-bold">{plan.price}<span className="text-sm font-normal text-muted-foreground">/месяц</span></p>
-                    <CardDescription>{plan.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                    <Separator className="my-4" />
-                    <ul className="space-y-3">
-                        {plan.features.map(feature => (
-                            <li key={feature} className="flex items-center gap-2 text-sm">
-                                <Check className="h-4 w-4 text-primary" />
-                                <span className="text-muted-foreground">{feature}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </CardContent>
-                <CardFooter>
-                    <Button className="w-full" disabled={plan.isCurrent} variant={plan.isCurrent ? 'outline' : 'default'}>
-                        {plan.isCurrent ? 'Текущий план' : 'Выбрать план'}
-                    </Button>
-                </CardFooter>
-            </Card>
-        ))}
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle className="font-headline">История платежей</CardTitle>
