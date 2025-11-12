@@ -59,6 +59,7 @@ export default function SignUpPage() {
           if (role === 'athlete') {
             const athleteRef = doc(firestore, 'athletes', user.uid);
             const athleteData = {
+              id: user.uid,
               userId: user.uid,
               dateOfBirth: '', // You can add a field for this
             };
@@ -66,6 +67,7 @@ export default function SignUpPage() {
           } else if (role === 'parent') {
             const parentRef = doc(firestore, 'parents', user.uid);
             const parentData = {
+              id: user.uid,
               userId: user.uid,
               athleteUserIds: [], // To be populated later
             };
@@ -85,7 +87,7 @@ export default function SignUpPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30">
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Регистрация</CardTitle>
           <CardDescription>
@@ -141,17 +143,25 @@ export default function SignUpPage() {
               <Label>Роль</Label>
               <RadioGroup
                 defaultValue="athlete"
-                className="flex gap-4"
+                className="grid grid-cols-2 gap-4"
                 onValueChange={setRole}
                 value={role}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="athlete" id="r1" />
-                  <Label htmlFor="r1">Спортсмен</Label>
+                  <Label htmlFor="r1" className="font-normal">Спортсмен</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="parent" id="r2" />
-                  <Label htmlFor="r2">Родитель</Label>
+                  <Label htmlFor="r2" className="font-normal">Родитель</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="coach" id="r3" />
+                  <Label htmlFor="r3" className="font-normal">Тренер</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="admin" id="r4" />
+                  <Label htmlFor="r4" className="font-normal">Админ</Label>
                 </div>
               </RadioGroup>
             </div>

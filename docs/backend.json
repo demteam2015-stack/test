@@ -17,8 +17,13 @@
         },
         "role": {
           "type": "string",
-          "description": "The role of the user (athlete, coach, parent, administrator).",
-          "format": "string"
+          "description": "The role of the user.",
+          "enum": [
+            "athlete",
+            "coach",
+            "parent",
+            "admin"
+          ]
         },
         "firstName": {
           "type": "string",
