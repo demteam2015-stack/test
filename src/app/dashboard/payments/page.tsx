@@ -24,6 +24,7 @@ import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { getPayments, updatePayment, type Payment } from '@/lib/payments-api';
+import { getConfigValue, setConfigValue } from '@/lib/config-api';
 import {
   Dialog,
   DialogContent,
@@ -42,7 +43,63 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
-const COACH_PHONE_NUMBER = '+380 XX XXX-XX-XX'; // Placeholder
+const REQUISITES_KEY = 'payment_requisites';
+const DEFAULT_REQUISITES = '+380 XX XXX-XX-XX';
+
+const RequisitesForm = ({ onUpdate, currentRequisites }: { onUpdate: (newRequisites: string) => void, currentRequisites: string }) => {
+    const { toast } = useToast();
+    const [isSaving, setIsSaving] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [requisites, setRequisites] = useState(currentRequisites);
+    
+    useEffect(() => {
+        setRequisites(currentRequisites);
+    }, [currentRequisites, isModalOpen]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSaving(true);
+        setConfigValue(REQUISITES_KEY, requisites);
+        onUpdate(requisites);
+        setIsSaving(false);
+        setIsModalOpen(false);
+        toast({ title: 'Реквизиты обновлены' });
+    };
+
+    return (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <Edit className="h-4 w-4" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                 <form onSubmit={handleSubmit}>
+                    <DialogHeader>
+                        <DialogTitle>Редактировать реквизиты</DialogTitle>
+                        <DialogDescription>
+                           Обновите информацию, которая будет отображаться для оплаты.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                         <div className="grid gap-2">
+                            <Label htmlFor="requisites">Реквизиты (номер телефона, карты и т.д.)</Label>
+                            <Input id="requisites" value={requisites} onChange={(e) => setRequisites(e.target.value)} required disabled={isSaving} />
+                        </div>
+                    </div>
+                     <DialogFooter>
+                        <DialogClose asChild><Button type="button" variant="outline" disabled={isSaving}>Отмена</Button></DialogClose>
+                        <Button type="submit" disabled={isSaving}>
+                            {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                            Сохранить
+                        </Button>
+                    </DialogFooter>
+                 </form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 
 const PaymentForm = ({ onPaymentUpdated, paymentToEdit, children }: { onPaymentUpdated: () => void, paymentToEdit: Payment, children: React.ReactNode }) => {
     const { toast } = useToast();
@@ -164,6 +221,9 @@ export default function PaymentsPage() {
   const [suggestedAmount, setSuggestedAmount] = useState('1000.00');
   const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [paymentRequisites, setPaymentRequisites] = useState(DEFAULT_REQUISITES);
+
+  const isManager = user?.role === 'admin' || user?.role === 'coach';
 
   const fetchPayments = useCallback(async () => {
     setIsLoading(true);
@@ -172,9 +232,14 @@ export default function PaymentsPage() {
     setIsLoading(false);
   }, []);
 
+  const fetchConfig = useCallback(() => {
+    setPaymentRequisites(getConfigValue(REQUISITES_KEY, DEFAULT_REQUISITES));
+  }, []);
+
   useEffect(() => {
     fetchPayments();
-  }, [fetchPayments]);
+    fetchConfig();
+  }, [fetchPayments, fetchConfig]);
 
   const generateSuggestedAmount = () => {
     const randomCents = Math.floor(Math.random() * 99) + 1;
@@ -187,11 +252,11 @@ export default function PaymentsPage() {
     generateSuggestedAmount();
   }, []);
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(suggestedAmount);
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
     toast({
       title: 'Скопировано!',
-      description: `Сумма ${suggestedAmount} руб. скопирована в буфер обмена.`,
+      description: `"${text}" скопировано в буфер обмена.`,
     });
   };
 
@@ -246,7 +311,7 @@ export default function PaymentsPage() {
                     <TableRow key={payment.id}>
                       <TableCell className="font-medium">{payment.invoice}</TableCell>
                       <TableCell>{formatDate(payment.date)}</TableCell>
-                      <TableCell>{payment.amount}</TableCell>
+                      <TableCell>{payment.amount} руб.</TableCell>
                       <TableCell>
                         <Badge variant={statusBadgeVariant(payment.status)} className={payment.status === 'Оплачено' ? 'text-green-600 bg-green-100 dark:text-green-300 dark:bg-green-900/50' : ''}>
                             {payment.status}
@@ -316,19 +381,27 @@ export default function PaymentsPage() {
             <CardHeader>
                 <CardTitle>Оплата абонемента</CardTitle>
                 <CardDescription>
-                    Чтобы оплатить или продлить абонемент, выполните перевод по номеру телефона тренера. Для быстрой идентификации вашего платежа, пожалуйста, используйте сгенерированную ниже сумму.
+                    Чтобы оплатить или продлить абонемент, выполните перевод по указанным реквизитам. Для быстрой идентификации вашего платежа, пожалуйста, используйте сгенерированную ниже сумму.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div>
-                    <Label>Номер телефона для перевода</Label>
-                    <p className="text-lg font-semibold">{COACH_PHONE_NUMBER}</p>
+                    <div className="flex items-center gap-2">
+                        <Label>Реквизиты для перевода</Label>
+                        {isManager && <RequisitesForm onUpdate={setPaymentRequisites} currentRequisites={paymentRequisites} />}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                        <p className="text-lg font-semibold">{paymentRequisites}</p>
+                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(paymentRequisites)} aria-label="Скопировать реквизиты">
+                            <Copy className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
                 <div>
                     <Label>Рекомендуемая сумма для перевода</Label>
                     <div className="flex items-center gap-2 mt-1">
                         <p className="text-2xl font-bold text-primary tabular-nums">{suggestedAmount} руб.</p>
-                        <Button variant="outline" size="icon" onClick={copyToClipboard} aria-label="Скопировать сумму">
+                        <Button variant="outline" size="icon" onClick={() => copyToClipboard(suggestedAmount)} aria-label="Скопировать сумму">
                             <Copy className="h-4 w-4" />
                         </Button>
                         <Button variant="outline" size="icon" onClick={generateSuggestedAmount} aria-label="Сгенерировать новую сумму">
@@ -356,7 +429,16 @@ export default function PaymentsPage() {
         </p>
       </div>
       
-      {user?.role === 'admin' || user?.role === 'coach' ? renderAdminOrCoachView() : renderParentAthleteView()}
+      {isManager ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div className="lg:col-span-2">
+                {renderAdminOrCoachView()}
+            </div>
+            <div className="lg:col-span-1">
+                {renderParentAthleteView()}
+            </div>
+        </div>
+      ) : renderParentAthleteView()}
 
     </div>
   );

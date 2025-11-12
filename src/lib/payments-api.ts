@@ -1,11 +1,26 @@
 'use client';
 
-import { paymentHistoryData as initialPayments } from './data';
-import type { Payment } from './data';
+// This is a mock API. In a real application, this would be a call to a backend service.
+// For now, we'll use localStorage to simulate a database.
 
-export type { Payment };
+const PAYMENTS_STORAGE_KEY = 'demyanenko_hub_payments_v2';
 
-const PAYMENTS_STORAGE_KEY = 'demyanenko_hub_payments';
+export interface Payment {
+    id: string;
+    invoice: string;
+    date: string; // ISO string
+    amount: string; // Keep as string to include currency, e.g., "1000.00 руб."
+    status: "Оплачено" | "В ожидании" | "Не удалось";
+}
+
+const createInitialPayments = (): Payment[] => {
+  return [
+    { id: 'pay1', invoice: 'INV-001', date: new Date(new Date().setMonth(new Date().getMonth() -1)).toISOString(), amount: '1000.00', status: 'Оплачено'},
+    { id: 'pay2', invoice: 'INV-002', date: new Date(new Date().setMonth(new Date().getMonth() -2)).toISOString(), amount: '1000.00', status: 'Оплачено'},
+    { id: 'pay3', invoice: 'INV-003', date: new Date(new Date().setMonth(new Date().getMonth() -3)).toISOString(), amount: '500.00', status: 'Оплачено'},
+  ];
+};
+
 
 // --- Helper Functions ---
 
@@ -16,8 +31,9 @@ const getPaymentsFromStorage = (): Payment[] => {
         if (storedData) {
             return JSON.parse(storedData);
         }
-        // If no data, initialize with defaults from data.ts
-        localStorage.setItem(PAYMENTS_STORAGE_KEY, JSON.stringify(initialPayments));
+        // If no data, initialize with defaults
+        const initialPayments = createInitialPayments();
+        savePaymentsToStorage(initialPayments);
         return initialPayments;
     } catch (e) {
         console.error("Failed to read payments:", e);
