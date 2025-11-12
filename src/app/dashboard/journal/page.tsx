@@ -42,8 +42,16 @@ function AttendanceForm({ event, athletes, initialData, onSave }: { event: Train
     onSave(records);
   };
   
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('');
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${lastName[0]}${firstName[0]}`;
+  }
+  
+  const formatDateOfBirth = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   }
 
   return (
@@ -57,10 +65,13 @@ function AttendanceForm({ event, athletes, initialData, onSave }: { event: Train
           <div key={athlete.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
             <div className='flex items-center gap-3'>
               <Avatar>
-                  <AvatarImage src={athlete.photoURL} alt={athlete.name}/>
-                  <AvatarFallback>{getInitials(athlete.name)}</AvatarFallback>
+                  <AvatarImage src={athlete.photoURL} alt={`${athlete.lastName} ${athlete.firstName}`}/>
+                  <AvatarFallback>{getInitials(athlete.firstName, athlete.lastName)}</AvatarFallback>
               </Avatar>
-              <span className="font-medium">{athlete.name}</span>
+              <div>
+                <p className="font-medium">{`${athlete.lastName} ${athlete.firstName} ${athlete.middleName}`}</p>
+                <p className="text-sm text-muted-foreground">{formatDateOfBirth(athlete.dateOfBirth)}</p>
+              </div>
             </div>
             <RadioGroup
               defaultValue={attendance[athlete.id] || 'present'}

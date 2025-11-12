@@ -69,17 +69,20 @@ export const competitionsData: Competition[] = [
 // --- TEAM MEMBERS DATA ---
 export interface Athlete {
     id: string;
-    name: string;
+    lastName: string;
+    firstName: string;
+    middleName: string;
+    dateOfBirth: string; // ISO string
     photoURL: string;
 }
 
 export const teamMembersData: Athlete[] = [
-    { id: 'athlete-1', name: 'Олена Демьяненко', photoURL: 'https://i.pravatar.cc/150?u=athlete-1' },
-    { id: 'athlete-2', name: 'Андрей Шевченко', photoURL: 'https://i.pravatar.cc/150?u=athlete-2' },
-    { id: 'athlete-3', name: 'Яна Клочкова', photoURL: 'https://i.pravatar.cc/150?u=athlete-3' },
-    { id: 'athlete-4', name: 'Василий Ломаченко', photoURL: 'https://i.pravatar.cc/150?u=athlete-4' },
-    { id: 'athlete-5', name: 'Сергей Бубка', photoURL: 'https://i.pravatar.cc/150?u=athlete-5' },
-    { id: 'athlete-6', name: 'Элина Свитолина', photoURL: 'https://i.pravatar.cc/150?u=athlete-6' },
+    { id: 'athlete-1', lastName: 'Демьяненко', firstName: 'Олена', middleName: 'Викторовна', dateOfBirth: '1985-05-15', photoURL: 'https://i.pravatar.cc/150?u=athlete-1' },
+    { id: 'athlete-2', lastName: 'Шевченко', firstName: 'Андрей', middleName: 'Николаевич', dateOfBirth: '1976-09-29', photoURL: 'https://i.pravatar.cc/150?u=athlete-2' },
+    { id: 'athlete-3', lastName: 'Клочкова', firstName: 'Яна', middleName: 'Александровна', dateOfBirth: '1982-08-07', photoURL: 'https://i.pravatar.cc/150?u=athlete-3' },
+    { id: 'athlete-4', lastName: 'Ломаченко', firstName: 'Василий', middleName: 'Анатольевич', dateOfBirth: '1988-02-17', photoURL: 'https://i.pravatar.cc/150?u=athlete-4' },
+    { id: 'athlete-5', lastName: 'Бубка', firstName: 'Сергей', middleName: 'Назарович', dateOfBirth: '1963-12-04', photoURL: 'https://i.pravatar.cc/150?u=athlete-5' },
+    { id: 'athlete-6', lastName: 'Свитолина', firstName: 'Элина', middleName: 'Михайловна', dateOfBirth: '1994-09-12', photoURL: 'https://i.pravatar.cc/150?u=athlete-6' },
 ];
 
 
