@@ -41,7 +41,7 @@ const deriveKey = async (password: string, salt: ArrayBuffer, usage: KeyUsage[])
         {
             name: 'PBKDF2',
             salt: salt,
-            iterations: 100000,
+            iterations: 300000,
             hash: 'SHA-256'
         },
         baseKey,
@@ -304,3 +304,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
+    
