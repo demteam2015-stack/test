@@ -20,7 +20,7 @@ import { useState, type FormEvent } from "react";
 export default function SignupPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
@@ -32,7 +32,7 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      await signup({ firstName, lastName, email, password });
+      await signup({ firstName, lastName, username, password });
       toast({
         title: "Регистрация прошла успешно",
         description: "Теперь вы можете войти в систему.",
@@ -71,14 +71,14 @@ export default function SignupPage() {
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Имя пользователя (логин)</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
+                id="username"
+                type="text"
+                placeholder="например, ivan_ivanov"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 disabled={isLoading}
               />
             </div>

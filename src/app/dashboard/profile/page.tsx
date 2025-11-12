@@ -23,6 +23,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    email: '',
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -31,6 +32,7 @@ export default function ProfilePage() {
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
+        email: user.email || '',
       });
     }
   }, [user]);
@@ -108,15 +110,26 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
+             <div className="space-y-2">
+              <Label htmlFor="username">Имя пользователя (логин)</Label>
+              <Input
+                id="username"
+                name="username"
+                value={user.username || ''}
+                disabled
+                aria-readonly
+              />
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email (необязательно)</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                value={user.email || ''}
-                disabled
-                aria-readonly
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="Ваш контактный email"
+                disabled={isSaving}
               />
             </div>
             <div className="space-y-2">
