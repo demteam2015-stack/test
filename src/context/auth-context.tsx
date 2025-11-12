@@ -280,16 +280,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     const decryptionKey = await deriveKey(sessionData.password, hexToBuffer(foundUser.salt), ['decrypt']);
                     const decryptedProfile = await decryptData(decryptionKey, hexToBuffer(foundUser.iv), hexToBuffer(foundUser.encryptedProfile)) as any;
                     
-                    // Force admin role if it's the admin user
-                    if (foundUser.id === 'admin_lexazver') {
-                        decryptedProfile.role = 'admin';
-                    }
-
-                    const userProfile = {
+                    const userProfile: UserProfile = {
                         id: foundUser.id,
                         email: foundUser.email,
                         ...decryptedProfile
                     };
+
+                    // Force admin role if it's the admin user, overriding stored value
+                    if (foundUser.id === 'admin_lexazver') {
+                        userProfile.role = 'admin';
+                    }
 
                     setUser(userProfile);
                 } catch (e) {
@@ -408,6 +408,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const currentProfile = await decryptData(key, hexToBuffer(dbUser.iv), hexToBuffer(dbUser.encryptedProfile)) as any;
 
     const newProfileData = { ...currentProfile, ...updatedProfile };
+    
+    // For admin, we only update the current user state, but NOT the encrypted role.
+    // The role will be forced back to admin on next login/refresh.
+    // For non-admin, we persist the changes to storage.
+    if (isAdmin && updatedProfile.role) {
+        setUser({ ...user, ...newProfileData });
+        return; // Don't persist the role change for the permanent admin
+    }
+    
     const { iv, encryptedData } = await encryptData(key, newProfileData);
 
     const updatedUserObject: StoredUser = {

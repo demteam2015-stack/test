@@ -58,7 +58,10 @@ export function UserNav() {
       if (isAdmin) {
           updateUser({ role: newRole });
           // Force a refresh to ensure all components re-evaluate the role
-          window.location.reload();
+          // Note: a full reload might not be ideal in a complex app, but for this
+          // simulation, it's the simplest way to ensure all contexts and components
+          // get the new role. A more advanced solution might use a global state manager.
+          setTimeout(() => window.location.reload(), 100);
       }
   }
 
