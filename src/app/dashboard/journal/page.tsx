@@ -20,8 +20,10 @@ import Link from 'next/link';
 import { getAthletes, type Athlete } from '@/lib/athletes-api';
 import { saveAttendance, getAttendanceForDay, type AttendanceStatus } from '@/lib/journal-api';
 
+const TRAINING_COST = 100; // Стоимость одной тренировки для списания
+
 export default function JournalPage() {
-  const { user } = useAuth();
+  const { user, deductFromBalance } = useAuth();
   const { toast } = useToast();
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +33,7 @@ export default function JournalPage() {
   const journalEventId = 'general_attendance';
 
   const [attendance, setAttendance] = useState<{[athleteId: string]: AttendanceStatus}>({});
+  const [initialAttendance, setInitialAttendance] = useState<{[athleteId: string]: AttendanceStatus}>({});
 
   const canManage = user?.role === 'admin' || user?.role === 'coach';
 
@@ -41,15 +44,17 @@ export default function JournalPage() {
     
     if (athletesData.length > 0) {
       const savedAttendance = await getAttendanceForDay(journalDateKey);
+      let currentAttendance: {[athleteId: string]: AttendanceStatus} = {};
+      
       if (savedAttendance && savedAttendance[journalEventId]) {
-        setAttendance(savedAttendance[journalEventId]);
+        currentAttendance = savedAttendance[journalEventId];
       } else {
-        const defaultAttendance: {[athleteId: string]: AttendanceStatus} = {};
         athletesData.forEach(a => {
-            defaultAttendance[a.id] = 'present';
+            currentAttendance[a.id] = 'present';
         });
-        setAttendance(defaultAttendance);
       }
+      setAttendance(currentAttendance);
+      setInitialAttendance(JSON.parse(JSON.stringify(currentAttendance))); // Deep copy for comparison
     }
     
     setIsLoading(false);
@@ -78,10 +83,28 @@ export default function JournalPage() {
 
     await saveAttendance(journalDateKey, journalEventId, records);
     
+    // --- Logic for balance deduction ---
+    const deductionPromises: Promise<any>[] = [];
+    for (const athleteId in attendance) {
+      const newStatus = attendance[athleteId];
+      const oldStatus = initialAttendance[athleteId];
+      
+      // Deduct if athlete was marked present, and they weren't present before
+      if (newStatus === 'present' && oldStatus !== 'present') {
+        const athlete = athletes.find(a => a.id === athleteId);
+        if (athlete?.parentId) {
+            deductionPromises.push(deductFromBalance(athlete.parentId, TRAINING_COST, `Списание за тренировку ${athlete.firstName} ${athlete.lastName}`));
+        }
+      }
+    }
+    
+    await Promise.all(deductionPromises);
+
+    setInitialAttendance(JSON.parse(JSON.stringify(attendance))); // Update initial state
     setIsSaving(false);
     toast({
         title: "Журнал сохранен",
-        description: `Данные о посещаемости за ${journalDateKey} обновлены.`
+        description: `Данные о посещаемости за ${journalDateKey} обновлены. Баланс родителей скорректирован.`
     });
   }
   

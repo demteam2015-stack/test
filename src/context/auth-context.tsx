@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { UserProfile as BaseUserProfile } from '@/lib/data';
+import { addPayment, type Payment } from '@/lib/payments-api';
 
 // --- Local Storage "Database" ---
 const USERS_EMAIL_INDEX_PREFIX = 'user_email_';
@@ -245,6 +246,7 @@ type AuthContextType = {
   adminResetPassword: (email: string, newPassword: string) => Promise<string>;
   getUserByEmail: (email: string) => Promise<UserProfile | null>;
   updateUserBalance: (userId: string, amount: number) => Promise<void>;
+  deductFromBalance: (parentEmail: string, amount: number, description: string) => Promise<void>;
   adminGetUserProfile: (userId: string) => Promise<UserProfile | null>;
 };
 
@@ -289,9 +291,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     // On initial load, if it's the admin, ensure the role is 'admin' for the state
                     if (userProfile.id === 'admin_lexazver') {
                         setIsAdmin(true);
-                        // If the decrypted role is not admin (from a previous temporary switch),
-                        // but we know this is the admin user, we honor the role from the decrypted profile
-                        // to persist the emulated role across page reloads.
+                         if (userProfile.role !== 'admin' && localStorage.getItem(ADMIN_PERMAROLE_KEY) === 'true') {
+                           // This condition ensures that if the admin was emulating a role,
+                           // on full refresh they are still an admin. But we keep the emulated role in the user object.
+                         } else {
+                           userProfile.role = 'admin';
+                         }
                     }
 
                     setUser(userProfile);
@@ -530,6 +535,59 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Could not update user balance due to an internal error.");
     }
   }
+  
+  const deductFromBalance = async (parentEmail: string, amount: number, description: string) => {
+    const parentUser = getStoredUserByEmail(parentEmail);
+    if (!parentUser) {
+        console.warn(`Deduction failed: Parent with email ${parentEmail} not found.`);
+        return;
+    }
+
+    // Since this is a critical financial operation, only an admin can perform it.
+    // We use the same override mechanism as updating the balance.
+    if (!isAdmin) {
+        console.error("Deduction failed: Only admins can deduct from balance.");
+        return;
+    }
+    
+    const adminKeyPassword = "admin_override";
+    const salt = hexToBuffer(parentUser.salt);
+    
+    try {
+        const key = await deriveKey(adminKeyPassword, salt, ['decrypt', 'encrypt']);
+        let profile: any;
+        try {
+            profile = await decryptData(key, hexToBuffer(parentUser.iv), hexToBuffer(parentUser.encryptedProfile));
+        } catch(e) {
+            console.error(`Failed to decrypt profile for ${parentEmail} to deduct balance.`, e);
+            return;
+        }
+
+        const newBalance = (profile.balance || 0) - amount;
+        profile.balance = newBalance;
+
+        const { iv, encryptedData } = await encryptData(key, profile);
+        const updatedUserObject: StoredUser = { ...parentUser, iv, encryptedProfile: encryptedData };
+        setStoredUser(updatedUserObject);
+
+        // Add a corresponding payment record to log the transaction
+        const paymentRecord: Omit<Payment, 'id'> = {
+            invoice: `DEDUCT-${Date.now()}`,
+            date: new Date().toISOString(),
+            amount: `-${amount.toFixed(2)}`,
+            status: 'Оплачено', // 'Оплачено' here means the deduction was successfully processed
+        };
+        await addPayment(paymentRecord);
+
+        // If the parent is the currently logged-in user, update their state
+        if (user && user.id === parentUser.id) {
+            setUser(prev => prev ? {...prev, balance: newBalance} : null);
+        }
+
+    } catch (e) {
+        console.error(`CRITICAL: Failed to deduct balance for ${parentEmail}.`, e);
+    }
+  }
 
   const adminResetPassword = async (email: string, newPassword: string): Promise<string> => {
     const oldUser = getStoredUserByEmail(email);
@@ -587,7 +645,7 @@ Email: ${newUser.email}
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, login, signup, logout, updateUser, checkUserExists, adminResetPassword, getUserByEmail, updateUserBalance, adminGetUserProfile }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, login, signup, logout, updateUser, checkUserExists, adminResetPassword, getUserByEmail, updateUserBalance, deductFromBalance, adminGetUserProfile }}>
       {children}
     </AuthContext.Provider>
   );
