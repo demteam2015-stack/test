@@ -10,6 +10,7 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   photoURL?: string;
+  age?: number;
 }
 
 // This is now a default/template user, not the logged in user.

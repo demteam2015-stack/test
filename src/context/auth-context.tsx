@@ -325,6 +325,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         username: profileData.username,
         firstName: profileData.firstName,
         lastName: profileData.lastName,
+        age: profileData.age,
         role: 'athlete', // Default role
         photoURL: `https://i.pravatar.cc/150?u=${profileData.username}`
     };

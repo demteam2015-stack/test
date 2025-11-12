@@ -23,6 +23,7 @@ export default function SignupPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [age, setAge] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      await signup({ firstName, lastName, username, email, password });
+      await signup({ firstName, lastName, username, email, password, age: Number(age) });
       toast({
         title: "Регистрация прошла успешно",
         description: "Теперь вы можете войти в систему.",
@@ -83,17 +84,30 @@ export default function SignupPage() {
                 disabled={isLoading}
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="username">Имя пользователя (логин)</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="например, ivan_ivanov"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                disabled={isLoading}
-              />
+            <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                <Label htmlFor="username">Имя пользователя (логин)</Label>
+                <Input
+                    id="username"
+                    type="text"
+                    placeholder="ivan_ivanov"
+                    required
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    disabled={isLoading}
+                />
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="age">Возраст</Label>
+                    <Input
+                        id="age"
+                        type="number"
+                        placeholder="25"
+                        value={age}
+                        onChange={(e) => setAge(e.target.value)}
+                        disabled={isLoading}
+                    />
+                </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Пароль</Label>
