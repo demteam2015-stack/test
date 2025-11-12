@@ -47,6 +47,107 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { startOfDay } from 'date-fns';
 
+const BulkEventForm = ({ selectedDates, onEventsCreated }: { selectedDates: Date[], onEventsCreated: () => void }) => {
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [isSaving, setIsSaving] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const [title, setTitle] = useState('Тренировка');
+    const [startTime, setStartTime] = useState('18:00');
+    const [endTime, setEndTime] = useState('20:00');
+    const [location, setLocation] = useState('Стадион "Олимпийский"');
+    const [notes, setNotes] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user || !startTime || !endTime || !title || !location || selectedDates.length === 0) {
+            toast({ variant: 'destructive', title: 'Ошибка', description: 'Пожалуйста, заполните все обязательные поля и выберите хотя бы одну дату.' });
+            return;
+        }
+
+        setIsSaving(true);
+        
+        const eventPromises = selectedDates.map(date => {
+            const eventData = {
+                title,
+                date: date.toISOString(),
+                startTime,
+                endTime,
+                location,
+                notes,
+                createdBy: user.username,
+            };
+            return createEvent(eventData);
+        });
+
+        await Promise.all(eventPromises);
+        
+        toast({ title: "События созданы", description: `Добавлено ${selectedDates.length} событий в расписание.` });
+
+        setIsSaving(false);
+        setIsModalOpen(false);
+        onEventsCreated(); // Callback to refetch events and clear selection
+    };
+    
+    const handleOpenChange = (open: boolean) => {
+        setIsModalOpen(open);
+    }
+    
+    return (
+        <Dialog open={isModalOpen} onOpenChange={handleOpenChange}>
+            <DialogTrigger asChild>
+                <Button disabled={selectedDates.length === 0}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Добавить расписание ({selectedDates.length})
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <form onSubmit={handleSubmit}>
+                    <DialogHeader>
+                        <DialogTitle>Новое расписание</DialogTitle>
+                        <DialogDescription>
+                           Заполните детали. События будут созданы для всех {selectedDates.length} выбранных дат.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="title">Название</Label>
+                            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required disabled={isSaving} />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="start-time">Начало</Label>
+                                <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} required disabled={isSaving} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="end-time">Окончание</Label>
+                                <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} required disabled={isSaving} />
+                            </div>
+                        </div>
+                         <div className="grid gap-2">
+                            <Label htmlFor="location">Место</Label>
+                            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} required disabled={isSaving} />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="notes">Заметки</Label>
+                            <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} disabled={isSaving} placeholder="Дополнительная информация (необязательно)"/>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild><Button type="button" variant="outline" disabled={isSaving}>Отмена</Button></DialogClose>
+                        <Button type="submit" disabled={isSaving || selectedDates.length === 0}>
+                            {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                            Создать
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+
 const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCreated: (event: TrainingEvent) => void, eventToEdit: TrainingEvent | null, onEventUpdated: (event: TrainingEvent) => void }) => {
     const { user } = useAuth();
     const { toast } = useToast();
@@ -122,14 +223,9 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
         setIsModalOpen(open);
     }
     
-    const TriggerButton = isEditMode ? (
+    const TriggerButton = (
          <Button variant="ghost" size="icon" className="h-8 w-8">
             <Edit className="h-4 w-4" />
-        </Button>
-    ) : (
-         <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Добавить тренировку
         </Button>
     );
 
@@ -139,9 +235,9 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>{isEditMode ? 'Редактировать тренировку' : 'Новая тренировка'}</DialogTitle>
+                        <DialogTitle>Редактировать тренировку</DialogTitle>
                         <DialogDescription>
-                           {isEditMode ? 'Измените детали и сохраните.' : 'Заполните детали новой тренировки.'}
+                           Измените детали и сохраните.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -199,7 +295,7 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
                         <DialogClose asChild><Button type="button" variant="outline" disabled={isSaving}>Отмена</Button></DialogClose>
                         <Button type="submit" disabled={isSaving}>
                             {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEditMode ? 'Сохранить' : 'Создать'}
+                            Сохранить
                         </Button>
                     </DialogFooter>
                 </form>
@@ -210,7 +306,8 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
 
 export default function SchedulePage() {
   const { user } = useAuth();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [viewDate, setViewDate] = useState<Date>(new Date());
+  const [selectedDates, setSelectedDates] = useState<Date[] | undefined>([]);
   const [allEvents, setAllEvents] = useState<TrainingEvent[]>([]);
   const [isClient, setIsClient] = useState(false);
 
@@ -226,18 +323,19 @@ export default function SchedulePage() {
   }, []);
 
   const dailyEvents = useMemo(() => {
-    const dayStart = startOfDay(selectedDate);
+    const dayStart = startOfDay(viewDate);
     return allEvents
         .filter(event => startOfDay(new Date(event.date)).getTime() === dayStart.getTime())
         .sort((a,b) => a.startTime.localeCompare(b.startTime));
-  }, [selectedDate, allEvents]);
+  }, [viewDate, allEvents]);
   
   const eventDays = useMemo(() => {
       return allEvents.map(e => new Date(e.date));
   }, [allEvents]);
 
-  const handleEventChange = () => {
+  const handleEventsChange = () => {
       fetchEvents();
+      setSelectedDates([]);
   }
   
   const handleDelete = async (eventId: string) => {
@@ -263,18 +361,20 @@ export default function SchedulePage() {
                     Расписание
                 </h1>
                 <p className="text-muted-foreground">
-                    Просмотр и управление вашим расписанием.
+                    {canManage ? 'Выберите дни в календаре и добавьте расписание.' : 'Просматривайте расписание тренировок.'}
                 </p>
             </div>
-            {canManage && <EventForm onEventCreated={handleEventChange} eventToEdit={null} onEventUpdated={handleEventChange}/>}
+            {canManage && <BulkEventForm selectedDates={selectedDates || []} onEventsCreated={handleEventsChange}/>}
         </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-1">
              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
+                mode="multiple"
+                min={1}
+                selected={selectedDates}
+                onSelect={canManage ? setSelectedDates : undefined}
+                onDayClick={(day) => setViewDate(day)}
                 className="rounded-md border"
                 modifiers={{
                     events: eventDays,
@@ -288,7 +388,7 @@ export default function SchedulePage() {
         <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle>
-                    События на {format(selectedDate, 'd MMMM yyyy', { locale: ru })}
+                    События на {format(viewDate, 'd MMMM yyyy', { locale: ru })}
                 </CardTitle>
             </CardHeader>
             <CardContent className="h-[500px] overflow-y-auto">
@@ -301,7 +401,7 @@ export default function SchedulePage() {
                                         <CardTitle className="text-lg">{event.title}</CardTitle>
                                         {canManage && (
                                             <div className="flex items-center gap-1">
-                                                <EventForm onEventCreated={handleEventChange} eventToEdit={event} onEventUpdated={handleEventChange} />
+                                                <EventForm onEventCreated={handleEventsChange} eventToEdit={event} onEventUpdated={handleEventsChange} />
                                                  <AlertDialog>
                                                     <AlertDialogTrigger asChild>
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
