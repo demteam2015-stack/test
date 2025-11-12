@@ -140,7 +140,7 @@ const setStoredUser = (user: StoredUser) => {
     }
 
     if (user.id) {
-        const idKey = `${USERS_ID_INDEX_PREFIX}${id}`;
+        const idKey = `${USERS_ID_INDEX_PREFIX}${user.id}`;
         localStorage.setItem(idKey, JSON.stringify(user));
     }
 };
@@ -159,7 +159,7 @@ const deleteStoredUser = (user: StoredUser) => {
     }
 
     if (user.id) {
-        const idKey = `${USERS_ID_INDEX_PREFIX}${id}`;
+        const idKey = `${USERS_ID_INDEX_PREFIX}${user.id}`;
         localStorage.removeItem(idKey);
     }
 }
@@ -280,6 +280,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     const decryptionKey = await deriveKey(sessionData.password, hexToBuffer(foundUser.salt), ['decrypt']);
                     const decryptedProfile = await decryptData(decryptionKey, hexToBuffer(foundUser.iv), hexToBuffer(foundUser.encryptedProfile)) as any;
                     
+                    // Force admin role if it's the admin user
+                    if (foundUser.id === 'admin_lexazver') {
+                        decryptedProfile.role = 'admin';
+                    }
+
                     const userProfile = {
                         id: foundUser.id,
                         email: foundUser.email,
@@ -313,6 +318,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 email: foundUser.email,
                 ...profile
             };
+            
+            // Force admin role if it's the admin user
+            if (userProfile.id === 'admin_lexazver') {
+                userProfile.role = 'admin';
+            }
+
             setUser(userProfile);
             
             if (userProfile.id === 'admin_lexazver') {
