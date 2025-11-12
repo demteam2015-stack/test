@@ -49,14 +49,14 @@ export const createEvent = (eventData: Omit<TrainingEvent, 'id'>): Promise<Train
             const events = getEvents();
             const newEvent: TrainingEvent = {
                 ...eventData,
-                id: `event_${Date.now()}_${Math.random()}`,
+                id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             };
             
             events.push(newEvent);
             saveEvents(events);
             
             resolve(newEvent);
-        }, 500);
+        }, 0); // Removed timeout to make it faster
     });
 };
 
