@@ -4,8 +4,11 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import type { UserProfile } from '@/lib/data';
 
 // --- Local Storage "Database" ---
-const USERS_STORAGE_KEY = 'local_users_db_v2';
+const USERS_EMAIL_INDEX_PREFIX = 'user_email_';
+const USERS_USERNAME_INDEX_PREFIX = 'user_username_';
+const USERS_ID_INDEX_PREFIX = 'user_id_';
 const SESSION_STORAGE_KEY = 'local_user_session_v2';
+const MIGRATION_KEY = 'local_db_migrated_to_indexed_v1';
 
 
 // --- Crypto Helpers ---
@@ -95,46 +98,100 @@ type StoredUser = {
   encryptedProfile: string; // hex
 };
 
-// Function to initialize the database with an admin user if it's empty
-const initializeUsers = async () => {
+// --- New Indexed Storage Functions ---
+const getStoredUserByEmail = (email: string): StoredUser | null => {
+    if (typeof window === 'undefined') return null;
+    const key = `${USERS_EMAIL_INDEX_PREFIX}${email.toLowerCase()}`;
+    const userJson = localStorage.getItem(key);
+    return userJson ? JSON.parse(userJson) : null;
+};
+
+const getStoredUserByUsername = (username: string): StoredUser | null => {
+    if (typeof window === 'undefined') return null;
+    const key = `${USERS_USERNAME_INDEX_PREFIX}${username.toLowerCase()}`;
+    const userJson = localStorage.getItem(key);
+    return userJson ? JSON.parse(userJson) : null;
+};
+
+const getStoredUserById = (id: string): StoredUser | null => {
+    if (typeof window === 'undefined') return null;
+    const key = `${USERS_ID_INDEX_PREFIX}${id}`;
+    const userJson = localStorage.getItem(key);
+    return userJson ? JSON.parse(userJson) : null;
+};
+
+const setStoredUser = (user: StoredUser) => {
     if (typeof window === 'undefined') return;
-    const usersJson = localStorage.getItem(USERS_STORAGE_KEY);
-    if (!usersJson || JSON.parse(usersJson).length === 0) {
-        const salt = generateSalt();
-        const encryptionKey = await deriveKey('password', salt, ['encrypt']);
-        
-        const adminProfile = {
-            username: 'lexazver',
-            firstName: 'Lexa',
-            lastName: 'Zver',
-            role: 'admin',
-            photoURL: `https://i.pravatar.cc/150?u=admin_lexazver`
-        };
+    const emailKey = `${USERS_EMAIL_INDEX_PREFIX}${user.email.toLowerCase()}`;
+    const usernameKey = `${USERS_USERNAME_INDEX_PREFIX}${user.username.toLowerCase()}`;
+    const idKey = `${USERS_ID_INDEX_PREFIX}${user.id}`;
+    const userJson = JSON.stringify(user);
 
-        const { iv, encryptedData } = await encryptData(encryptionKey, adminProfile);
+    localStorage.setItem(emailKey, userJson);
+    localStorage.setItem(usernameKey, userJson);
+    localStorage.setItem(idKey, userJson);
+};
 
-        const adminUser: StoredUser = {
-            id: 'admin_lexazver',
-            email: 'lexazver@example.com',
-            username: 'lexazver',
-            salt: bufferToHex(salt),
-            iv: iv,
-            encryptedProfile: encryptedData,
-        };
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([adminUser]));
+
+// Function to migrate from old array-based storage to new indexed storage
+const runMigration = async () => {
+    if (typeof window === 'undefined') return;
+    const hasMigrated = localStorage.getItem(MIGRATION_KEY);
+    if (hasMigrated) return; // Don't run migration twice
+
+    const oldUsersKey = 'local_users_db_v2';
+    const usersJson = localStorage.getItem(oldUsersKey);
+
+    if (usersJson) {
+        try {
+            const users: StoredUser[] = JSON.parse(usersJson);
+            if (Array.isArray(users)) {
+                users.forEach(user => setStoredUser(user));
+                // Once migration is successful, we can remove the old key
+                localStorage.removeItem(oldUsersKey);
+            }
+        } catch (e) {
+            console.error("Failed to parse or migrate old user data:", e);
+        }
     }
+    
+    // Always mark as migrated to avoid re-running, even on failure.
+    localStorage.setItem(MIGRATION_KEY, 'true');
 };
 
-const getStoredUsers = (): StoredUser[] => {
-  if (typeof window === 'undefined') return [];
-  const usersJson = localStorage.getItem(USERS_STORAGE_KEY);
-  return usersJson ? JSON.parse(usersJson) : [];
+
+// Function to initialize the database with an admin user if it's empty
+const initializeAdminUser = async () => {
+    if (typeof window === 'undefined') return;
+    
+    // Check if admin already exists to avoid re-creation
+    if (getStoredUserByEmail('lexazver@example.com')) return;
+
+    const salt = generateSalt();
+    const encryptionKey = await deriveKey('password', salt, ['encrypt']);
+    
+    const adminProfile = {
+        username: 'lexazver',
+        firstName: 'Lexa',
+        lastName: 'Zver',
+        role: 'admin',
+        photoURL: `https://i.pravatar.cc/150?u=admin_lexazver`
+    };
+
+    const { iv, encryptedData } = await encryptData(encryptionKey, adminProfile);
+
+    const adminUser: StoredUser = {
+        id: 'admin_lexazver',
+        email: 'lexazver@example.com',
+        username: 'lexazver',
+        salt: bufferToHex(salt),
+        iv: iv,
+        encryptedProfile: encryptedData,
+    };
+    
+    setStoredUser(adminUser);
 };
 
-const setStoredUsers = (users: StoredUser[]) => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-};
 
 // --- Auth Context ---
 
@@ -155,19 +212,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const setup = async () => {
-        await initializeUsers();
+        await runMigration();
+        await initializeAdminUser();
+        
         // Check for a persisted session on initial load
         if (typeof window !== 'undefined') {
             const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
             if (sessionJson) {
                 try {
                     const sessionData = JSON.parse(sessionJson);
-                    const decryptionKey = await deriveKey(sessionData.password, hexToBuffer(sessionData.salt), ['decrypt']);
-                    const decryptedProfile = await decryptData(decryptionKey, hexToBuffer(sessionData.iv), hexToBuffer(sessionData.encryptedProfile)) as any;
+                    const foundUser = getStoredUserById(sessionData.id);
+                    if (!foundUser) {
+                        throw new Error("User from session not found in DB.");
+                    }
+                    
+                    const decryptionKey = await deriveKey(sessionData.password, hexToBuffer(foundUser.salt), ['decrypt']);
+                    const decryptedProfile = await decryptData(decryptionKey, hexToBuffer(foundUser.iv), hexToBuffer(foundUser.encryptedProfile)) as any;
                     
                     setUser({
-                        id: sessionData.id,
-                        email: sessionData.email,
+                        id: foundUser.id,
+                        email: foundUser.email,
                         ...decryptedProfile
                     });
 
@@ -183,8 +247,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
-    const users = getStoredUsers();
-    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const foundUser = getStoredUserByEmail(email);
 
     if (foundUser) {
         try {
@@ -199,14 +262,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             };
             setUser(userProfile);
             
-            // Store session data needed for re-hydration, including password for key derivation
+            // Store session data needed for re-hydration.
+            // Password in sessionStorage is a trade-off for this architecture.
             sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
                 id: foundUser.id,
-                email: foundUser.email,
-                password: password, // Storing password in sessionStorage is a necessary trade-off for this architecture
-                salt: foundUser.salt,
-                iv: foundUser.iv,
-                encryptedProfile: foundUser.encryptedProfile
+                password: password,
             }));
 
         } catch(e) {
@@ -218,11 +278,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (details: Omit<UserProfile, 'id' | 'role'> & { password: string }): Promise<void> => {
-    const users = getStoredUsers();
-    if (users.some(u => u.email.toLowerCase() === details.email.toLowerCase())) {
+    if (getStoredUserByEmail(details.email)) {
       throw new Error('Пользователь с таким email уже существует.');
     }
-    if (users.some(u => u.username.toLowerCase() === details.username.toLowerCase())) {
+    if (getStoredUserByUsername(details.username)) {
       throw new Error('Пользователь с таким именем уже существует.');
     }
     
@@ -236,7 +295,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         firstName: profileData.firstName,
         lastName: profileData.lastName,
         role: 'athlete', // Default role
-        photoURL: `https://i.pravatar.cc/150?u=user_${Date.now()}`
+        photoURL: `https://i.pravatar.cc/150?u=${profileData.username}`
     };
 
     const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
@@ -250,7 +309,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       encryptedProfile: encryptedData
     };
 
-    setStoredUsers([...users, newUser]);
+    setStoredUser(newUser);
   };
 
   const logout = () => {
@@ -268,13 +327,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     const { password } = JSON.parse(sessionJson);
 
-    const users = getStoredUsers();
-    const userIndex = users.findIndex(u => u.id === user.id);
-    if (userIndex === -1) {
+    const dbUser = getStoredUserById(user.id);
+    if (!dbUser) {
         throw new Error("User not found in database.");
     }
     
-    const dbUser = users[userIndex];
     const salt = hexToBuffer(dbUser.salt);
 
     // Decrypt existing profile
@@ -285,15 +342,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const newProfileData = { ...currentProfile, ...updatedProfile };
     const { iv, encryptedData } = await encryptData(key, newProfileData);
 
-    // Update localStorage
-    dbUser.iv = iv;
-    dbUser.encryptedProfile = encryptedData;
-    users[userIndex] = dbUser;
-    setStoredUsers(users);
-
-    // Update sessionStorage
-    const newSessionData = { ...JSON.parse(sessionJson), iv, encryptedProfile: encryptedData };
-    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(newSessionData));
+    // Create new user object with updated encrypted data
+    const updatedUserObject: StoredUser = {
+        ...dbUser,
+        iv,
+        encryptedProfile: encryptedData
+    };
+    
+    // Save the updated user object to all indexes
+    setStoredUser(updatedUserObject);
 
     // Update React state
     setUser({ ...user, ...newProfileData });
