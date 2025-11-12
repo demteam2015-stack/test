@@ -1,3 +1,6 @@
+
+'use client';
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -9,16 +12,76 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Clock, MapPin } from "lucide-react";
+import { useCollection, useFirestore } from "@/firebase";
+import { collection, query, where, orderBy } from "firebase/firestore";
+import { useMemo } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
-const events = [
-    { time: '09:00 - 11:00', title: 'Утренние упражнения', location: 'Главная арена', type: 'тренировка' },
-    { time: '13:00 - 14:00', title: 'Стратегическая сессия', location: 'Конференц-зал A', type: 'собрание' },
-    { time: '16:30 - 18:00', title: 'Силовая и кондиционная подготовка', location: 'Спортзал', type: 'тренировка' },
-]
+interface Event {
+    title: string;
+    status: 'Scheduled' | 'Completed';
+    date: string; // ISO string
+    location: string;
+    type: 'тренировка' | 'собрание';
+}
+
+const EventSkeleton = () => (
+    <li className="flex items-center space-x-4 p-4">
+        <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-24" />
+        </div>
+        <div>
+           <Skeleton className="h-6 w-20 rounded-full" />
+        </div>
+    </li>
+);
+
 
 export default function SchedulePage() {
+  const firestore = useFirestore();
+  
+  const todayStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString();
+  }, []);
+
+  const todayEnd = useMemo(() => {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d.toISOString();
+  }, []);
+
+
+  const eventsQuery = useMemo(() => {
+    if (!firestore) return null;
+    return query(
+        collection(firestore, 'events'),
+        where('date', '>=', todayStart),
+        where('date', '<=', todayEnd),
+        orderBy('date', 'asc')
+    );
+  }, [firestore, todayStart, todayEnd]);
+
+  const { data: events, isLoading, error } = useCollection<Event>(eventsQuery);
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+  }
+
+  const badgeVariants: { [key: string]: 'default' | 'secondary' } = {
+    'тренировка': 'default',
+    'собрание': 'secondary',
+  };
+
   return (
     <div className="grid gap-8 md:grid-cols-3">
       <div className="md:col-span-2 space-y-8">
@@ -28,29 +91,44 @@ export default function SchedulePage() {
         <Card className="overflow-hidden">
           <CardHeader>
             <CardTitle>Сегодняшние события</CardTitle>
-            <CardDescription>Вот запланированные на сегодня события. Вы посещаете 2 из 3.</CardDescription>
+            <CardDescription>
+                {isLoading ? 'Загрузка событий...' : `Вот запланированные на сегодня события. Всего: ${events?.length || 0}.`}
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
+            {error && <p className="text-destructive p-4">Ошибка загрузки расписания: {error.message}</p>}
             <div className="flow-root">
               <ul className="-my-4 divide-y divide-border">
-                {events.map(event => (
-                    <li key={event.title} className="flex items-center space-x-4 p-4">
-                        <div className="min-w-0 flex-1">
-                            <p className="truncate font-medium">{event.title}</p>
-                            <p className="truncate text-sm text-muted-foreground flex items-center gap-2">
-                                <Clock className="h-3 w-3" />
-                                {event.time}
-                            </p>
-                             <p className="truncate text-sm text-muted-foreground flex items-center gap-2">
-                                <MapPin className="h-3 w-3" />
-                                {event.location}
-                            </p>
-                        </div>
-                        <div>
-                           <Badge variant={event.type === 'тренировка' ? 'default' : 'secondary'}>{event.type}</Badge>
-                        </div>
+                {isLoading ? (
+                    <>
+                        <EventSkeleton />
+                        <EventSkeleton />
+                        <EventSkeleton />
+                    </>
+                ) : events && events.length > 0 ? (
+                    events.map(event => (
+                        <li key={event.id} className="flex items-center space-x-4 p-4">
+                            <div className="min-w-0 flex-1">
+                                <p className="truncate font-medium">{event.title}</p>
+                                <p className="truncate text-sm text-muted-foreground flex items-center gap-2">
+                                    <Clock className="h-3 w-3" />
+                                    {formatTime(event.date)}
+                                </p>
+                                 <p className="truncate text-sm text-muted-foreground flex items-center gap-2">
+                                    <MapPin className="h-3 w-3" />
+                                    {event.location || 'Не указано'}
+                                </p>
+                            </div>
+                            <div>
+                               <Badge variant={badgeVariants[event.type] || 'default'}>{event.type}</Badge>
+                            </div>
+                        </li>
+                    ))
+                ) : (
+                    <li className="p-4 text-center text-muted-foreground h-48 flex items-center justify-center">
+                        На сегодня событий не запланировано.
                     </li>
-                ))}
+                )}
               </ul>
             </div>
           </CardContent>
