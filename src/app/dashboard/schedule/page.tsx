@@ -9,7 +9,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { Calendar as CalendarIcon, PlusCircle, Clock, MapPin, Trash2, Edit } from "lucide-react";
+import { Calendar as CalendarIcon, PlusCircle, Clock, MapPin, Trash2, Edit, Dumbbell, Trophy, Users } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { useAuth } from '@/context/auth-context';
@@ -69,7 +69,7 @@ const BulkEventForm = ({ selectedDates, onEventsCreated }: { selectedDates: Date
         setIsSaving(true);
         
         const eventPromises = selectedDates.map(date => {
-            const eventData = {
+            const eventData: Omit<TrainingEvent, 'id'> = {
                 title,
                 date: date.toISOString(),
                 startTime,
@@ -77,6 +77,7 @@ const BulkEventForm = ({ selectedDates, onEventsCreated }: { selectedDates: Date
                 location,
                 notes,
                 createdBy: user.username,
+                type: 'training', // Default type for now
             };
             return createEvent(eventData);
         });
@@ -199,7 +200,7 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated, children }: { 
         }
 
         setIsSaving(true);
-        const eventData = {
+        const eventData: Omit<TrainingEvent, 'id'> = {
             title,
             date: date.toISOString(),
             startTime,
@@ -207,6 +208,7 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated, children }: { 
             location,
             notes,
             createdBy: user.username,
+            type: 'training', // default type
         };
 
         if(isEditMode && eventToEdit) {
@@ -348,6 +350,19 @@ export default function SchedulePage() {
       toast({ title: "Событие удалено" });
   }
 
+  const EventIcon = ({ type }: { type: TrainingEvent['type'] }) => {
+    switch (type) {
+      case 'training':
+        return <Dumbbell className="h-4 w-4 text-muted-foreground" />;
+      case 'competition':
+        return <Trophy className="h-4 w-4 text-muted-foreground" />;
+      case 'meeting':
+        return <Users className="h-4 w-4 text-muted-foreground" />;
+      default:
+        return <Dumbbell className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
+
   if (!isClient) {
       return (
         <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
@@ -402,7 +417,10 @@ export default function SchedulePage() {
                             <Card key={event.id}>
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-lg">{event.title}</CardTitle>
+                                        <div className="flex items-center gap-3">
+                                            <EventIcon type={event.type} />
+                                            <CardTitle className="text-lg">{event.title}</CardTitle>
+                                        </div>
                                         {canManage && (
                                             <div className="flex items-center gap-1">
                                                 <EventForm 
@@ -467,5 +485,3 @@ export default function SchedulePage() {
     </div>
   );
 }
-
-    

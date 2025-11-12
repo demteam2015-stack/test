@@ -13,6 +13,7 @@ export interface TrainingEvent {
     location: string;
     notes?: string;
     createdBy: string; // username
+    type: 'training' | 'competition' | 'meeting';
 }
 
 // --- Helper Functions ---
@@ -88,7 +89,7 @@ export const updateEvent = (eventId: string, updatedData: Partial<Omit<TrainingE
             return;
         }
 
-        const updatedEvent = { ...events[eventIndex], ...updatedData };
+        const updatedEvent = { ...events[eventIndex], ...updatedData } as TrainingEvent;
         events[eventIndex] = updatedEvent;
         saveEvents(events);
         
