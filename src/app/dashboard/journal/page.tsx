@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -9,7 +9,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { BookUser, Calendar as CalendarIcon, Check, Loader, User, X } from "lucide-react";
+import { BookUser, Calendar as CalendarIcon, Loader } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { useAuth } from '@/context/auth-context';
@@ -127,28 +127,28 @@ export default function JournalPage() {
 
   const isoDate = useMemo(() => startOfDay(selectedDate).toISOString(), [selectedDate]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      const dailyEvents = getEventsForDay(selectedDate).filter(e => e.type === 'training');
-      const savedAttendance = await getAttendanceForDay(isoDate);
+  const fetchData = useCallback(async (date: Date, iso: string) => {
+    setIsLoading(true);
+    const dailyEvents = getEventsForDay(date).filter(e => e.type === 'training');
+    const savedAttendance = await getAttendanceForDay(iso);
 
-      setEvents(dailyEvents);
+    setEvents(dailyEvents);
 
-      const initialAttendance: AttendanceState = {};
-      dailyEvents.forEach(event => {
-        initialAttendance[event.id] = {};
-        teamMembersData.forEach(athlete => {
-          initialAttendance[event.id][athlete.id] = savedAttendance?.[event.id]?.[athlete.id] || 'present';
-        });
+    const initialAttendance: AttendanceState = {};
+    dailyEvents.forEach(event => {
+      initialAttendance[event.id] = {};
+      teamMembersData.forEach(athlete => {
+        initialAttendance[event.id][athlete.id] = savedAttendance?.[event.id]?.[athlete.id] || 'present';
       });
-      
-      setAttendanceData(initialAttendance);
-      setIsLoading(false);
-    };
+    });
+    
+    setAttendanceData(initialAttendance);
+    setIsLoading(false);
+  }, []);
 
-    fetchData();
-  }, [selectedDate, isoDate]);
+  useEffect(() => {
+    fetchData(selectedDate, isoDate);
+  }, [selectedDate, isoDate, fetchData]);
 
   const handleSaveAttendance = async (eventId: string, records: { athleteId: string; status: AttendanceStatus }[]) => {
     setIsSaving(true);

@@ -16,13 +16,62 @@ export interface TrainingEvent {
     type: 'training' | 'competition' | 'meeting' | 'holiday';
 }
 
+
+const createInitialEvents = (): TrainingEvent[] => {
+    const today = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+
+    return [
+        {
+            id: `event_initial_1`,
+            title: 'Утренняя тренировка',
+            date: today.toISOString(),
+            startTime: '09:00',
+            endTime: '11:00',
+            location: 'Стадион "Олимпийский"',
+            notes: 'Разминка, беговые упражнения.',
+            createdBy: 'lexazver',
+            type: 'training'
+        },
+        {
+            id: `event_initial_2`,
+            title: 'Вечерняя тренировка',
+            date: today.toISOString(),
+            startTime: '18:00',
+            endTime: '20:00',
+            location: 'Легкоатлетический манеж',
+            notes: 'Работа над техникой, силовые упражнения.',
+            createdBy: 'lexazver',
+            type: 'training'
+        },
+        {
+            id: `event_initial_3`,
+            title: 'Общая физическая подготовка',
+            date: tomorrow.toISOString(),
+            startTime: '10:00',
+            endTime: '12:00',
+            location: 'Тренажерный зал',
+            createdBy: 'lexazver',
+            type: 'training'
+        }
+    ];
+};
+
+
 // --- Helper Functions ---
 
 const getEvents = (): TrainingEvent[] => {
     if (typeof window === 'undefined') return [];
     try {
         const storedData = localStorage.getItem(EVENTS_STORAGE_KEY);
-        return storedData ? JSON.parse(storedData) : [];
+        if (storedData) {
+            return JSON.parse(storedData);
+        }
+        // If no data, initialize with defaults
+        const initialEvents = createInitialEvents();
+        saveEvents(initialEvents);
+        return initialEvents;
     } catch (e) {
         console.error("Failed to read events:", e);
         return [];
