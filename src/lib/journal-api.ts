@@ -24,7 +24,7 @@ export type Journal = {
 
 // --- Helper Functions ---
 
-export const getJournal = (): Journal => {
+const getJournal = (): Journal => {
     if (typeof window === 'undefined') return {};
     try {
         const storedData = localStorage.getItem(JOURNAL_STORAGE_KEY);
@@ -78,5 +78,14 @@ export const getAttendanceForDay = (date: string): Promise<JournalDay | undefine
     return new Promise((resolve) => {
         const journal = getJournal();
         resolve(journal[date]);
+    });
+};
+
+/**
+ * Fetches the entire journal.
+ */
+export const getFullJournal = (): Promise<Journal> => {
+    return new Promise((resolve) => {
+        resolve(getJournal());
     });
 };

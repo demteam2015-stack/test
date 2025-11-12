@@ -575,6 +575,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             invoice: `DEDUCT-${Date.now()}`,
             date: new Date().toISOString(),
             amount: `-${amount.toFixed(2)}`,
+            userId: parentUser.id,
+            userName: parentUser.username,
             status: 'Оплачено', // 'Оплачено' here means the deduction was successfully processed
         };
         await addPayment(paymentRecord);

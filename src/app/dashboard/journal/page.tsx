@@ -49,6 +49,7 @@ export default function JournalPage() {
       if (savedAttendance && savedAttendance[journalEventId]) {
         currentAttendance = savedAttendance[journalEventId];
       } else {
+        // Default all to 'present' if no record for today
         athletesData.forEach(a => {
             currentAttendance[a.id] = 'present';
         });

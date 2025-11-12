@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Loader, Users, TrendingUp, TrendingDown, Wallet, User as UserIcon } from 'lucide-react';
-import { getJournal } from '@/lib/journal-api';
+import { getFullJournal } from '@/lib/journal-api';
 import { getAthletes, type Athlete } from '@/lib/athletes-api';
 import { getPayments, type Payment } from '@/lib/payments-api';
 import { useAuth } from '@/context/auth-context';
@@ -46,7 +46,7 @@ export default function ReportsPage() {
   const generateReports = useCallback(async () => {
     setIsLoading(true);
 
-    const journal = await getJournal();
+    const journal = await getFullJournal();
     const athletes: Athlete[] = await getAthletes();
     const payments: Payment[] = await getPayments();
     
