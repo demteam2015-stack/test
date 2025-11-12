@@ -118,25 +118,10 @@ service cloud.firestore {
     }
 
     /**
-     * @description Publicly readable events collection.
+     * @description Publicly readable collections for events, competitions, and team members.
      */
-    match /events/{document=**} {
-      allow read: if isSignedIn();
-      allow write: if false; // To be restricted to admins later
-    }
-
-    /**
-     * @description Publicly readable competitions collection.
-     */
-    match /competitions/{document=**} {
-      allow read: if isSignedIn();
-      allow write: if false; // To be restricted to admins later
-    }
-
-    /**
-     * @description Publicly readable team members collection.
-     */
-    match /teamMembers/{document=**} {
+    match /{collection}/{document=**} 
+      where collection in ['events', 'competitions', 'teamMembers'] {
       allow read: if isSignedIn();
       allow write: if false; // To be restricted to admins later
     }
