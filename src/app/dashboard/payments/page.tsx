@@ -9,6 +9,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -48,7 +49,7 @@ export default function PaymentsPage() {
     navigator.clipboard.writeText(suggestedAmount);
     toast({
       title: 'Скопировано!',
-      description: `Сумма ${suggestedAmount} UAH скопирована в буфер обмена.`,
+      description: `Сумма ${suggestedAmount} руб. скопирована в буфер обмена.`,
     });
   };
 
@@ -164,7 +165,7 @@ export default function PaymentsPage() {
                 <div>
                     <Label>Рекомендуемая сумма для перевода</Label>
                     <div className="flex items-center gap-2 mt-1">
-                        <p className="text-2xl font-bold text-primary tabular-nums">{suggestedAmount} UAH</p>
+                        <p className="text-2xl font-bold text-primary tabular-nums">{suggestedAmount} руб.</p>
                         <Button variant="outline" size="icon" onClick={copyToClipboard} aria-label="Скопировать сумму">
                             <Copy className="h-4 w-4" />
                         </Button>

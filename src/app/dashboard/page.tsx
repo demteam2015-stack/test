@@ -196,7 +196,7 @@ function ParentDashboard({ user }: { user: UserProfile }) {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">
-                        {user?.balance !== undefined ? `${user.balance.toFixed(2)} UAH` : '0.00 UAH'}
+                        {user?.balance !== undefined ? `${user.balance.toFixed(2)} руб.` : '0.00 руб.'}
                     </div>
                     <p className="text-xs text-muted-foreground">
                         Средства для оплаты тренировок.

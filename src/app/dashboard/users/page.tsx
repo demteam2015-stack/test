@@ -109,12 +109,12 @@ const BalanceModal = ({ user, isOpen, onClose, onBalanceUpdated }: { user: UserP
                 <DialogHeader>
                     <DialogTitle>Управление балансом: {currentUser?.username}</DialogTitle>
                     <DialogDescription>
-                        Текущий баланс: {currentUser?.balance?.toFixed(2) ?? '0.00'} UAH. Введите сумму для зачисления.
+                        Текущий баланс: {currentUser?.balance?.toFixed(2) ?? '0.00'} руб. Введите сумму для зачисления.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="amount">Сумма пополнения (UAH)</Label>
+                        <Label htmlFor="amount">Сумма пополнения (руб.)</Label>
                         <Input
                             id="amount"
                             type="number"
