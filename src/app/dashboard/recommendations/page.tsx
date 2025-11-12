@@ -1,167 +1,101 @@
 'use client';
 
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
-import { getRecommendations, type FormState } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Slider } from '@/components/ui/slider';
-import { useEffect, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { BrainCircuit, Lightbulb, Loader, ServerCrash, BarChart } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Bar,
-  BarChart as RechartsBarChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from 'recharts';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-
-const initialState: FormState = {
-  message: '',
-};
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? (
-        <>
-          <Loader className="mr-2 h-4 w-4 animate-spin" />
-          Генерация...
-        </>
-      ) : (
-        <>
-          <SparklesIcon className="mr-2 h-4 w-4" />
-          Получить рекомендации
-        </>
-      )}
-    </Button>
-  );
-}
-
-type PerformanceData = {
-  metric: string;
-  value: number;
-}[];
+import { BrainCircuit, Lightbulb, ServerCrash } from 'lucide-react';
+import { useState } from 'react';
 
 export default function RecommendationsPage() {
-  const [formState, formAction] = useActionState(getRecommendations, initialState);
-  const [attendance, setAttendance] = useState([0.9]);
-  const [chartData, setChartData] = useState<PerformanceData | null>(null);
-  const { toast } = useToast();
+    const [loading, setLoading] = useState(false);
+    const [recommendations, setRecommendations] = useState('');
+    const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (formState.message === 'success') {
-      toast({
-        title: "Рекомендации сгенерированы",
-        description: "Ваш персональный план тренировок готов.",
-      });
-      try {
-        if (formState.fields?.performanceData) {
-          const parsedData = JSON.parse(formState.fields.performanceData);
-          setChartData(parsedData);
-        }
-      } catch (e) {
-        console.error("Failed to parse performance data for chart", e);
-        setChartData(null);
-      }
-    } else if (formState.message && formState.message !== 'success' && formState.message !== '') {
-      toast({
-        variant: "destructive",
-        title: "Произошла ошибка",
-        description: formState.message,
-      });
-      setChartData(null);
-    }
-  }, [formState, toast]);
+  const handleClick = () => {
+    setLoading(true);
+    setError('');
+    setRecommendations('');
+    setTimeout(() => {
+        setRecommendations(`
+### План тренировок на следующую неделю
+
+**Цель:** Улучшение спринтерских качеств и силовой выносливости.
+
+**Понедельник:**
+*   **Разминка:** 15 минут (легкий бег, динамическая растяжка).
+*   **Основная часть:**
+    *   Интервальный бег: 6x150м с 80% интенсивностью. Отдых между повторениями - 3-4 минуты.
+    *   Прыжковые упражнения: 3 серии по 10 прыжков в длину с места.
+*   **Заминка:** 10 минут (растяжка основных групп мышц).
+
+**Среда:**
+*   **Разминка:** 15 минут.
+*   **Основная часть (Силовая тренировка):**
+    *   Приседания со штангой: 4 подхода по 8 повторений.
+    *   Подтягивания: 3 подхода до отказа.
+    *   Жим лежа: 4 подхода по 8-10 повторений.
+*   **Заминка:** 10 минут.
+
+**Пятница:**
+*   **Разминка:** 15 минут.
+*   **Основная часть:**
+    *   Техническая работа: бег с барьерами, старты с колодок.
+    *   Кросс: 30 минут в легком темпе.
+*   **Заминка:** 15 минут.
+
+### Советы по питанию и ментальному здоровью
+
+*   **Питание:** Увеличьте потребление белка (курица, рыба, творог) для восстановления мышц. Не забывайте про сложные углеводы (гречка, овсянка) за 1.5-2 часа до тренировки.
+*   **Ментальное здоровье:** Практикуйте 10-минутную медитацию перед сном для снижения стресса и улучшения концентрации. Визуализируйте свои успешные старты.
+        `);
+        setLoading(false);
+    }, 1500);
+  }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
+    <div className="grid gap-8">
       <div className="flex flex-col gap-8">
         <div>
           <h1 className="text-3xl font-bold font-headline tracking-tight">
             AI Тренер
           </h1>
           <p className="text-muted-foreground">
-            Получайте персональные рекомендации по тренировкам для атлетов.
+            Получайте персональные рекомендации по тренировкам.
           </p>
         </div>
-
-        <form action={formAction}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Информация об атлете</CardTitle>
-              <CardDescription>
-                Заполните детали ниже, чтобы получить советы от AI.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="athleteId">ID Атлета</Label>
-                <Input id="athleteId" name="athleteId" placeholder="например, D-12345" defaultValue="D-12345" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="performanceData">Данные о производительности (JSON)</Label>
-                <Textarea
-                  id="performanceData"
-                  name="performanceData"
-                  placeholder='[{"metric": "Спринт 100м (с)", "value": 11.5}, {"metric": "Прыжок в длину (м)", "value": 7.2}]'
-                  className="min-h-32 font-code"
-                  defaultValue='[{"metric": "Спринт 100м (с)", "value": 11.5}, {"metric": "Прыжок в длину (м)", "value": 7.2}, {"metric": "Подтягивания", "value": 15}]'
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="attendanceRate">Посещаемость: {attendance[0] * 100}%</Label>
-                <Input type="hidden" name="attendanceRate" value={attendance[0]} />
-                <Slider
-                  id="attendanceRate"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={attendance}
-                  onValueChange={setAttendance}
-                />
-              </div>
-              <div className="space-y-4">
-                 <Label>Дополнительные предпочтения</Label>
-                 <div className="flex items-center space-x-2">
-                    <Checkbox id="includeDietaryTips" name="includeDietaryTips" defaultChecked />
-                    <Label htmlFor="includeDietaryTips" className="font-normal">Включить советы по питанию</Label>
-                 </div>
-                 <div className="flex items-center space-x-2">
-                    <Checkbox id="includeMentalWellnessTips" name="includeMentalWellnessTips" defaultChecked/>
-                    <Label htmlFor="includeMentalWellnessTips" className="font-normal">Включить советы по ментальному здоровью</Label>
-                 </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <SubmitButton />
-            </CardFooter>
-          </Card>
-        </form>
       </div>
 
       <div className="space-y-8">
+        <Card>
+            <CardHeader>
+                <CardTitle>Генератор рекомендаций</CardTitle>
+                <CardDescription>
+                    Нажмите на кнопку ниже, чтобы получить персональный план тренировок, сгенерированный с помощью AI.
+                </CardDescription>
+            </CardHeader>
+            <CardFooter>
+                <Button onClick={handleClick} disabled={loading}>
+                    {loading ? 'Генерация...' : 'Получить рекомендации'}
+                </Button>
+            </CardFooter>
+        </Card>
+
+        {error && (
+             <Alert variant="destructive">
+                <ServerCrash className="h-4 w-4" />
+                <AlertTitle>Ошибка</AlertTitle>
+                <AlertDescription>
+                    {error}
+                </AlertDescription>
+            </Alert>
+        )}
+
         <Card className="min-h-[300px]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -173,81 +107,32 @@ export default function RecommendationsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {formState.message === 'success' && formState.recommendations ? (
+            {loading ? (
+                 <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border text-center h-60">
+                    <Loader className="h-12 w-12 text-muted-foreground animate-spin" />
+                    <h3 className="mt-4 text-lg font-semibold">Генерация плана...</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">Пожалуйста, подождите.</p>
+                </div>
+            ) : recommendations ? (
               <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-muted p-4">
-                {formState.recommendations}
+                {recommendations}
               </div>
             ) : (
                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border text-center h-60">
                     <Lightbulb className="h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-semibold">Ожидание ввода</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">Заполните форму, чтобы получить рекомендации.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Нажмите на кнопку, чтобы сгенерировать рекомендации.</p>
                 </div>
             )}
           </CardContent>
         </Card>
-        
-        {chartData && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart className="text-primary" />
-                Визуализация производительности
-              </CardTitle>
-              <CardDescription>
-                Диаграмма ваших последних показателей.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={{
-                  value: {
-                    label: "Значение",
-                    color: "hsl(var(--chart-1))",
-                  },
-                }} className="h-[250px] w-full">
-                <RechartsBarChart data={chartData} layout="vertical" margin={{ left: 20 }}>
-                  <YAxis
-                    dataKey="metric"
-                    type="category"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={10}
-                    width={140}
-                    className="text-xs"
-                  />
-                  <XAxis dataKey="value" type="number" hide />
-                   <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent indicator="dot" />}
-                  />
-                  <Bar dataKey="value" fill="var(--color-value)" radius={5} />
-                </RechartsBarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );
 }
 
-function SparklesIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m12 3-1.9 4.2-4.2 1.9 4.2 1.9L12 15l1.9-4.2 4.2-1.9-4.2-1.9L12 3Z" />
-      <path d="M5 12s2.5-1.5 5-3.5A2.2 2.2 0 0 1 14.5 9c2.5 2 5 3.5 5 3.5s-2.5 1.5-5 3.5A2.2 2.2 0 0 1 9.5 15c-2.5-2-5-3.5-5-3.5Z" />
-      <path d="M19 12s-2.5 1.5-5 3.5" />
-    </svg>
-  );
+function Loader(props: React.SVGProps<SVGSVGElement>) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+    )
 }

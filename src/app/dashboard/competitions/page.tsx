@@ -1,7 +1,6 @@
 'use client';
 
 import { competitionsData } from '@/lib/data';
-import type { Competition } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
