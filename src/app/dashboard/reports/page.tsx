@@ -22,6 +22,7 @@ import { getJournal } from '@/lib/journal-api';
 import { getAthletes, type Athlete } from '@/lib/athletes-api';
 import { getPayments, type Payment } from '@/lib/payments-api';
 import { useAuth } from '@/context/auth-context';
+import { AttendanceChart } from '@/components/attendance-chart';
 
 type AttendanceReport = {
   athleteId: string;
@@ -30,6 +31,7 @@ type AttendanceReport = {
   absent: number;
   excused: number;
   total: number;
+  attendancePercentage: number;
 };
 
 export default function ReportsPage() {
@@ -268,56 +270,63 @@ export default function ReportsPage() {
             Ваша персональная статистика посещений тренировок.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="grid gap-8 lg:grid-cols-2">
            {userReport ? (
-             <div className="grid gap-4 md:grid-cols-4">
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Посещено</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-green-500">
-                            {userReport.present}
-                        </div>
-                    </CardContent>
-                 </Card>
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Пропущено</CardTitle>
-                        <TrendingDown className="h-4 w-4 text-red-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-red-500">
-                            {userReport.absent}
-                        </div>
-                    </CardContent>
-                 </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Уваж. причина</CardTitle>
-                        <UserIcon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-muted-foreground">
-                            {userReport.excused}
-                        </div>
-                    </CardContent>
-                 </Card>
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Процент посещений</CardTitle>
-                        <BarChart className="h-4 w-4 text-primary" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-primary">
-                            {`${(userReport.attendancePercentage || 0).toFixed(0)}%`}
-                        </div>
-                    </CardContent>
-                 </Card>
-             </div>
+            <>
+                <div className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Посещено</CardTitle>
+                                <TrendingUp className="h-4 w-4 text-green-500" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold text-green-500">
+                                    {userReport.present}
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Пропущено</CardTitle>
+                                <TrendingDown className="h-4 w-4 text-red-500" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold text-red-500">
+                                    {userReport.absent}
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Уваж. причина</CardTitle>
+                                <UserIcon className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold text-muted-foreground">
+                                    {userReport.excused}
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Процент посещений</CardTitle>
+                                <BarChart className="h-4 w-4 text-primary" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold text-primary">
+                                    {`${(userReport.attendancePercentage || 0).toFixed(0)}%`}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+                <div>
+                     <AttendanceChart data={userReport} />
+                </div>
+            </>
            ) : (
-             <div className="flex h-40 items-center justify-center rounded-lg border-2 border-dashed border-border text-center">
+             <div className="lg:col-span-2 flex h-40 items-center justify-center rounded-lg border-2 border-dashed border-border text-center">
                 <p className="text-muted-foreground">Данных о вашей посещаемости пока нет.</p>
             </div>
            )}
