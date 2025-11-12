@@ -101,6 +101,55 @@
         "id",
         "userId"
       ]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Represents a team event, such as a practice or a meeting.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Completed", "Scheduled"]
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["title", "status", "date"]
+    },
+    "Competition": {
+      "title": "Competition",
+      "description": "Represents a competitive event.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["name", "date"]
+    },
+    "TeamMember": {
+      "title": "TeamMember",
+      "description": "Represents an active team member.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "joinDate": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["userId", "joinDate"]
     }
   },
   "auth": {
@@ -158,8 +207,56 @@
             }
           ]
         }
+      },
+      {
+        "path": "/events/{eventId}",
+        "definition": {
+          "entityName": "Event",
+          "schema": {
+            "$ref": "#/backend/entities/Event"
+          },
+          "description": "Stores team events like practices and meetings.",
+          "params": [
+            {
+              "name": "eventId",
+              "description": "The unique identifier for the event."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/competitions/{competitionId}",
+        "definition": {
+          "entityName": "Competition",
+          "schema": {
+            "$ref": "#/backend/entities/Competition"
+          },
+          "description": "Stores upcoming and past competitions.",
+          "params": [
+            {
+              "name": "competitionId",
+              "description": "The unique identifier for the competition."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/teamMembers/{memberId}",
+        "definition": {
+          "entityName": "TeamMember",
+          "schema": {
+            "$ref": "#/backend/entities/TeamMember"
+          },
+          "description": "Stores active team members.",
+          "params": [
+            {
+              "name": "memberId",
+              "description": "The unique identifier for the team member, often the userId."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "This Firestore structure is designed to support the Demyanenko Team Hub application, focusing on user roles (athlete, parent), registration, and authentication. It prioritizes Authorization Independence, clarity, and scalability. User data is stored in the `/users/{userId}` collection, with separate collections for Athlete and Parent profiles linked to the user ID. This design uses path-based ownership for user-specific data and avoids `get()` calls in security rules, enhancing security and enabling atomic operations. The structure facilitates secure `list` operations and explicit state modeling, ensuring a robust and maintainable application.\n\n**Authorization Independence:** The `Athlete` and `Parent` documents are stored in separate collections and include the `userId` field, which links them to the corresponding user document. This allows security rules to be based solely on the authenticated user's ID and the `userId` field in the `Athlete` and `Parent` documents, without needing to perform `get()` calls to parent documents.\n\n**QAPs Support:**\n*   The segregation of `Athlete` and `Parent` data into separate collections allows for role-based access control. Security rules can be written to restrict access to these collections based on the user's role.\n\n**Invariants Support:**\n*   The `userId` field in the `Athlete` and `Parent` documents ensures the integrity of ownership. Security rules can enforce that only the user with the matching `userId` can modify the corresponding document."
+    "reasoning": "This Firestore structure is designed to support the Demyanenko Team Hub application, focusing on user roles (athlete, parent), registration, and authentication. It prioritizes Authorization Independence, clarity, and scalability. User data is stored in the `/users/{userId}` collection, with separate collections for Athlete and Parent profiles linked to the user ID. This design uses path-based ownership for user-specific data and avoids `get()` calls in security rules, enhancing security and enabling atomic operations. The structure facilitates secure `list` operations and explicit state modeling, ensuring a robust and maintainable application. The addition of `events`, `competitions`, and `teamMembers` collections allows for dynamic data management for the dashboard and other sections of the app."
   }
 }

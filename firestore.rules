@@ -6,30 +6,31 @@
  * associated athlete/parent data.  Only the authenticated user can read or
  * modify their own profile data. Athlete and Parent profiles are linked to
  * user profiles via the 'userId' field, and only the associated user can
- * create, update, or delete these profiles.
+ * create, update, or delete these profiles. Public collections like events,
+ * competitions, and team members are read-only for any authenticated user.
  *
  * Data Structure:
  * - /users/{userId}: Stores user profiles, where userId is the Firebase Auth UID.
  * - /athletes/{athleteId}: Stores athlete profiles, linked to user profiles via the 'userId' field.
  * - /parents/{parentId}: Stores parent profiles, linked to user profiles via the 'userId' field.
+ * - /events/{eventId}: Stores team events. Read-only for authenticated users.
+ * - /competitions/{competitionId}: Stores team competitions. Read-only for authenticated users.
+ * - /teamMembers/{memberId}: Stores active team members. Read-only for authenticated users.
  *
  * Key Security Decisions:
  * - Users can only manage their own profiles.
  * - Athlete and Parent profiles are only manageable by the linked user.
+ * - Public data collections are readable by any authenticated user but writable only by admins (future rule).
  * - Listing of users, athletes, and parents is restricted to prevent information leakage.
- *
- * Denormalization for Authorization:
- * The 'Athlete' and 'Parent' documents contain the 'userId' field, which is a denormalized
- * copy of the user's UID. This allows security rules to validate ownership without
- * performing additional 'get()' operations.
- *
- * Structural Segregation:
- * Athlete and Parent profiles are stored in separate top-level collections to simplify
- * access control based on user roles.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // isSignedIn() verifies that the request has valid authentication credentials.
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
     /**
      * @description Secure user profiles stored under /users/{userId}.
@@ -39,11 +40,6 @@ service cloud.firestore {
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      // isSignedIn() verifies that the request has valid authentication credentials.
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       // isOwner(userId) verifies that the authenticated user's UID matches the
       // document's userId.
       function isOwner(userId) {
@@ -72,11 +68,6 @@ service cloud.firestore {
      * @principle Enforces document ownership for writes, with public reads.
      */
     match /athletes/{athleteId} {
-      // isSignedIn() verifies that the request has valid authentication credentials.
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       // isAthleteOwner(userId) verifies that the authenticated user's UID matches the
       // athlete document's userId.
       function isAthleteOwner(userId) {
@@ -105,11 +96,6 @@ service cloud.firestore {
      * @principle Enforces document ownership for writes, with public reads.
      */
     match /parents/{parentId} {
-      // isSignedIn() verifies that the request has valid authentication credentials.
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
       // isParentOwner(userId) verifies that the authenticated user's UID matches the
       // parent document's userId.
       function isParentOwner(userId) {
@@ -128,6 +114,30 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update: if isExistingParentOwner(resource.data.userId) && request.resource.data.userId == resource.data.userId; // Enforce immutability of userId
       allow delete: if isExistingParentOwner(resource.data.userId);
+    }
+
+    /**
+     * @description Publicly readable events collection.
+     */
+    match /events/{eventId} {
+      allow read: if isSignedIn();
+      allow write: if false; // To be restricted to admins later
+    }
+
+    /**
+     * @description Publicly readable competitions collection.
+     */
+    match /competitions/{competitionId} {
+      allow read: if isSignedIn();
+      allow write: if false; // To be restricted to admins later
+    }
+
+    /**
+     * @description Publicly readable team members collection.
+     */
+    match /teamMembers/{memberId} {
+      allow read: if isSignedIn();
+      allow write: if false; // To be restricted to admins later
     }
   }
 }
