@@ -4,13 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Award,
-  BrainCircuit,
   Calendar,
   CreditCard,
   Home,
   Trophy,
   Users,
-  ShieldCheck,
+  BrainCircuit,
 } from 'lucide-react';
 import {
   SidebarHeader,
@@ -33,10 +32,7 @@ const baseLinks = [
   { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award },
 ];
 
-const adminLinks = [
-  { href: '/dashboard/users', label: 'Пользователи', icon: Users },
-  { href: '/dashboard/admin-panel', label: 'Админ-панель', icon: ShieldCheck },
-];
+const adminLinks = [{ href: '/dashboard/users', label: 'Пользователи', icon: Users }];
 
 export default function MainNav() {
   const pathname = usePathname();
