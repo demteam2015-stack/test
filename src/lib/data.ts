@@ -1,5 +1,5 @@
 // This file contains static data to be used in the application
-// since we are removing the dependency on a live database.
+// since we are not using a live database.
 
 // --- USER DATA ---
 export interface UserProfile {
@@ -11,6 +11,7 @@ export interface UserProfile {
   photoURL?: string;
 }
 
+// This is now a default/template user, not the logged in user.
 export const userProfileData: UserProfile = {
   id: 'static-user-01',
   email: 'athlete@example.com',

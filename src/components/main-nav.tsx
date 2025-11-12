@@ -30,8 +30,9 @@ const allLinks = [
   { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard },
   { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy },
   { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award },
-  { href: '/dashboard/users', label: 'Пользователи', icon: Users },
-  { href: '/dashboard/admin-panel', label: 'Админ-панель', icon: ShieldCheck },
+  // These routes are commented out as they are not yet implemented
+  // { href: '/dashboard/users', label: 'Пользователи', icon: Users },
+  // { href: '/dashboard/admin-panel', label: 'Админ-панель', icon: ShieldCheck },
 ];
 
 export default function MainNav() {

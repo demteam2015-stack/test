@@ -13,19 +13,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CreditCard, LogOut, Settings, User as UserIcon, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { userProfileData } from '@/lib/data';
+import { useAuth } from '@/context/auth-context';
 
 export function UserNav() {
   const router = useRouter();
+  const { user, logout } = useAuth();
 
   const handleSignOut = () => {
-    // In a real app, this would sign the user out.
-    // Since this is a static app, we'll just navigate to a simulated login.
-    alert("Вы вышли из системы (симуляция).");
-    router.push('/');
+    logout();
+    router.push('/login');
   };
-
-  const user = userProfileData;
 
   const getInitials = (firstName?: string, lastName?: string) => {
     if (!firstName || !lastName) return 'U';
@@ -33,8 +30,12 @@ export function UserNav() {
   };
 
   const getFullName = (firstName?: string, lastName?: string) => {
-    if (!firstName || !lastName) return 'Атлет';
+    if (!firstName && !lastName) return 'Атлет';
     return `${firstName} ${lastName}`;
+  }
+  
+  if (!user) {
+    return null;
   }
 
   const roleTranslations: { [key: string]: string } = {
@@ -45,6 +46,7 @@ export function UserNav() {
   };
 
   const userRole = user.role ? roleTranslations[user.role] : 'Неизвестно';
+
 
   return (
     <DropdownMenu>

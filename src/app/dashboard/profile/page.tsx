@@ -12,19 +12,32 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, useEffect } from 'react';
 import { Loader, User } from 'lucide-react';
-import { userProfileData, type UserProfile } from '@/lib/data';
-
+import { useAuth } from '@/context/auth-context';
 
 export default function ProfilePage() {
   const { toast } = useToast();
+  const { user, updateUser } = useAuth();
 
-  const [formData, setFormData] = useState<Pick<UserProfile, 'firstName' | 'lastName'>>({
-    firstName: userProfileData.firstName,
-    lastName: userProfileData.lastName,
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
   });
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+      });
+    }
+  }, [user]);
+
+  if (!user) {
+      return null; // Or a loading spinner
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -35,14 +48,11 @@ export default function ProfilePage() {
     e.preventDefault();
     setIsSaving(true);
     
-    // In a real app, you would save this data.
-    // Here, we just simulate a save.
-    console.log("Saving data:", formData);
-
     setTimeout(() => {
+        updateUser(formData);
         toast({
             title: 'Профиль обновлен',
-            description: 'Ваши данные были успешно сохранены (симуляция).',
+            description: 'Ваши данные были успешно сохранены.',
         });
         setIsSaving(false);
     }, 1000);
@@ -82,7 +92,7 @@ export default function ProfilePage() {
                 <Input
                   id="firstName"
                   name="firstName"
-                  value={formData.firstName || ''}
+                  value={formData.firstName}
                   onChange={handleInputChange}
                   disabled={isSaving}
                 />
@@ -92,7 +102,7 @@ export default function ProfilePage() {
                 <Input
                   id="lastName"
                   name="lastName"
-                  value={formData.lastName || ''}
+                  value={formData.lastName}
                   onChange={handleInputChange}
                   disabled={isSaving}
                 />
@@ -104,7 +114,7 @@ export default function ProfilePage() {
                 id="email"
                 name="email"
                 type="email"
-                value={userProfileData.email || ''}
+                value={user.email || ''}
                 disabled
                 aria-readonly
               />
@@ -112,7 +122,7 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <Label>Роль</Label>
               <Input
-                value={roleTranslations[userProfileData.role] || userProfileData.role}
+                value={roleTranslations[user.role] || user.role}
                 disabled
                 aria-readonly
               />
