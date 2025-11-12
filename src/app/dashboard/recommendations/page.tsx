@@ -10,83 +10,80 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { BrainCircuit, Lightbulb, ServerCrash, Loader } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
+import { getFeedback, type FeedbackInput } from '@/ai/flows/feedback-flow';
 
 export default function RecommendationsPage() {
     const [loading, setLoading] = useState(false);
-    const [recommendations, setRecommendations] = useState('');
+    const [feedback, setFeedback] = useState('');
+    const [response, setResponse] = useState('');
     const [error, setError] = useState('');
 
-  const handleClick = () => {
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!feedback) return;
     setLoading(true);
     setError('');
-    setRecommendations('');
-    setTimeout(() => {
-        setRecommendations(`
-### План тренировок на следующую неделю
+    setResponse('');
 
-**Цель:** Улучшение спринтерских качеств и силовой выносливости.
-
-**Понедельник:**
-*   **Разминка:** 15 минут (легкий бег, динамическая растяжка).
-*   **Основная часть:**
-    *   Интервальный бег: 6x150м с 80% интенсивностью. Отдых между повторениями - 3-4 минуты.
-    *   Прыжковые упражнения: 3 серии по 10 прыжков в длину с места.
-*   **Заминка:** 10 минут (растяжка основных групп мышц).
-
-**Среда:**
-*   **Разминка:** 15 минут.
-*   **Основная часть (Силовая тренировка):**
-    *   Приседания со штангой: 4 подхода по 8 повторений.
-    *   Подтягивания: 3 подхода до отказа.
-    *   Жим лежа: 4 подхода по 8-10 повторений.
-*   **Заминка:** 10 минут.
-
-**Пятница:**
-*   **Разминка:** 15 минут.
-*   **Основная часть:**
-    *   Техническая работа: бег с барьерами, старты с колодок.
-    *   Кросс: 30 минут в легком темпе.
-*   **Заминка:** 15 минут.
-
-### Советы по питанию и ментальному здоровью
-
-*   **Питание:** Увеличьте потребление белка (курица, рыба, творог) для восстановления мышц. Не забывайте про сложные углеводы (гречка, овсянка) за 1.5-2 часа до тренировки.
-*   **Ментальное здоровье:** Практикуйте 10-минутную медитацию перед сном для снижения стресса и улучшения концентрации. Визуализируйте свои успешные старты.
-        `);
+    try {
+        const input: FeedbackInput = { feedbackText: feedback };
+        const result = await getFeedback(input);
+        setResponse(result.analysis);
+    } catch (err: any) {
+        setError(err.message || "Не удалось получить ответ от AI.");
+    } finally {
         setLoading(false);
-    }, 1500);
+    }
   }
 
   return (
     <div className="grid gap-8">
       <div className="flex flex-col gap-8">
         <div>
-          <h1 className="text-3xl font-bold font-headline tracking-tight">
-            AI Тренер
+          <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+            <BrainCircuit className="h-8 w-8 text-primary"/>
+            Обратная связь
           </h1>
           <p className="text-muted-foreground">
-            Получайте персональные рекомендации по тренировкам.
+            Оставьте отзыв, и AI-тренер его проанализирует.
           </p>
         </div>
       </div>
 
       <div className="space-y-8">
-        <Card>
-            <CardHeader>
-                <CardTitle>Генератор рекомендаций</CardTitle>
-                <CardDescription>
-                    Нажмите на кнопку ниже, чтобы получить персональный план тренировок, сгенерированный с помощью AI.
-                </CardDescription>
-            </CardHeader>
-            <CardFooter>
-                <Button onClick={handleClick} disabled={loading}>
-                    {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                    {loading ? 'Генерация...' : 'Получить рекомендации'}
-                </Button>
-            </CardFooter>
-        </Card>
+        <form onSubmit={handleSubmit}>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Форма обратной связи</CardTitle>
+                    <CardDescription>
+                        Опишите ваши впечатления, проблемы или предложения. AI проанализирует ваш отзыв и даст развернутый ответ.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid w-full gap-2">
+                        <Label htmlFor="feedback-input">Ваш отзыв</Label>
+                        <Textarea 
+                            id="feedback-input" 
+                            placeholder="Например: 'Последние тренировки кажутся слишком интенсивными, я не успеваю восстанавливаться.' или 'Предлагаю добавить больше упражнений на гибкость.'" 
+                            rows={5}
+                            value={feedback}
+                            onChange={(e) => setFeedback(e.target.value)}
+                            disabled={loading}
+                        />
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Button type="submit" disabled={loading || !feedback}>
+                        {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                        {loading ? 'Анализ...' : 'Отправить на анализ AI'}
+                    </Button>
+                </CardFooter>
+            </Card>
+        </form>
 
         {error && (
              <Alert variant="destructive">
@@ -102,28 +99,28 @@ export default function RecommendationsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
                 <BrainCircuit className="text-primary"/>
-                Ваш персональный план
+                Анализ и рекомендации AI
             </CardTitle>
             <CardDescription>
-              Рекомендации появятся здесь после генерации.
+              Ответ AI появится здесь после анализа вашего отзыва.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border text-center h-60">
                     <Loader className="h-12 w-12 text-muted-foreground animate-spin" />
-                    <h3 className="mt-4 text-lg font-semibold">Генерация плана...</h3>
+                    <h3 className="mt-4 text-lg font-semibold">Анализирую ваш отзыв...</h3>
                     <p className="mt-2 text-sm text-muted-foreground">Пожалуйста, подождите.</p>
                 </div>
-            ) : recommendations ? (
+            ) : response ? (
               <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-muted p-4">
-                {recommendations}
+                {response}
               </div>
             ) : (
                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border text-center h-60">
                     <Lightbulb className="h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-semibold">Ожидание ввода</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">Нажмите на кнопку, чтобы сгенерировать рекомендации.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Заполните форму выше и отправьте на анализ.</p>
                 </div>
             )}
           </CardContent>

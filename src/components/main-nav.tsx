@@ -30,7 +30,7 @@ const navLinks = [
   { href: '/dashboard/team', label: 'Команда', icon: Users },
   { href: '/dashboard/journal', label: 'Журнал', icon: BookUser },
   { href: '/dashboard/reports', label: 'Отчеты', icon: BarChart },
-  { href: '/dashboard/recommendations', label: 'AI Тренер', icon: BrainCircuit },
+  { href: '/dashboard/recommendations', label: 'Обратная связь', icon: BrainCircuit },
   { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard },
   { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy },
   { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award },
