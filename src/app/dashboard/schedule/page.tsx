@@ -340,11 +340,8 @@ export default function SchedulePage() {
                 modifiers={{
                     events: eventDays,
                 }}
-                modifiersStyles={{
-                    events: {
-                        fontWeight: 'bold',
-                        color: 'hsl(var(--primary))',
-                    }
+                modifiersClassNames={{
+                    events: 'bg-primary/20 text-primary-foreground font-bold',
                 }}
              />
         </div>
