@@ -120,10 +120,17 @@ service cloud.firestore {
     /**
      * @description Publicly readable collections for events, competitions, and team members.
      */
-    match /{collection}/{document=**} 
-      where collection in ['events', 'competitions', 'teamMembers'] {
+    match /events/{event} {
       allow read: if isSignedIn();
-      allow write: if false; // To be restricted to admins later
+      allow write: if false; 
+    }
+    match /competitions/{competition} {
+      allow read: if isSignedIn();
+      allow write: if false; 
+    }
+    match /teamMembers/{member} {
+      allow read: if isSignedIn();
+      allow write: if false;
     }
   }
 }
