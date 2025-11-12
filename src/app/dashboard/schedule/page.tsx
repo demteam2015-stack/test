@@ -587,11 +587,35 @@ export default function SchedulePage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                     {groupedDailyEvents[eventType]?.map(event => (
-                                        <div key={event.id} className="relative rounded-md border p-4 pr-16">
-                                            <p className="font-semibold">{event.title}</p>
+                                     {groupedDailyEvents[eventType]?.map((event, index) => (
+                                        <div key={event.id} className="relative group">
+                                            {index > 0 && <hr className="my-4"/>}
+                                            <div className="pr-16">
+                                                <p className="font-semibold">{event.title}</p>
+                                                { (event.type !== 'holiday' || event.notes) &&
+                                                    <div className="mt-2 space-y-2">
+                                                        {event.type !== 'holiday' && (
+                                                        <>
+                                                            <div className="flex items-center text-sm text-muted-foreground">
+                                                                <Clock className="mr-2 h-4 w-4" />
+                                                                <span>{event.startTime} - {event.endTime}</span>
+                                                            </div>
+                                                            <div className="flex items-center text-sm text-muted-foreground">
+                                                                <MapPin className="mr-2 h-4 w-4" />
+                                                                <span>{event.location}</span>
+                                                            </div>
+                                                        </>
+                                                        )}
+                                                        {event.notes && (
+                                                            <p className="text-sm bg-muted/50 p-3 rounded-md mt-4">{event.notes}</p>
+                                                        )}
+                                                    </div>
+                                                }
+                                                <p className="text-xs text-muted-foreground pt-3 mt-3 border-t">Добавил: {event.createdBy}</p>
+                                            </div>
+
                                              {canManage && (
-                                                <div className="absolute top-2 right-2 flex items-center gap-1">
+                                                <div className="absolute top-0 right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <EventForm 
                                                         onEventCreated={handleEventsChange} 
                                                         eventToEdit={event} 
@@ -622,26 +646,6 @@ export default function SchedulePage() {
                                                     </AlertDialog>
                                                 </div>
                                             )}
-                                            { (event.type !== 'holiday' || event.notes) &&
-                                                <div className="mt-2 space-y-2">
-                                                    {event.type !== 'holiday' && (
-                                                    <>
-                                                        <div className="flex items-center text-sm text-muted-foreground">
-                                                            <Clock className="mr-2 h-4 w-4" />
-                                                            <span>{event.startTime} - {event.endTime}</span>
-                                                        </div>
-                                                        <div className="flex items-center text-sm text-muted-foreground">
-                                                            <MapPin className="mr-2 h-4 w-4" />
-                                                            <span>{event.location}</span>
-                                                        </div>
-                                                    </>
-                                                    )}
-                                                    {event.notes && (
-                                                        <p className="text-sm bg-muted/50 p-3 rounded-md mt-4">{event.notes}</p>
-                                                    )}
-                                                </div>
-                                            }
-                                            <p className="text-xs text-muted-foreground pt-3 mt-3 border-t">Добавил: {event.createdBy}</p>
                                         </div>
                                     ))}
                                 </CardContent>
