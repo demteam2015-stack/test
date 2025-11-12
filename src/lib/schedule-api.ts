@@ -45,18 +45,16 @@ const saveEvents = (events: TrainingEvent[]) => {
  */
 export const createEvent = (eventData: Omit<TrainingEvent, 'id'>): Promise<TrainingEvent> => {
     return new Promise((resolve) => {
-        setTimeout(() => {
-            const events = getEvents();
-            const newEvent: TrainingEvent = {
-                ...eventData,
-                id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            };
-            
-            events.push(newEvent);
-            saveEvents(events);
-            
-            resolve(newEvent);
-        }, 0); // Removed timeout to make it faster
+        const events = getEvents();
+        const newEvent: TrainingEvent = {
+            ...eventData,
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        };
+        
+        events.push(newEvent);
+        saveEvents(events);
+        
+        resolve(newEvent);
     });
 };
 

@@ -408,6 +408,10 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated, children }: { 
     );
 };
 
+type GroupedEvents = {
+    [key in TrainingEvent['type']]?: TrainingEvent[];
+};
+
 export default function SchedulePage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -427,11 +431,18 @@ export default function SchedulePage() {
     fetchEvents();
   }, []);
 
-  const dailyEvents = useMemo(() => {
+  const groupedDailyEvents = useMemo(() => {
     const dayStart = startOfDay(viewDate);
     return allEvents
         .filter(event => startOfDay(new Date(event.date)).getTime() === dayStart.getTime())
-        .sort((a,b) => a.startTime.localeCompare(b.startTime));
+        .sort((a,b) => a.startTime.localeCompare(b.startTime))
+        .reduce((acc, event) => {
+            if (!acc[event.type]) {
+                acc[event.type] = [];
+            }
+            acc[event.type]!.push(event);
+            return acc;
+        }, {} as GroupedEvents);
   }, [viewDate, allEvents]);
   
   const eventDays = useMemo(() => {
@@ -458,17 +469,24 @@ export default function SchedulePage() {
   const EventIcon = ({ type }: { type: TrainingEvent['type'] }) => {
     switch (type) {
       case 'training':
-        return <Dumbbell className="h-5 w-5 text-muted-foreground" />;
+        return <Dumbbell className="h-5 w-5" />;
       case 'competition':
-        return <Trophy className="h-5 w-5 text-muted-foreground" />;
+        return <Trophy className="h-5 w-5" />;
       case 'meeting':
-        return <Users className="h-5 w-5 text-muted-foreground" />;
+        return <Users className="h-5 w-5" />;
       case 'holiday':
-        return <Sun className="h-5 w-5 text-muted-foreground" />;
+        return <Sun className="h-5 w-5" />;
       default:
-        return <Briefcase className="h-5 w-5 text-muted-foreground" />;
+        return <Briefcase className="h-5 w-5" />;
     }
   };
+
+  const groupTitles: Record<TrainingEvent['type'], string> = {
+      training: "Тренировки",
+      competition: "Соревнования",
+      meeting: "Собрания",
+      holiday: "Каникулы/Выходные"
+  }
 
   const eventCardClasses = (type: TrainingEvent['type']) => {
     const baseClass = "border-l-4";
@@ -558,72 +576,75 @@ export default function SchedulePage() {
                 </CardTitle>
             </CardHeader>
             <CardContent className="h-[500px] overflow-y-auto">
-                {dailyEvents.length > 0 ? (
+                {Object.keys(groupedDailyEvents).length > 0 ? (
                     <div className="space-y-4">
-                        {dailyEvents.map(event => (
-                            <Card key={event.id} className={cn(eventCardClasses(event.type))}>
+                        {(Object.keys(groupedDailyEvents) as Array<keyof GroupedEvents>).map(eventType => (
+                            <Card key={eventType} className={cn(eventCardClasses(eventType))}>
                                 <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <EventIcon type={event.type} />
-                                            <CardTitle className="text-lg">{event.title}</CardTitle>
-                                        </div>
-                                        {canManage && (
-                                            <div className="flex items-center gap-1">
-                                                <EventForm 
-                                                    onEventCreated={handleEventsChange} 
-                                                    eventToEdit={event} 
-                                                    onEventUpdated={handleEventsChange}
-                                                >
-                                                     <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                </EventForm>
-                                                 <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                        <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            Это действие необратимо. Событие будет удалено из расписания навсегда.
-                                                        </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                        <AlertDialogCancel>Отмена</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDelete(event.id)} className="bg-destructive hover:bg-destructive/90">Удалить</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </div>
-                                        )}
+                                    <div className="flex items-center gap-3">
+                                        <EventIcon type={eventType} />
+                                        <CardTitle className="text-lg">{groupTitles[eventType]}</CardTitle>
                                     </div>
                                 </CardHeader>
-                                { (event.type !== 'holiday' || event.notes) &&
-                                <CardContent>
-                                    {event.type !== 'holiday' && (
-                                    <>
-                                        <div className="flex items-center text-sm text-muted-foreground mb-2">
-                                            <Clock className="mr-2 h-4 w-4" />
-                                            <span>{event.startTime} - {event.endTime}</span>
+                                <CardContent className="space-y-4">
+                                     {groupedDailyEvents[eventType]?.map(event => (
+                                        <div key={event.id} className="relative rounded-md border p-4 pr-16">
+                                            <p className="font-semibold">{event.title}</p>
+                                             {canManage && (
+                                                <div className="absolute top-2 right-2 flex items-center gap-1">
+                                                    <EventForm 
+                                                        onEventCreated={handleEventsChange} 
+                                                        eventToEdit={event} 
+                                                        onEventUpdated={handleEventsChange}
+                                                    >
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                    </EventForm>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                            <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                Это действие необратимо. Событие будет удалено из расписания навсегда.
+                                                            </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                            <AlertDialogCancel>Отмена</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDelete(event.id)} className="bg-destructive hover:bg-destructive/90">Удалить</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
+                                            )}
+                                            { (event.type !== 'holiday' || event.notes) &&
+                                                <div className="mt-2 space-y-2">
+                                                    {event.type !== 'holiday' && (
+                                                    <>
+                                                        <div className="flex items-center text-sm text-muted-foreground">
+                                                            <Clock className="mr-2 h-4 w-4" />
+                                                            <span>{event.startTime} - {event.endTime}</span>
+                                                        </div>
+                                                        <div className="flex items-center text-sm text-muted-foreground">
+                                                            <MapPin className="mr-2 h-4 w-4" />
+                                                            <span>{event.location}</span>
+                                                        </div>
+                                                    </>
+                                                    )}
+                                                    {event.notes && (
+                                                        <p className="text-sm bg-muted/50 p-3 rounded-md mt-4">{event.notes}</p>
+                                                    )}
+                                                </div>
+                                            }
+                                            <p className="text-xs text-muted-foreground pt-3 mt-3 border-t">Добавил: {event.createdBy}</p>
                                         </div>
-                                        <div className="flex items-center text-sm text-muted-foreground">
-                                            <MapPin className="mr-2 h-4 w-4" />
-                                            <span>{event.location}</span>
-                                        </div>
-                                    </>
-                                    )}
-                                    {event.notes && (
-                                        <p className="text-sm bg-muted/50 p-3 rounded-md mt-4">{event.notes}</p>
-                                    )}
+                                    ))}
                                 </CardContent>
-                                }
-                                <CardFooter>
-                                     <p className="text-xs text-muted-foreground">Добавил: {event.createdBy}</p>
-                                </CardFooter>
                             </Card>
                         ))}
                     </div>
