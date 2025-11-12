@@ -23,7 +23,7 @@ import { Logo } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/auth-context';
 
-const baseLinks = [
+const navLinks = [
   { href: '/dashboard', label: 'Панель', icon: Home },
   { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar },
   { href: '/dashboard/recommendations', label: 'AI Тренер', icon: BrainCircuit },
@@ -32,13 +32,8 @@ const baseLinks = [
   { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award },
 ];
 
-const adminLinks = [{ href: '/dashboard/users', label: 'Пользователи', icon: Users }];
-
 export default function MainNav() {
   const pathname = usePathname();
-  const { user } = useAuth();
-  
-  const allLinks = user?.role === 'admin' ? [...baseLinks, ...adminLinks] : baseLinks;
 
   return (
     <>
@@ -50,7 +45,7 @@ export default function MainNav() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {allLinks.map((link) => (
+          {navLinks.map((link) => (
             <SidebarMenuItem key={link.href}>
               <SidebarMenuButton
                 asChild
