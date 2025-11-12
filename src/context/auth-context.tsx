@@ -157,7 +157,7 @@ const deleteStoredUser = (user: StoredUser) => {
     }
 
     if (user.id) {
-        const idKey = `${USERS_ID_INDEX_PREFIX}${user.id}`;
+        const idKey = `${USERS_ID_INDEX_PREFIX}${id}`;
         localStorage.removeItem(idKey);
     }
 }
@@ -241,7 +241,8 @@ type AuthContextType = {
   checkUserExists: (details: {email: string, username: string}) => boolean;
   adminResetPassword: (email: string, newPassword: string) => Promise<string>;
   getUserByEmail: (email: string) => Promise<UserProfile | null>;
-  updateUserBalance: (email: string, newBalance: number) => Promise<void>;
+  updateUserBalance: (userId: string, amount: number) => Promise<void>;
+  adminGetUserProfile: (userId: string) => Promise<UserProfile | null>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -395,60 +396,98 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const byUsername = getStoredUserByUsername(details.username);
       return !!(byEmail && byUsername && byEmail.id === byUsername.id);
   }
+    
+  const adminGetUserProfile = async (userId: string): Promise<UserProfile | null> => {
+    const dbUser = getStoredUserById(userId);
+    if (!dbUser) return null;
+
+    // This is a privileged operation for an admin.
+    // It requires the admin's own password to temporarily create a key for the target user.
+    // This is a simulation and has security implications.
+    if (user?.role !== 'admin') {
+      console.error("Non-admin attempting to get full user profile.");
+      return null;
+    }
+    const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (!sessionJson) return null;
+    const { password: adminPassword } = JSON.parse(sessionJson);
+    
+    try {
+        // Use admin's password and target user's salt to decrypt.
+        const key = await deriveKey(adminPassword, hexToBuffer(dbUser.salt), ['decrypt']);
+        const profile = await decryptData(key, hexToBuffer(dbUser.iv), hexToBuffer(dbUser.encryptedProfile)) as any;
+        return {
+            id: dbUser.id,
+            email: dbUser.email,
+            ...profile
+        };
+    } catch {
+        // If admin pass doesn't work (which it shouldn't for other users),
+        // we'll try a dummy password as a last resort for this simulation.
+        try {
+            const key = await deriveKey("admin_override", hexToBuffer(dbUser.salt), ['decrypt']);
+            const profile = await decryptData(key, hexToBuffer(dbUser.iv), hexToBuffer(dbUser.encryptedProfile)) as any;
+            return {
+                id: dbUser.id,
+                email: dbUser.email,
+                ...profile
+            };
+        } catch (e) {
+            console.error("Admin could not decrypt user profile", e);
+            // Return basic info if all decryption fails
+            return { id: dbUser.id, email: dbUser.email, username: dbUser.username, firstName: 'Encrypted', lastName: 'Data', role: 'athlete' };
+        }
+    }
+  };
+
 
   const getUserByEmail = async (email: string): Promise<UserProfile | null> => {
       const dbUser = getStoredUserByEmail(email);
       if (!dbUser) return null;
       
-      // This is tricky. We can't decrypt without a password.
-      // For this simulation, we'll return a partially decrypted object.
-      // This is a major limitation of this client-only approach.
+      // Public-facing, so we don't return encrypted data.
       return {
           id: dbUser.id,
           email: dbUser.email,
           username: dbUser.username,
-          // The rest of the profile is encrypted and unavailable without a password.
-          // This is a placeholder.
           firstName: 'Encrypted',
           lastName: 'Encrypted',
           role: 'parent',
       }
   }
 
-  const updateUserBalance = async (email: string, newBalance: number) => {
-    const dbUser = getStoredUserByEmail(email);
+  const updateUserBalance = async (userId: string, amount: number) => {
+    if (user?.role !== 'admin') {
+        throw new Error("Only admins can update balances.");
+    }
+
+    const dbUser = getStoredUserById(userId);
     if (!dbUser) throw new Error("User not found to update balance");
 
-    // This is the most dangerous part of a client-only system.
-    // We have to decrypt and re-encrypt data. A password is required.
-    // Since we don't have the parent's password, we cannot securely do this.
-    // FOR SIMULATION PURPOSES ONLY, we will read, modify, and save the user object.
-    // This is NOT secure and would never be done in a real app.
+    // For this simulation, the admin will use a special "override" password
+    // to decrypt and re-encrypt any user's data. This is NOT secure.
+    const adminKeyPassword = "admin_override";
+    const salt = hexToBuffer(dbUser.salt);
     
     try {
-        const tempPassword = "dummy-password-for-simulation";
-        const keyForDecryption = await deriveKey(tempPassword, hexToBuffer(dbUser.salt), ['decrypt']);
-        
+        const key = await deriveKey(adminKeyPassword, salt, ['decrypt', 'encrypt']);
         let profile: any;
         try {
-            profile = await decryptData(keyForDecryption, hexToBuffer(dbUser.iv), hexToBuffer(dbUser.encryptedProfile));
-        } catch(e) {
-            // Decryption will fail. We'll have to create a new profile.
-            // This is a massive data loss problem in this architecture.
-            console.warn("Could not decrypt user profile to update balance. This is expected in the simulation. Profile data will be reset.");
+            profile = await decryptData(key, hexToBuffer(dbUser.iv), hexToBuffer(dbUser.encryptedProfile));
+        } catch {
+            console.warn("Admin override failed to decrypt profile. This might happen if user has a different password. Re-initializing profile.");
             profile = {
                 username: dbUser.username,
                 firstName: 'Data',
                 lastName: 'Reset',
                 role: 'parent',
-            }
+                balance: 0,
+            };
         }
-        
-        profile.balance = newBalance;
-        
-        // Re-encrypt with a new key derived from a DUMMY password.
-        const keyForEncryption = await deriveKey(tempPassword, hexToBuffer(dbUser.salt), ['encrypt']);
-        const { iv, encryptedData } = await encryptData(keyForEncryption, profile);
+
+        profile.balance = (profile.balance || 0) + amount;
+
+        const { iv, encryptedData } = await encryptData(key, profile);
 
         const updatedUserObject: StoredUser = {
             ...dbUser,
@@ -458,13 +497,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setStoredUser(updatedUserObject);
         
         // If the updated user is the currently logged-in user, update their state
-        if (user && user.email === email) {
-            setUser(prev => prev ? {...prev, balance: newBalance} : null);
+        if (user && user.id === userId) {
+            setUser(prev => prev ? {...prev, balance: profile.balance} : null);
         }
-
     } catch (e) {
-        console.error("CRITICAL: Failed to update balance. This demonstrates the flaw in client-side-only architecture.", e);
-        // In a real app, this would be a server-side atomic transaction.
+        console.error("CRITICAL: Failed to update balance with admin override.", e);
+        throw new Error("Could not update user balance due to an internal error.");
     }
   }
 
@@ -524,7 +562,7 @@ Email: ${newUser.email}
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUser, checkUserExists, adminResetPassword, getUserByEmail, updateUserBalance }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUser, checkUserExists, adminResetPassword, getUserByEmail, updateUserBalance, adminGetUserProfile }}>
       {children}
     </AuthContext.Provider>
   );

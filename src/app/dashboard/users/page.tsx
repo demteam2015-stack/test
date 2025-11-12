@@ -25,18 +25,20 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader, Users, KeyRound, MailWarning } from 'lucide-react';
-import type { UserProfile } from '@/lib/data';
+import { Loader, Users, KeyRound, MailWarning, Banknote } from 'lucide-react';
+import type { UserProfile } from '@/context/auth-context';
 import { getPendingResetRequests, deleteResetRequest, type ResetRequest } from '@/lib/reset-api';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -48,8 +50,6 @@ const getAllStoredUsers = (): UserProfile[] => {
     if (key && key.startsWith('user_id_')) {
       try {
         const storedUser = JSON.parse(localStorage.getItem(key) || '');
-        // The encryptedProfile contains the actual data.
-        // For this admin view, we can only access what's not encrypted.
         users.push({
             id: storedUser.id,
             email: storedUser.email,
@@ -66,6 +66,78 @@ const getAllStoredUsers = (): UserProfile[] => {
   return users.sort((a,b) => a.username.localeCompare(b.username));
 };
 
+
+const BalanceModal = ({ user, isOpen, onClose, onBalanceUpdated }: { user: UserProfile | null, isOpen: boolean, onClose: () => void, onBalanceUpdated: () => void }) => {
+    const { toast } = useToast();
+    const { updateUserBalance, adminGetUserProfile } = useAuth();
+    const [amount, setAmount] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            if (user) {
+                const fullUser = await adminGetUserProfile(user.id);
+                setCurrentUser(fullUser);
+            }
+        };
+        if (isOpen) {
+            fetchUser();
+        }
+    }, [user, isOpen, adminGetUserProfile]);
+
+    const handleSave = async () => {
+        if (!currentUser || !amount) return;
+        const topUpAmount = parseFloat(amount);
+        if (isNaN(topUpAmount) || topUpAmount <= 0) {
+            toast({ variant: 'destructive', title: 'Неверная сумма'});
+            return;
+        }
+
+        setIsSaving(true);
+        await updateUserBalance(currentUser.id, topUpAmount);
+        toast({ title: 'Баланс пополнен' });
+        setIsSaving(false);
+        setAmount('');
+        onBalanceUpdated();
+        onClose();
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Управление балансом: {currentUser?.username}</DialogTitle>
+                    <DialogDescription>
+                        Текущий баланс: {currentUser?.balance?.toFixed(2) ?? '0.00'} UAH. Введите сумму для зачисления.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="amount">Сумма пополнения (UAH)</Label>
+                        <Input
+                            id="amount"
+                            type="number"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            placeholder="1000.47"
+                            disabled={isSaving}
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild><Button variant="outline" disabled={isSaving}>Отмена</Button></DialogClose>
+                    <Button onClick={handleSave} disabled={isSaving || !amount}>
+                        {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                        Зачислить
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+
 export default function UsersPage() {
   const { user, loading, adminResetPassword } = useAuth();
   const router = useRouter();
@@ -76,8 +148,12 @@ export default function UsersPage() {
   const [usersPage, setUsersPage] = useState(1);
   const [requestsPage, setRequestsPage] = useState(1);
   
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
+
   const [selectedRequest, setSelectedRequest] = useState<ResetRequest | null>(null);
+  const [selectedUserForBalance, setSelectedUserForBalance] = useState<UserProfile | null>(null);
+
   const [newPassword, setNewPassword] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<{emailText: string} | null>(null);
@@ -109,9 +185,14 @@ export default function UsersPage() {
 
   const handleResetClick = (request: ResetRequest) => {
     setSelectedRequest(request);
-    setIsModalOpen(true);
+    setIsResetModalOpen(true);
     setResetResult(null);
     setNewPassword('');
+  }
+  
+  const handleBalanceClick = (user: UserProfile) => {
+    setSelectedUserForBalance(user);
+    setIsBalanceModalOpen(true);
   }
 
   const handleConfirmReset = async () => {
@@ -127,8 +208,8 @@ export default function UsersPage() {
     fetchAllData();
   }
   
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleCloseResetModal = () => {
+    setIsResetModalOpen(false);
     setSelectedRequest(null);
     setResetResult(null);
     setNewPassword('');
@@ -155,7 +236,7 @@ export default function UsersPage() {
             Управление пользователями
         </h1>
         <p className="text-muted-foreground">
-          Просмотр аккаунтов и обработка запросов на сброс пароля.
+          Просмотр аккаунтов, управление балансом и сброс паролей.
         </p>
       </div>
 
@@ -185,7 +266,7 @@ export default function UsersPage() {
                   <TableRow>
                     <TableHead>Имя пользователя</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>ID пользователя</TableHead>
+                    <TableHead>Действия</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -194,7 +275,12 @@ export default function UsersPage() {
                       <TableRow key={u.id}>
                         <TableCell className="font-medium">{u.username}</TableCell>
                         <TableCell>{u.email}</TableCell>
-                        <TableCell className="text-muted-foreground">{u.id}</TableCell>
+                        <TableCell>
+                            <Button size="sm" variant="outline" onClick={() => handleBalanceClick(u)}>
+                                <Banknote className="mr-2 size-4" />
+                                Баланс
+                            </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -305,7 +391,7 @@ export default function UsersPage() {
           </Card>
         </TabsContent>
       </Tabs>
-      <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
+      <Dialog open={isResetModalOpen} onOpenChange={handleCloseResetModal}>
         <DialogContent className="sm:max-w-lg">
             {!resetResult ? (
               <>
@@ -328,7 +414,7 @@ export default function UsersPage() {
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={handleCloseModal} disabled={isResetting}>Отмена</Button>
+                    <Button variant="outline" onClick={handleCloseResetModal} disabled={isResetting}>Отмена</Button>
                     <Button onClick={handleConfirmReset} disabled={!newPassword || isResetting}>
                         {isResetting && <Loader className="mr-2 h-4 w-4 animate-spin" />}
                         Сбросить и сгенерировать письмо
@@ -347,12 +433,18 @@ export default function UsersPage() {
                     {resetResult.emailText}
                  </div>
                  <DialogFooter>
-                     <Button onClick={handleCloseModal}>Закрыть</Button>
+                     <Button onClick={handleCloseResetModal}>Закрыть</Button>
                  </DialogFooter>
                 </>
             )}
         </DialogContent>
       </Dialog>
+      <BalanceModal 
+        user={selectedUserForBalance}
+        isOpen={isBalanceModalOpen}
+        onClose={() => setIsBalanceModalOpen(false)}
+        onBalanceUpdated={fetchAllData}
+      />
     </div>
   );
 }
