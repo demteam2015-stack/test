@@ -10,14 +10,18 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
-import { CreditCard, LogOut, Settings, User as UserIcon, Shield } from 'lucide-react';
+import { CreditCard, LogOut, Settings, User as UserIcon, Shield, Repeat } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 
 export function UserNav() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
 
   const handleSignOut = () => {
     logout();
@@ -44,8 +48,18 @@ export function UserNav() {
     parent: 'Родитель',
     admin: 'Администратор',
   };
+  
+  const allRoles: (UserProfile['role'])[] = ['admin', 'athlete', 'coach', 'parent'];
 
   const userRole = user.role ? roleTranslations[user.role] : 'Неизвестно';
+
+  const handleRoleSwitch = (newRole: UserProfile['role']) => {
+      if (user.role === 'admin' && user.role !== newRole) {
+          updateUser({ role: newRole });
+          // Optional: force a refresh to ensure all components re-evaluate the role
+          window.location.reload();
+      }
+  }
 
 
   return (
@@ -95,6 +109,31 @@ export function UserNav() {
                 Настройки
               </DropdownMenuItem>
             </DropdownMenuGroup>
+            {user.role === 'admin' && (
+                <>
+                <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                        <Repeat />
+                        Переключить роль
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                            {allRoles.map(role => (
+                                <DropdownMenuItem 
+                                    key={role}
+                                    onClick={() => handleRoleSwitch(role)}
+                                    disabled={user.role === role}
+                                >
+                                    <Shield className={`mr-2 h-4 w-4 ${user.role === role ? 'text-primary' : ''}`} />
+                                    {roleTranslations[role]}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                </DropdownMenuSub>
+                </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>
               <LogOut />
