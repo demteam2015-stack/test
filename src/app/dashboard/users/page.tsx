@@ -48,13 +48,15 @@ const getAllStoredUsers = (): UserProfile[] => {
     if (key && key.startsWith('user_id_')) {
       try {
         const storedUser = JSON.parse(localStorage.getItem(key) || '');
+        // The encryptedProfile contains the actual data.
+        // For this admin view, we can only access what's not encrypted.
         users.push({
             id: storedUser.id,
             email: storedUser.email,
             username: storedUser.username,
-            firstName: 'N/A',
-            lastName: 'N/A',
-            role: 'athlete'
+            firstName: 'N/A', // This is encrypted
+            lastName: 'N/A', // This is encrypted
+            role: 'athlete' // This is encrypted, defaulting to athlete
         });
       } catch (e) {
         console.error(`Failed to parse user data for key ${key}:`, e);
@@ -205,27 +207,31 @@ export default function UsersPage() {
                 </TableBody>
               </Table>
             </CardContent>
-            <CardFooter className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                    Страница {usersPage} из {totalUsersPages}
-                </span>
-                <div className="flex gap-2">
-                    <Button 
-                        variant="outline"
-                        onClick={() => setUsersPage(p => p - 1)}
-                        disabled={usersPage === 1}
-                    >
-                        Назад
-                    </Button>
-                    <Button 
-                        variant="outline"
-                        onClick={() => setUsersPage(p => p + 1)}
-                        disabled={usersPage >= totalUsersPages}
-                    >
-                        Вперед
-                    </Button>
-                </div>
-            </CardFooter>
+            {allUsers.length > ITEMS_PER_PAGE && (
+              <CardFooter className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                      Страница {usersPage} из {totalUsersPages}
+                  </span>
+                  <div className="flex gap-2">
+                      <Button 
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setUsersPage(p => p - 1)}
+                          disabled={usersPage === 1}
+                      >
+                          Назад
+                      </Button>
+                      <Button 
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setUsersPage(p => p + 1)}
+                          disabled={usersPage >= totalUsersPages}
+                      >
+                          Вперед
+                      </Button>
+                  </div>
+              </CardFooter>
+            )}
           </Card>
         </TabsContent>
         <TabsContent value="reset-requests">
@@ -271,7 +277,7 @@ export default function UsersPage() {
                 </TableBody>
               </Table>
             </CardContent>
-            {resetRequests.length > 0 && (
+            {resetRequests.length > ITEMS_PER_PAGE && (
               <CardFooter className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
                       Страница {requestsPage} из {totalRequestsPages}
@@ -279,6 +285,7 @@ export default function UsersPage() {
                   <div className="flex gap-2">
                       <Button 
                           variant="outline"
+                          size="sm"
                           onClick={() => setRequestsPage(p => p - 1)}
                           disabled={requestsPage === 1}
                       >
@@ -286,6 +293,7 @@ export default function UsersPage() {
                       </Button>
                       <Button 
                           variant="outline"
+                          size="sm"
                           onClick={() => setRequestsPage(p => p + 1)}
                           disabled={requestsPage >= totalRequestsPages}
                       >
