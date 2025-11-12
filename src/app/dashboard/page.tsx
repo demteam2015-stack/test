@@ -107,7 +107,7 @@ function AdminDashboard() {
     );
 }
 
-function AthleteDashboard() {
+function UserDashboard({ user }: { user: UserProfile }) {
   const now = useMemo(() => new Date(), []);
   const startOfThisWeek = useMemo(() => startOfWeek(now, { weekStartsOn: 1 }), [now]);
   const endOfThisWeek = useMemo(() => endOfWeek(now, { weekStartsOn: 1 }), [now]);
@@ -136,12 +136,18 @@ function AthleteDashboard() {
     if (lastDigit > 1 && lastDigit < 5) return `через ${days} дня`;
     return `через ${days} дней`;
   }
+
+  const roleTitles: { [key: string]: string } = {
+    athlete: 'Панель спортсмена',
+    coach: 'Панель тренера',
+    parent: 'Панель родителя',
+  };
   
   return (
       <div className="flex flex-col gap-8">
         <div>
             <h1 className="text-3xl font-bold font-headline tracking-tight">
-            С возвращением, атлет!
+            {roleTitles[user.role] || 'Панель управления'}
             </h1>
             <p className="text-muted-foreground">
             Вот сводка активности вашей команды.
@@ -206,9 +212,11 @@ function AthleteDashboard() {
 export default function DashboardPage() {
     const { user } = useAuth();
     
-    if (user?.role === 'admin') {
+    if (!user) return null;
+
+    if (user.role === 'admin') {
         return <AdminDashboard />;
     }
 
-    return <AthleteDashboard />;
+    return <UserDashboard user={user} />;
 }
