@@ -67,11 +67,19 @@ export const competitionsData: Competition[] = [
 ];
 
 // --- TEAM MEMBERS DATA ---
-export const teamMembersData = [
-    { id: 'tm1', name: 'Иван Иванов'},
-    { id: 'tm2', name: 'Петр Петров'},
-    { id: 'tm3', name: 'Сергей Сергеев'},
-    { id: 'tm4', name: 'Анна Аннова'},
+export interface Athlete {
+    id: string;
+    name: string;
+    photoURL: string;
+}
+
+export const teamMembersData: Athlete[] = [
+    { id: 'athlete-1', name: 'Олена Демьяненко', photoURL: 'https://i.pravatar.cc/150?u=athlete-1' },
+    { id: 'athlete-2', name: 'Андрей Шевченко', photoURL: 'https://i.pravatar.cc/150?u=athlete-2' },
+    { id: 'athlete-3', name: 'Яна Клочкова', photoURL: 'https://i.pravatar.cc/150?u=athlete-3' },
+    { id: 'athlete-4', name: 'Василий Ломаченко', photoURL: 'https://i.pravatar.cc/150?u=athlete-4' },
+    { id: 'athlete-5', name: 'Сергей Бубка', photoURL: 'https://i.pravatar.cc/150?u=athlete-5' },
+    { id: 'athlete-6', name: 'Элина Свитолина', photoURL: 'https://i.pravatar.cc/150?u=athlete-6' },
 ];
 
 

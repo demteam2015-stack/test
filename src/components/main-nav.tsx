@@ -9,6 +9,7 @@ import {
   Home,
   Trophy,
   BrainCircuit,
+  BookUser,
 } from 'lucide-react';
 import {
   SidebarHeader,
@@ -24,6 +25,7 @@ import { Separator } from '@/components/ui/separator';
 const navLinks = [
   { href: '/dashboard', label: 'Панель', icon: Home },
   { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar },
+  { href: '/dashboard/journal', label: 'Журнал', icon: BookUser },
   { href: '/dashboard/recommendations', label: 'AI Тренер', icon: BrainCircuit },
   { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard },
   { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy },
