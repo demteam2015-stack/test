@@ -1,6 +1,6 @@
 'use client';
 
-const JOURNAL_STORAGE_KEY = 'demyanenko_hub_journal';
+const JOURNAL_STORAGE_KEY = 'demyanenko_hub_journal_v2'; // new key to avoid conflicts
 
 export type AttendanceStatus = 'present' | 'absent' | 'excused';
 
@@ -10,6 +10,7 @@ export interface AttendanceRecord {
     status: AttendanceStatus;
 }
 
+// Format: { [isoDateString]: { [eventId]: { [athleteId]: status } } }
 export type JournalDay = {
     [eventId: string]: {
         [athleteId: string]: AttendanceStatus;
@@ -47,6 +48,7 @@ const saveJournal = (journal: Journal) => {
 
 /**
  * Saves attendance data for a specific day and event.
+ * The date should be in 'YYYY-MM-DD' format (from date.toISOString().split('T')[0])
  */
 export const saveAttendance = (date: string, eventId: string, records: { athleteId: string, status: AttendanceStatus }[]): Promise<void> => {
     return new Promise((resolve) => {
@@ -70,6 +72,7 @@ export const saveAttendance = (date: string, eventId: string, records: { athlete
 
 /**
  * Fetches attendance data for a specific day.
+ * The date should be in 'YYYY-MM-DD' format (from date.toISOString().split('T')[0])
  */
 export const getAttendanceForDay = (date: string): Promise<JournalDay | undefined> => {
     return new Promise((resolve) => {

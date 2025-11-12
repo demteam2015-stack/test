@@ -117,7 +117,7 @@ function AttendanceForm({ event, athletes, initialData, onSave, isSaving }: { ev
 export default function JournalPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
   const [events, setEvents] = useState<TrainingEvent[]>([]);
   const [attendanceData, setAttendanceData] = useState<AttendanceState>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -125,13 +125,13 @@ export default function JournalPage() {
 
   const canManage = user?.role === 'admin' || user?.role === 'coach';
 
-  const isoDate = useMemo(() => startOfDay(selectedDate).toISOString(), [selectedDate]);
+  const isoDate = useMemo(() => selectedDate.toISOString().split('T')[0], [selectedDate]);
 
-  const fetchData = useCallback(async (date: Date, iso: string) => {
+  const fetchData = useCallback(async (date: Date) => {
     setIsLoading(true);
-    // Get all events for the day suitable for attendance tracking
+    const dayIso = date.toISOString().split('T')[0];
     const dailyEvents = getEventsForDay(date).filter(e => e.type === 'training' || e.type === 'competition' || e.type === 'meeting');
-    const savedAttendance = await getAttendanceForDay(iso);
+    const savedAttendance = await getAttendanceForDay(dayIso);
 
     setEvents(dailyEvents);
 
@@ -148,23 +148,33 @@ export default function JournalPage() {
   }, []);
 
   useEffect(() => {
-    fetchData(selectedDate, isoDate);
-  }, [selectedDate, isoDate, fetchData]);
+    fetchData(selectedDate);
+  }, [selectedDate, fetchData]);
 
   const handleSaveAttendance = async (eventId: string, records: { athleteId: string; status: AttendanceStatus }[]) => {
+    if (!canManage) return;
     setIsSaving(true);
     await saveAttendance(isoDate, eventId, records);
     toast({
       title: "Журнал обновлен",
       description: "Данные о посещаемости успешно сохранены.",
     });
-    // Optimistically update state
-    setAttendanceData(prev => ({
-        ...prev,
-        [eventId]: records.reduce((acc, rec) => ({...acc, [rec.athleteId]: rec.status}), {})
-    }));
+    
+    setAttendanceData(prev => {
+        const newEventAttendance = records.reduce((acc, rec) => ({...acc, [rec.athleteId]: rec.status}), {});
+        return {
+            ...prev,
+            [eventId]: newEventAttendance
+        };
+    });
     setIsSaving(false);
   };
+  
+  const handleDateSelect = (day: Date | undefined) => {
+      if (day) {
+          setSelectedDate(startOfDay(day));
+      }
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -188,7 +198,7 @@ export default function JournalPage() {
                     <Calendar
                         mode="single"
                         selected={selectedDate}
-                        onSelect={(day) => setSelectedDate(day || new Date())}
+                        onSelect={handleDateSelect}
                         className="rounded-md border p-0"
                         locale={ru}
                         disabled={isLoading || isSaving}
