@@ -45,6 +45,8 @@ import { ru } from 'date-fns/locale';
 
 const REQUISITES_KEY = 'payment_requisites';
 const DEFAULT_REQUISITES = '+380 XX XXX-XX-XX';
+const BASE_AMOUNT_KEY = 'payment_base_amount';
+const DEFAULT_BASE_AMOUNT = '1000';
 
 const RequisitesForm = ({ onUpdate, currentRequisites }: { onUpdate: (newRequisites: string) => void, currentRequisites: string }) => {
     const { toast } = useToast();
@@ -85,6 +87,66 @@ const RequisitesForm = ({ onUpdate, currentRequisites }: { onUpdate: (newRequisi
                          <div className="grid gap-2">
                             <Label htmlFor="requisites">Реквизиты (номер телефона, карты и т.д.)</Label>
                             <Input id="requisites" value={requisites} onChange={(e) => setRequisites(e.target.value)} required disabled={isSaving} />
+                        </div>
+                    </div>
+                     <DialogFooter>
+                        <DialogClose asChild><Button type="button" variant="outline" disabled={isSaving}>Отмена</Button></DialogClose>
+                        <Button type="submit" disabled={isSaving}>
+                            {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                            Сохранить
+                        </Button>
+                    </DialogFooter>
+                 </form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+const AmountForm = ({ onUpdate, currentAmount }: { onUpdate: (newAmount: string) => void, currentAmount: string }) => {
+    const { toast } = useToast();
+    const [isSaving, setIsSaving] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [amount, setAmount] = useState(currentAmount);
+    
+    useEffect(() => {
+        setAmount(currentAmount);
+    }, [currentAmount, isModalOpen]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const parsedAmount = parseFloat(amount);
+        if (isNaN(parsedAmount) || parsedAmount < 0) {
+            toast({ variant: 'destructive', title: 'Неверная сумма' });
+            return;
+        }
+
+        setIsSaving(true);
+        setConfigValue(BASE_AMOUNT_KEY, amount);
+        onUpdate(amount);
+        setIsSaving(false);
+        setIsModalOpen(false);
+        toast({ title: 'Базовая сумма обновлена' });
+    };
+
+    return (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <Edit className="h-4 w-4" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                 <form onSubmit={handleSubmit}>
+                    <DialogHeader>
+                        <DialogTitle>Редактировать базовую сумму</DialogTitle>
+                        <DialogDescription>
+                           Установите основную сумму для абонемента (без копеек).
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                         <div className="grid gap-2">
+                            <Label htmlFor="base-amount">Сумма (руб.)</Label>
+                            <Input id="base-amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required disabled={isSaving} />
                         </div>
                     </div>
                      <DialogFooter>
@@ -222,6 +284,7 @@ export default function PaymentsPage() {
   const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [paymentRequisites, setPaymentRequisites] = useState(DEFAULT_REQUISITES);
+  const [baseAmount, setBaseAmount] = useState(DEFAULT_BASE_AMOUNT);
 
   const isManager = user?.role === 'admin' || user?.role === 'coach';
 
@@ -234,6 +297,7 @@ export default function PaymentsPage() {
 
   const fetchConfig = useCallback(() => {
     setPaymentRequisites(getConfigValue(REQUISITES_KEY, DEFAULT_REQUISITES));
+    setBaseAmount(getConfigValue(BASE_AMOUNT_KEY, DEFAULT_BASE_AMOUNT));
   }, []);
 
   useEffect(() => {
@@ -241,16 +305,15 @@ export default function PaymentsPage() {
     fetchConfig();
   }, [fetchPayments, fetchConfig]);
 
-  const generateSuggestedAmount = () => {
+  const generateSuggestedAmount = useCallback(() => {
     const randomCents = Math.floor(Math.random() * 99) + 1;
-    const baseAmount = 1000;
     const finalAmount = `${baseAmount}.${randomCents.toString().padStart(2, '0')}`;
     setSuggestedAmount(finalAmount);
-  };
+  }, [baseAmount]);
 
   useEffect(() => {
     generateSuggestedAmount();
-  }, []);
+  }, [generateSuggestedAmount]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -279,6 +342,12 @@ export default function PaymentsPage() {
           default:
               return 'default';
       }
+  }
+
+  const handleConfigUpdate = () => {
+    fetchConfig();
+    // We need to regenerate the suggested amount in case the base amount was changed
+    generateSuggestedAmount();
   }
 
   const renderAdminOrCoachView = () => (
@@ -398,7 +467,10 @@ export default function PaymentsPage() {
                     </div>
                 </div>
                 <div>
-                    <Label>Рекомендуемая сумма для перевода</Label>
+                    <div className="flex items-center gap-2">
+                        <Label>Рекомендуемая сумма для перевода</Label>
+                         {isManager && <AmountForm onUpdate={handleConfigUpdate} currentAmount={baseAmount} />}
+                    </div>
                     <div className="flex items-center gap-2 mt-1">
                         <p className="text-2xl font-bold text-primary tabular-nums">{suggestedAmount} руб.</p>
                         <Button variant="outline" size="icon" onClick={() => copyToClipboard(suggestedAmount)} aria-label="Скопировать сумму">
@@ -443,3 +515,5 @@ export default function PaymentsPage() {
     </div>
   );
 }
+
+    
