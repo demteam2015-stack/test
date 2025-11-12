@@ -42,7 +42,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCreated: (event: TrainingEvent) => void, eventToEdit: TrainingEvent | null, onEventUpdated: (event: TrainingEvent) => void }) => {
     const { user } = useAuth();
@@ -133,7 +135,7 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
     return (
         <Dialog open={isModalOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>{TriggerButton}</DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
                         <DialogTitle>{isEditMode ? 'Редактировать тренировку' : 'Новая тренировка'}</DialogTitle>
@@ -148,9 +150,32 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
                         </div>
                         <div className="grid gap-2">
                              <Label htmlFor="date">Дата</Label>
-                             <Calendar mode="single" selected={date} onSelect={setDate} className="p-0 rounded-md border" initialFocus/>
+                             <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full justify-start text-left font-normal",
+                                            !date && "text-muted-foreground"
+                                        )}
+                                        disabled={isSaving}
+                                        >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {date ? format(date, 'PPP', { locale: ru}) : <span>Выберите дату</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                        mode="single"
+                                        selected={date}
+                                        onSelect={setDate}
+                                        initialFocus
+                                        locale={ru}
+                                    />
+                                </PopoverContent>
+                            </Popover>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="start-time">Начало</Label>
                                 <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} required disabled={isSaving} />
