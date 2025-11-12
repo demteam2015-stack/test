@@ -120,15 +120,15 @@ service cloud.firestore {
     /**
      * @description Publicly readable collections for events, competitions, and team members.
      */
-    match /events/{event} {
+    match /events/{document=**} {
       allow read: if isSignedIn();
       allow write: if false; 
     }
-    match /competitions/{competition} {
+    match /competitions/{document=**} {
       allow read: if isSignedIn();
       allow write: if false; 
     }
-    match /teamMembers/{member} {
+    match /teamMembers/{document=**} {
       allow read: if isSignedIn();
       allow write: if false;
     }
