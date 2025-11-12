@@ -8,6 +8,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
@@ -21,6 +31,10 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const { login } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -47,6 +61,21 @@ export default function LoginPage() {
     }
   };
 
+  const handleForgotPasswordSubmit = (e: FormEvent) => {
+      e.preventDefault();
+      setIsForgotPasswordLoading(true);
+      // Имитируем сетевую задержку
+      setTimeout(() => {
+          setIsForgotPasswordLoading(false);
+          setIsModalOpen(false);
+          toast({
+              title: "Инструкции отправлены",
+              description: `Если аккаунт с email ${forgotPasswordEmail} существует, на него будет отправлено письмо.`,
+          });
+          setForgotPasswordEmail('');
+      }, 1500);
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
       <Card className="w-full max-w-sm">
@@ -71,7 +100,51 @@ export default function LoginPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Пароль</Label>
+              <div className="flex items-center">
+                <Label htmlFor="password">Пароль</Label>
+                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                    <DialogTrigger asChild>
+                         <button
+                            type="button"
+                            className="ml-auto inline-block text-sm underline"
+                         >
+                            Забыли пароль?
+                         </button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                         <form onSubmit={handleForgotPasswordSubmit}>
+                            <DialogHeader>
+                                <DialogTitle>Восстановить пароль</DialogTitle>
+                                <DialogDescription>
+                                    Введите ваш email, и мы отправим вам инструкции по восстановлению пароля.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="forgot-password-email" className="text-right">
+                                        Email
+                                    </Label>
+                                    <Input
+                                        id="forgot-password-email"
+                                        type="email"
+                                        value={forgotPasswordEmail}
+                                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                                        className="col-span-3"
+                                        required
+                                        disabled={isForgotPasswordLoading}
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button type="submit" disabled={isForgotPasswordLoading}>
+                                    {isForgotPasswordLoading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                                    Отправить инструкции
+                                </Button>
+                            </DialogFooter>
+                         </form>
+                    </DialogContent>
+                 </Dialog>
+              </div>
               <Input
                 id="password"
                 type="password"
