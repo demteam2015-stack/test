@@ -92,6 +92,14 @@ const BulkEventForm = ({ selectedDates, onEventsCreated }: { selectedDates: Date
     
     const handleOpenChange = (open: boolean) => {
         setIsModalOpen(open);
+        if (!open) {
+            // Reset form on close
+            setTitle('Тренировка');
+            setStartTime('18:00');
+            setEndTime('20:00');
+            setLocation('Стадион "Олимпийский"');
+            setNotes('');
+        }
     }
     
     return (
@@ -148,7 +156,7 @@ const BulkEventForm = ({ selectedDates, onEventsCreated }: { selectedDates: Date
 };
 
 
-const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCreated: (event: TrainingEvent) => void, eventToEdit: TrainingEvent | null, onEventUpdated: (event: TrainingEvent) => void }) => {
+const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated, children }: { onEventCreated: (event: TrainingEvent) => void, eventToEdit: TrainingEvent | null, onEventUpdated: (event: TrainingEvent) => void, children: React.ReactNode }) => {
     const { user } = useAuth();
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
@@ -164,15 +172,13 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
     const isEditMode = !!eventToEdit;
 
     useEffect(() => {
-        if (isEditMode && eventToEdit) {
+        if (isEditMode && eventToEdit && isModalOpen) {
             setTitle(eventToEdit.title);
             setDate(new Date(eventToEdit.date));
             setStartTime(eventToEdit.startTime);
             setEndTime(eventToEdit.endTime);
             setLocation(eventToEdit.location);
             setNotes(eventToEdit.notes || '');
-        } else {
-            resetForm();
         }
     }, [eventToEdit, isEditMode, isModalOpen]);
 
@@ -221,23 +227,20 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
     
     const handleOpenChange = (open: boolean) => {
         setIsModalOpen(open);
+        if (!open) {
+            resetForm();
+        }
     }
-    
-    const TriggerButton = (
-         <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Edit className="h-4 w-4" />
-        </Button>
-    );
 
     return (
         <Dialog open={isModalOpen} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>{TriggerButton}</DialogTrigger>
+            <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Редактировать тренировку</DialogTitle>
+                        <DialogTitle>{isEditMode ? 'Редактировать тренировку' : 'Новая тренировка'}</DialogTitle>
                         <DialogDescription>
-                           Измените детали и сохраните.
+                           {isEditMode ? 'Измените детали и сохраните.' : 'Заполните данные о новой тренировке.'}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -295,7 +298,7 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
                         <DialogClose asChild><Button type="button" variant="outline" disabled={isSaving}>Отмена</Button></DialogClose>
                         <Button type="submit" disabled={isSaving}>
                             {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                            Сохранить
+                            {isEditMode ? 'Сохранить' : 'Создать'}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -306,6 +309,7 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated }: { onEventCre
 
 export default function SchedulePage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [viewDate, setViewDate] = useState<Date>(new Date());
   const [selectedDates, setSelectedDates] = useState<Date[] | undefined>([]);
   const [allEvents, setAllEvents] = useState<TrainingEvent[]>([]);
@@ -370,10 +374,10 @@ export default function SchedulePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-1">
              <Calendar
-                mode="multiple"
+                mode={canManage ? "multiple" : "single"}
                 min={1}
-                selected={selectedDates}
-                onSelect={canManage ? setSelectedDates : undefined}
+                selected={canManage ? selectedDates : viewDate}
+                onSelect={canManage ? setSelectedDates : (day) => setViewDate(day || new Date())}
                 onDayClick={(day) => setViewDate(day)}
                 className="rounded-md border"
                 modifiers={{
@@ -401,7 +405,15 @@ export default function SchedulePage() {
                                         <CardTitle className="text-lg">{event.title}</CardTitle>
                                         {canManage && (
                                             <div className="flex items-center gap-1">
-                                                <EventForm onEventCreated={handleEventsChange} eventToEdit={event} onEventUpdated={handleEventsChange} />
+                                                <EventForm 
+                                                    onEventCreated={handleEventsChange} 
+                                                    eventToEdit={event} 
+                                                    onEventUpdated={handleEventsChange}
+                                                >
+                                                     <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                </EventForm>
                                                  <AlertDialog>
                                                     <AlertDialogTrigger asChild>
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
@@ -455,3 +467,5 @@ export default function SchedulePage() {
     </div>
   );
 }
+
+    
