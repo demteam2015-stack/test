@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -9,165 +9,20 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { BookUser, Calendar as CalendarIcon, Loader } from "lucide-react";
+import { BookUser, Loader, Users as UsersIcon } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
-import type { TrainingEvent } from '@/lib/schedule-api';
-import { getEventsForDay } from '@/lib/schedule-api';
-import { teamMembersData, type Athlete } from '@/lib/data';
-import { saveAttendance, getAttendanceForDay, type AttendanceStatus } from '@/lib/journal-api';
-import { format, startOfDay } from 'date-fns';
-import { ru } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import Link from 'next/link';
 
-type AttendanceState = {
-  [eventId: string]: {
-    [athleteId: string]: AttendanceStatus;
-  };
-};
-
-function AttendanceForm({ event, athletes, initialData, onSave, isSaving }: { event: TrainingEvent; athletes: Athlete[]; initialData: { [athleteId: string]: AttendanceStatus }; onSave: (records: { athleteId: string; status: AttendanceStatus }[]) => void; isSaving: boolean; }) {
-  const [attendance, setAttendance] = useState(initialData);
-
-  useEffect(() => {
-    setAttendance(initialData);
-  }, [initialData]);
-
-
-  const handleStatusChange = (athleteId: string, status: AttendanceStatus) => {
-    setAttendance(prev => ({ ...prev, [athleteId]: status }));
-  };
-
-  const handleSave = () => {
-    const records = Object.entries(attendance).map(([athleteId, status]) => ({ athleteId, status }));
-    onSave(records);
-  };
-  
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${lastName[0] || ''}${firstName[0] || ''}`;
-  }
-  
-  const formatDateOfBirth = (dateString: string) => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl">{event.title}</CardTitle>
-        <CardDescription>{event.startTime} - {event.endTime} в {event.location}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {athletes.map(athlete => (
-          <div key={athlete.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors">
-            <div className='flex items-center gap-4 mb-4 sm:mb-0'>
-              <Avatar className="h-12 w-12">
-                  <AvatarImage src={athlete.photoURL} alt={`${athlete.lastName} ${athlete.firstName}`}/>
-                  <AvatarFallback>{getInitials(athlete.firstName, athlete.lastName)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-semibold">{`${athlete.lastName} ${athlete.firstName} ${athlete.middleName}`}</p>
-                <p className="text-sm text-muted-foreground">
-                  Дата рождения: {formatDateOfBirth(athlete.dateOfBirth)}
-                </p>
-              </div>
-            </div>
-            <RadioGroup
-              value={attendance[athlete.id] || 'present'}
-              onValueChange={(value) => handleStatusChange(athlete.id, value as AttendanceStatus)}
-              className="flex gap-2 sm:gap-4 shrink-0"
-              disabled={isSaving}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="present" id={`present-${event.id}-${athlete.id}`} className="text-green-500 border-green-500"/>
-                <Label htmlFor={`present-${event.id}-${athlete.id}`} className="cursor-pointer flex items-center gap-2">Присутствовал</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="absent" id={`absent-${event.id}-${athlete.id}`} className="text-red-500 border-red-500" />
-                <Label htmlFor={`absent-${event.id}-${athlete.id}`} className="cursor-pointer flex items-center gap-2">Отсутствовал</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="excused" id={`excused-${event.id}-${athlete.id}`} className="text-yellow-500 border-yellow-500"/>
-                <Label htmlFor={`excused-${event.id}-${athlete.id}`} className="cursor-pointer flex items-center gap-2">Уваж. причина</Label>
-              </div>
-            </RadioGroup>
-          </div>
-        ))}
-      </CardContent>
-      <CardFooter>
-        <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-            Сохранить журнал
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-}
-
+// Placeholder. This page will be reimplemented in the next step.
 
 export default function JournalPage() {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [today] = useState<Date>(startOfDay(new Date()));
-  const [events, setEvents] = useState<TrainingEvent[]>([]);
-  const [attendanceData, setAttendanceData] = useState<AttendanceState>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-
   const canManage = user?.role === 'admin' || user?.role === 'coach';
-
-  const isoDate = useMemo(() => today.toISOString().split('T')[0], [today]);
-
-  const fetchData = useCallback(async (date: Date) => {
-    setIsLoading(true);
-    const dayIso = date.toISOString().split('T')[0];
-    const dailyEvents = getEventsForDay(date).filter(e => e.type === 'training' || e.type === 'competition' || e.type === 'meeting');
-    const savedAttendance = await getAttendanceForDay(dayIso);
-
-    setEvents(dailyEvents);
-
-    const initialAttendance: AttendanceState = {};
-    dailyEvents.forEach(event => {
-      initialAttendance[event.id] = {};
-      teamMembersData.forEach(athlete => {
-        initialAttendance[event.id][athlete.id] = savedAttendance?.[event.id]?.[athlete.id] || 'present';
-      });
-    });
-    
-    setAttendanceData(initialAttendance);
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    fetchData(today);
-  }, [today, fetchData]);
-
-  const handleSaveAttendance = async (eventId: string, records: { athleteId: string; status: AttendanceStatus }[]) => {
-    if (!canManage) return;
-    setIsSaving(true);
-    await saveAttendance(isoDate, eventId, records);
-    toast({
-      title: "Журнал обновлен",
-      description: "Данные о посещаемости успешно сохранены.",
-    });
-    
-    setAttendanceData(prev => {
-        const newEventAttendance = records.reduce((acc, rec) => ({...acc, [rec.athleteId]: rec.status}), {});
-        return {
-            ...prev,
-            [eventId]: newEventAttendance
-        };
-    });
-    setIsSaving(false);
-  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -177,36 +32,25 @@ export default function JournalPage() {
             Журнал посещаемости
         </h1>
         <p className="text-muted-foreground">
-          {canManage ? 'Отмечайте присутствие спортсменов на сегодняшних тренировках.' : 'Просмотр посещаемости.'}
+          {canManage ? 'Отмечайте присутствие спортсменов на тренировках.' : 'Просмотр посещаемости.'}
         </p>
       </div>
       
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold">
-            События на {format(today, 'd MMMM yyyy', { locale: ru })}
-        </h2>
-        {isLoading ? (
-            <div className="flex items-center justify-center min-h-[300px] border-2 border-dashed rounded-lg">
-                <Loader className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        ) : events.length > 0 ? (
-            events.map(event => (
-                <AttendanceForm 
-                    key={event.id}
-                    event={event}
-                    athletes={teamMembersData}
-                    initialData={attendanceData[event.id] || {}}
-                    onSave={(records) => handleSaveAttendance(event.id, records)}
-                    isSaving={isSaving}
-                />
-            ))
-        ) : (
+      <Card>
+        <CardContent className="pt-6">
             <div className="flex flex-col h-60 items-center justify-center rounded-lg border-2 border-dashed border-border text-center">
-                <CalendarIcon className="h-12 w-12 text-muted-foreground" />
-                <p className="mt-4 text-muted-foreground">На сегодня нет событий для отметки.</p>
+                <UsersIcon className="h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-semibold">Сначала заполните состав команды</h3>
+                <p className="mt-2 text-sm text-muted-foreground">Перейдите в раздел "Команда", чтобы добавить спортсменов.</p>
+                <Button asChild className="mt-4">
+                    <Link href="/dashboard/team">
+                        Перейти к команде
+                    </Link>
+                </Button>
             </div>
-        )}
-      </div>
+        </CardContent>
+      </Card>
+
     </div>
   );
 }
