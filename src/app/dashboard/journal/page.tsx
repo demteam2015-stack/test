@@ -20,10 +20,8 @@ import Link from 'next/link';
 import { getAthletes, type Athlete } from '@/lib/athletes-api';
 import { saveAttendance, getAttendanceForDay, type AttendanceStatus } from '@/lib/journal-api';
 
-const TRAINING_COST = 150;
-
 export default function JournalPage() {
-  const { user, updateUserBalance, getUserByEmail } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,34 +71,6 @@ export default function JournalPage() {
   const handleSave = async () => {
     setIsSaving(true);
     
-    const chargedParents: string[] = [];
-
-    // Process charges first
-    for (const athleteId in attendance) {
-        if (attendance[athleteId] === 'present') {
-            const athlete = athletes.find(a => a.id === athleteId);
-            if (athlete && athlete.parentId) {
-                // Find parent and deduct balance
-                const parent = await getUserByEmail(athlete.parentId);
-                if (parent && !chargedParents.includes(parent.id)) {
-                    // We charge per parent, not per child, to avoid duplicate charges if multiple children attended.
-                    // This is a simplification. A real system would charge per-child.
-                    // The `updateUserBalance` takes the USER ID and the amount to ADD. So we pass a negative amount.
-                    try {
-                      await updateUserBalance(parent.id, -TRAINING_COST);
-                      chargedParents.push(parent.id);
-                    } catch (e: any) {
-                      toast({
-                        variant: 'destructive',
-                        title: `Ошибка списания`,
-                        description: `Не удалось списать средства со счета родителя ${parent.email}. ${e.message}`,
-                      });
-                    }
-                }
-            }
-        }
-    }
-
     const records = Object.entries(attendance).map(([athleteId, status]) => ({
       athleteId,
       status
@@ -111,7 +81,7 @@ export default function JournalPage() {
     setIsSaving(false);
     toast({
         title: "Журнал сохранен",
-        description: `Данные о посещаемости обновлены. Произведено списание с ${chargedParents.length} родительских счетов.`
+        description: `Данные о посещаемости за ${journalDateKey} обновлены.`
     });
   }
   
@@ -190,7 +160,7 @@ export default function JournalPage() {
             Журнал посещаемости
         </h1>
         <p className="text-muted-foreground">
-          Отметьте присутствующих спортсменов и сохраните данные. При сохранении с баланса родителя будет списано 150 UAH за каждого присутствующего спортсмена.
+          Отметьте присутствующих спортсменов и сохраните данные.
         </p>
       </div>
       

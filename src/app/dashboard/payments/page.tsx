@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Check, CreditCard, Copy, RefreshCw, Banknote } from "lucide-react";
+import { CreditCard, Copy, RefreshCw } from "lucide-react";
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { paymentHistoryData } from "@/lib/data";
@@ -74,12 +74,11 @@ export default function PaymentsPage() {
   }
 
   const renderAdminOrCoachView = () => (
-    <>
-      <Card>
+    <Card>
         <CardHeader>
           <CardTitle className="font-headline">История платежей</CardTitle>
           <CardDescription>
-            Просмотр всех транзакций в системе.
+            Просмотр всех транзакций в системе. Администратор может подтверждать получение оплаты здесь.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -117,35 +116,16 @@ export default function PaymentsPage() {
           </Table>
         </CardContent>
       </Card>
-    </>
   );
   
   const renderParentAthleteView = () => (
-     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Banknote />
-                        Мой баланс
-                    </CardTitle>
-                    <CardDescription>Ваш текущий счет в команде.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-4xl font-bold">
-                        {user?.balance !== undefined ? `${user.balance.toFixed(2)} UAH` : 'Загрузка...'}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Средства списываются автоматически после каждой отмеченной тренировки.
-                    </p>
-                </CardContent>
-            </Card>
-
             <Card>
                 <CardHeader>
                   <CardTitle className="font-headline">История платежей</CardTitle>
                   <CardDescription>
-                    Ваши последние транзакции.
+                    Ваши последние транзакции по абонементам.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -169,11 +149,11 @@ export default function PaymentsPage() {
                 </CardContent>
               </Card>
         </div>
-        <Card className="lg:col-span-1 border-primary ring-2 ring-primary">
+        <Card className="lg:col-span-1 border-primary ring-2 ring-primary sticky top-24">
             <CardHeader>
-                <CardTitle>Пополнить баланс</CardTitle>
+                <CardTitle>Оплата абонемента</CardTitle>
                 <CardDescription>
-                    Чтобы пополнить баланс, выполните перевод по номеру телефона тренера. Для быстрой идентификации вашего платежа, пожалуйста, используйте сгенерированную ниже сумму.
+                    Чтобы оплатить или продлить абонемент, выполните перевод по номеру телефона тренера. Для быстрой идентификации вашего платежа, пожалуйста, используйте сгенерированную ниже сумму.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -195,7 +175,7 @@ export default function PaymentsPage() {
                      <p className="text-xs text-muted-foreground mt-1">Нажмите, чтобы скопировать или сгенерировать новую сумму.</p>
                 </div>
                 <Separator />
-                <p className="text-sm text-muted-foreground">После совершения перевода, администратор зачислит средства на ваш баланс в течение рабочего дня. Вы увидите обновленный баланс на этой странице.</p>
+                <p className="text-sm text-muted-foreground">После совершения перевода, администратор подтвердит оплату, и ваш абонемент будет активирован. Вы увидите обновленный статус в истории платежей.</p>
             </CardContent>
         </Card>
     </div>
@@ -206,10 +186,10 @@ export default function PaymentsPage() {
       <div>
         <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
           <CreditCard className="size-8 text-primary" />
-          Оплата и членство
+          Оплата и абонементы
         </h1>
         <p className="text-muted-foreground">
-          Управляйте своим счетом и просматривайте историю платежей.
+          Управляйте оплатой абонементов и просматривайте историю платежей.
         </p>
       </div>
       
