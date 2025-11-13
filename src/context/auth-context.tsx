@@ -10,7 +10,7 @@ const USERS_USERNAME_INDEX_PREFIX = 'user_username_';
 const USERS_ID_INDEX_PREFIX = 'user_id_';
 const SESSION_STORAGE_KEY = 'local_user_session_v2';
 const ADMIN_PERMAROLE_KEY = 'admin_permarole_v3';
-const INITIAL_ADMIN_CREATED = 'initial_admin_created_v2';
+const INITIAL_ADMIN_CREATED = 'initial_admin_created_v3'; // Bumped version
 
 
 export type UserProfile = BaseUserProfile & {
@@ -191,58 +191,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Function to create the initial admin user
-  const createInitialAdmin = async () => {
-    if (typeof window === 'undefined' || localStorage.getItem(INITIAL_ADMIN_CREATED) === 'true') {
-        return;
-    }
+  // Function to create/ensure the admin user exists with correct credentials
+    const ensureAdminUser = async () => {
+        if (typeof window === 'undefined' || localStorage.getItem(INITIAL_ADMIN_CREATED) === 'true') {
+            return;
+        }
 
-    const adminEmail = 'lexazver@gmail.com';
-    const adminUsername = 'lexazver';
-    const adminPassword = '123123'; // Simple default password
+        const adminEmail = 'lexazver@gmail.com';
+        const adminUsername = 'lexazver';
+        const adminPassword = '123123';
+        
+        let existingUser = getStoredUserByEmail(adminEmail);
 
-    if (getStoredUserByEmail(adminEmail) || getStoredUserByUsername(adminUsername)) {
+        const salt = existingUser ? hexToBuffer(existingUser.salt) : generateSalt();
+        const encryptionKey = await deriveKey(adminPassword, salt, ['encrypt']);
+
+        const profileToEncrypt = {
+            username: adminUsername,
+            firstName: 'Алексей',
+            lastName: 'Демьяненко',
+            dateOfBirth: new Date('1990-01-01').toISOString(),
+            role: 'admin',
+            photoURL: '', // Will be set from placeholder images
+            balance: 9999,
+        };
+
+        const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
+
+        const adminUser: StoredUser = {
+            id: existingUser?.id || 'initial_admin_id_placeholder',
+            email: adminEmail,
+            username: adminUsername,
+            salt: bufferToHex(salt),
+            iv: iv,
+            encryptedProfile: encryptedData,
+        };
+        
+        setStoredUser(adminUser);
         localStorage.setItem(INITIAL_ADMIN_CREATED, 'true');
-        return; // Admin already exists
-    }
-
-    const salt = generateSalt();
-    const encryptionKey = await deriveKey(adminPassword, salt, ['encrypt']);
-
-    const profileToEncrypt = {
-        username: adminUsername,
-        firstName: 'Алексей',
-        lastName: 'Демьяненко',
-        dateOfBirth: new Date('1990-01-01').toISOString(),
-        role: 'admin',
-        photoURL: '', // Will be set from placeholder images
-        balance: 9999,
+        console.log('Admin user created or updated successfully.');
     };
-
-    const newAdmin: StoredUser = {
-        id: 'initial_admin_id_placeholder',
-        email: adminEmail,
-        username: adminUsername,
-        salt: bufferToHex(salt),
-        iv: '',
-        encryptedProfile: '',
-    };
-
-    const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
-    newAdmin.iv = iv;
-    newAdmin.encryptedProfile = encryptedData;
-
-    setStoredUser(newAdmin);
-    localStorage.setItem(INITIAL_ADMIN_CREATED, 'true');
-    console.log('Initial admin user created.');
-  };
 
 
   useEffect(() => {
     const setup = async () => {
         // Check for a persisted session on initial load
         if (typeof window !== 'undefined') {
-            await createInitialAdmin();
+            await ensureAdminUser();
 
             const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
             const isAdminSession = localStorage.getItem(ADMIN_PERMAROLE_KEY) === 'true';
@@ -286,6 +281,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
+    // Special check for admin login to ensure it always works with the default password
+    if (email.toLowerCase() === 'lexazver@gmail.com') {
+        await ensureAdminUser();
+    }
+      
     const foundUser = getStoredUserByEmail(email);
 
     if (foundUser) {
