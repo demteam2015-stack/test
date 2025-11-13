@@ -64,6 +64,7 @@ export const competitionsData: Competition[] = [
     { id: 'comp1', name: 'Чемпионат города', date: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString(), location: 'Городской стадион', status: 'Предстоящий', registrationStatus: 'Зарегистрирован'},
     { id: 'comp2', name: 'Национальный отбор', date: new Date(new Date().setDate(new Date().getDate() + 45)).toISOString(), location: 'Национальный спортивный комплекс', status: 'Предстоящий', registrationStatus: 'Не зарегистрирован'},
     { id: 'comp3', name: 'Кубок ветеранов', date: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString(), location: 'Стадион "Ветеран"', status: 'Завершенный', result: '1-е место'},
+    { id: 'comp4', name: 'Открытый ринг', date: new Date(new Date().setDate(new Date().getDate() - 90)).toISOString(), location: 'Клуб "Легион"', status: 'Завершенный', result: 'Участие'},
 ];
 
 // --- TEAM MEMBERS DATA ---

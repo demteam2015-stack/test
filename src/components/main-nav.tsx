@@ -55,7 +55,7 @@ export default function MainNav() {
 
   const navLinks = [
     { href: '/dashboard', label: 'Панель', icon: Home, roles: ['admin', 'coach', 'parent', 'athlete'] },
-    { href: '/dashboard/profile', label: 'Профиль', icon: User, roles: ['admin', 'coach', 'parent', 'athlete'] },
+    { href: '/dashboard/profile', label: 'Мой путь', icon: User, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/team', label: 'Команда', icon: Users, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/journal', label: 'Журнал', icon: BookUser, roles: ['admin', 'coach'] },
