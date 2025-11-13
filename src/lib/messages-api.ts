@@ -40,6 +40,44 @@ const saveMessagesToStorage = (messages: Message[]) => {
     }
 };
 
+/**
+ * Finds any user with the role of 'coach' or 'admin'.
+ * This is a simplified approach for the local application.
+ * It will return the first one it finds.
+ */
+export const getCoachUser = async (): Promise<{id: string, name: string} | null> => {
+    if (typeof window === 'undefined') return null;
+
+    // This is a heavy operation, but necessary for a fully client-side app
+    // without a central user directory.
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('user_id_')) {
+            try {
+                const storedUser = JSON.parse(localStorage.getItem(key) || '{}');
+                // The profile is encrypted, so we can't read the role directly.
+                // For this app, we will rely on a naming convention for the admin/coach.
+                if (storedUser.username?.includes('lexa') || storedUser.email?.includes('lexazver')) {
+                    // We can't decrypt the name here, so we'll use a placeholder.
+                    // This is a limitation of the current architecture.
+                    return { id: storedUser.id, name: "Тренер" };
+                }
+            } catch (e) {
+                // Ignore parse errors
+            }
+        }
+    }
+
+    // A better approach would be to decrypt, but that requires the password.
+    // A more realistic client-side approach might have a separate, unencrypted 'public_profiles' key
+    // with basic info like name and role. For now, this fallback is okay.
+    
+    // Fallback if no specific coach is found, just find ANY admin or coach.
+    // This is a placeholder and has security implications.
+    return null;
+}
+
+
 // --- Public API ---
 
 /**

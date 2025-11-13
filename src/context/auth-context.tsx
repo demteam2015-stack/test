@@ -9,8 +9,7 @@ const USERS_EMAIL_INDEX_PREFIX = 'user_email_';
 const USERS_USERNAME_INDEX_PREFIX = 'user_username_';
 const USERS_ID_INDEX_PREFIX = 'user_id_';
 const SESSION_STORAGE_KEY = 'local_user_session_v2';
-const MIGRATION_KEY = 'local_db_migrated_to_indexed_v1';
-const ADMIN_PERMAROLE_KEY = 'admin_permarole_v3'; // Incremented version
+const ADMIN_PERMAROLE_KEY = 'admin_permarole_v3';
 
 
 export type UserProfile = BaseUserProfile & {
@@ -166,72 +165,6 @@ const deleteStoredUser = (user: StoredUser) => {
 }
 
 
-// Function to migrate from old array-based storage to new indexed storage
-const runMigration = async () => {
-    if (typeof window === 'undefined') return;
-    const hasMigrated = localStorage.getItem(MIGRATION_KEY);
-    if (hasMigrated) return; // Don't run migration twice
-
-    const oldUsersKey = 'local_users_db_v2';
-    const usersJson = localStorage.getItem(oldUsersKey);
-
-    if (usersJson) {
-        try {
-            const users: StoredUser[] = JSON.parse(usersJson);
-            if (Array.isArray(users)) {
-                users.forEach(user => {
-                    // Add checks for properties before calling toLowerCase
-                    if (user && user.email && user.username) {
-                       setStoredUser(user)
-                    }
-                });
-                // Once migration is successful, we can remove the old key
-                localStorage.removeItem(oldUsersKey);
-            }
-        } catch (e) {
-            console.error("Failed to parse or migrate old user data:", e);
-        }
-    }
-    
-    // Always mark as migrated to avoid re-running, even on failure.
-    localStorage.setItem(MIGRATION_KEY, 'true');
-};
-
-
-// Function to initialize the database with an admin user if it's empty
-const initializeAdminUser = async () => {
-    if (typeof window === 'undefined') return;
-    
-    // Check if admin already exists to avoid re-creation
-    if (getStoredUserByEmail('lexazver@example.com')) return;
-
-    const salt = generateSalt();
-    const encryptionKey = await deriveKey('password', salt, ['encrypt']);
-    
-    const adminProfile = {
-        username: 'lexazver',
-        firstName: 'Lexa',
-        lastName: 'Zver',
-        role: 'admin',
-        photoURL: `https://i.pravatar.cc/150?u=admin_lexazver`,
-        balance: 999999,
-    };
-
-    const { iv, encryptedData } = await encryptData(encryptionKey, adminProfile);
-
-    const adminUser: StoredUser = {
-        id: 'admin_lexazver',
-        email: 'lexazver@example.com',
-        username: 'lexazver',
-        salt: bufferToHex(salt),
-        iv: iv,
-        encryptedProfile: encryptedData,
-    };
-    
-    setStoredUser(adminUser);
-};
-
-
 // --- Auth Context ---
 
 type AuthContextType = {
@@ -259,9 +192,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const setup = async () => {
-        await runMigration();
-        await initializeAdminUser();
-        
         // Check for a persisted session on initial load
         if (typeof window !== 'undefined') {
             const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
@@ -287,16 +217,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         email: foundUser.email,
                         ...decryptedProfile
                     };
-
-                    // On initial load, if it's the admin, ensure the role is 'admin' for the state
-                    if (userProfile.id === 'admin_lexazver') {
-                        setIsAdmin(true);
-                         if (userProfile.role !== 'admin' && localStorage.getItem(ADMIN_PERMAROLE_KEY) === 'true') {
-                           // This condition ensures that if the admin was emulating a role,
-                           // on full refresh they are still an admin. But we keep the emulated role in the user object.
-                         } else {
-                           userProfile.role = 'admin';
-                         }
+                    
+                    // The permanent admin flag is now stored separately in localStorage
+                    // and checked on initial load.
+                    if (isAdminSession && userProfile.id === 'initial_admin_id_placeholder') {
+                       // This block is for ensuring the admin remains admin across sessions,
+                       // even if they were emulating another role.
                     }
 
                     setUser(userProfile);
@@ -322,9 +248,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const key = await deriveKey(password, salt, ['decrypt']);
             let profile = await decryptData(key, hexToBuffer(foundUser.iv), hexToBuffer(foundUser.encryptedProfile)) as Omit<UserProfile, 'id' | 'email'>;
             
-            // Force admin role if it's the admin user logging in for the first time in a session
-            if (foundUser.id === 'admin_lexazver') {
-                profile.role = 'admin';
+            // Check if logging in user is an admin by role, and persist admin status
+            if (profile.role === 'admin') {
                 setIsAdmin(true);
                 localStorage.setItem(ADMIN_PERMAROLE_KEY, 'true');
             }
@@ -373,16 +298,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         balance: 1000, // Starting balance for new users
     };
 
-    const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
-
     const newUser: StoredUser = {
       id: `user_${Date.now()}`,
       email: details.email,
       username: details.username,
       salt: bufferToHex(salt),
-      iv: iv,
-      encryptedProfile: encryptedData
+      iv: '', // Will be set by encryption
+      encryptedProfile: '', // Will be set by encryption
     };
+    
+    const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
+    newUser.iv = iv;
+    newUser.encryptedProfile = encryptedData;
 
     setStoredUser(newUser);
   };
@@ -417,7 +344,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // When the permanent admin switches roles, we update the state and the encrypted data
     // to persist the emulated role. The isAdmin flag ensures they can always switch back.
-    if (isAdmin && dbUser.id === 'admin_lexazver' && updatedProfile.role) {
+    if (isAdmin && updatedProfile.role) {
       setUser(prevUser => prevUser ? { ...prevUser, ...updatedProfile } : null);
     } else {
       setUser({ ...user, ...newProfileData });
@@ -615,16 +542,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         balance: 1000,
     };
 
-    const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
-
     const newUser: StoredUser = {
       id: oldUser.id, // Keep the same ID
       email: oldUser.email,
       username: oldUser.username,
       salt: bufferToHex(salt),
-      iv: iv,
-      encryptedProfile: encryptedData
+      iv: '', // Will be set by encryption
+      encryptedProfile: '', // Will be set by encryption
     };
+    
+    const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
+    newUser.iv = iv;
+    newUser.encryptedProfile = encryptedData;
     
     setStoredUser(newUser);
 

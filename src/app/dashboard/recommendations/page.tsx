@@ -18,32 +18,6 @@ import { getMessageThreadsForUser, markThreadAsRead, createMessage, type Message
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
-// Assume a single coach for simplicity
-const COACH_ID = 'admin_lexazver';
-const COACH_NAME = 'Тренер';
-
-// --- Components for different roles ---
-
-const AthleteParentView = () => {
-    // This view is now deprecated and functionality is moved to my-messages page.
-    // We can show a simple message or redirect.
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Новое сообщение</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-muted-foreground">Чтобы отправить новое сообщение или просмотреть историю, пожалуйста, перейдите в раздел "Мои сообщения".</p>
-            </CardContent>
-            <CardFooter>
-                 <Button asChild>
-                    <a href="/dashboard/my-messages">Перейти в Мои сообщения</a>
-                 </Button>
-            </CardFooter>
-        </Card>
-    )
-};
-
 const CoachAdminView = () => {
     const { user } = useAuth();
     const [threads, setThreads] = useState<Record<string, Message[]>>({});
@@ -95,7 +69,7 @@ const CoachAdminView = () => {
 
         const newMessage: Omit<Message, 'id'|'isRead'> = {
             senderId: user.id,
-            senderName: COACH_NAME,
+            senderName: user.firstName ? `${user.firstName} ${user.lastName}` : user.username,
             senderRole: user.role,
             recipientId: otherParticipant.senderId,
             threadId: activeThreadId,
@@ -184,8 +158,8 @@ const CoachAdminView = () => {
                             </div>
                         </CardHeader>
                         <CardContent className="flex-grow overflow-y-auto space-y-4 pr-2">
-                           {activeThread.map(msg => (
-                                <div key={msg.id} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
+                           {activeThread.map((msg, index) => (
+                                <div key={msg.id + index} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
                                     {msg.senderId !== user?.id && (
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage src={`https://i.pravatar.cc/150?u=${msg.senderId}`} />
@@ -193,7 +167,7 @@ const CoachAdminView = () => {
                                         </Avatar>
                                     )}
                                     <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                        <p className="text-xs font-bold mb-1 opacity-80">{msg.senderName}</p>
+                                        <p className="text-xs font-bold mb-1 text-primary">{msg.senderName}</p>
                                         <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                         <time className={`text-xs opacity-70 mt-2 block ${msg.senderId === user?.id ? 'text-right' : 'text-left'}`}>
                                             {format(new Date(msg.date), 'HH:mm', { locale: ru })}
@@ -247,18 +221,35 @@ export default function RecommendationsPage() {
     const { user } = useAuth();
     const isManager = user?.role === 'admin' || user?.role === 'coach';
 
+    if (!user) return null; // Should be handled by layout, but as a safeguard.
+
     return (
         <div className="grid gap-8">
             <div>
                 <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
                     <MessageSquare className="h-8 w-8 text-primary"/>
-                    {isManager ? 'Сообщения' : 'Мои сообщения'}
+                    Сообщения
                 </h1>
                 <p className="text-muted-foreground">
-                    {isManager ? 'Просмотр и ответы на сообщения от спортсменов и родителей.' : 'Задайте вопрос тренеру или поделитесь мыслями.'}
+                    Просмотр и ответы на сообщения от спортсменов и родителей.
                 </p>
             </div>
-            {isManager ? <CoachAdminView /> : <AthleteParentView />}
+            {isManager ? <CoachAdminView /> : (
+                // This view is deprecated for athletes/parents, they use my-messages now.
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Страница сообщений</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground">Чтобы отправить новое сообщение или просмотреть историю, пожалуйста, перейдите в раздел "Мои сообщения".</p>
+                    </CardContent>
+                    <CardFooter>
+                        <Button asChild>
+                            <a href="/dashboard/my-messages">Перейти в Мои сообщения</a>
+                        </Button>
+                    </CardFooter>
+                </Card>
+            )}
         </div>
     );
 }

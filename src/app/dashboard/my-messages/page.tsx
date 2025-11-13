@@ -14,13 +14,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Mail, Check, CheckCheck, Loader, Inbox, Send, ArrowLeft, MessageSquarePlus } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
-import { getMessageThreadsForUser, markThreadAsRead, createMessage, type Message } from '@/lib/messages-api';
+import { getMessageThreadsForUser, markThreadAsRead, createMessage, type Message, getCoachUser } from '@/lib/messages-api';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-
-// Assume a single coach for simplicity
-const COACH_ID = 'admin_lexazver';
-const COACH_NAME = 'Тренер';
 
 export default function MyMessagesPage() {
   const { user } = useAuth();
@@ -30,6 +26,11 @@ export default function MyMessagesPage() {
   const [replyText, setReplyText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [coach, setCoach] = useState<{ id: string; name: string } | null>(null);
+
+  useEffect(() => {
+    getCoachUser().then(setCoach);
+  }, []);
 
   const fetchThreads = useCallback(async () => {
     if (!user) return;
@@ -64,9 +65,10 @@ export default function MyMessagesPage() {
   };
 
   const handleStartNewConversation = () => {
+      if (!user || !coach) return;
       // Logic to find or create the main thread with the coach
-      const coachThreadId = `${user?.id}_${COACH_ID}`;
-      const invertedCoachThreadId = `${COACH_ID}_${user?.id}`;
+      const coachThreadId = `${user.id}_${coach.id}`;
+      const invertedCoachThreadId = `${coach.id}_${user.id}`;
 
       if (threads[coachThreadId] || threads[invertedCoachThreadId]) {
           setActiveThreadId(threads[coachThreadId] ? coachThreadId : invertedCoachThreadId);
@@ -79,20 +81,18 @@ export default function MyMessagesPage() {
   }
   
   const handleReply = async () => {
-    if (!replyText || !user) return;
+    if (!replyText || !user || !coach) return;
 
     setIsSending(true);
-
-    const isNewConversation = !activeThreadId || !threads[activeThreadId] || threads[activeThreadId].length === 0;
     
     // In a new conversation, the threadId is determined for the first time.
-    const threadIdToSend = activeThreadId || `${user.id}_${COACH_ID}`;
+    const threadIdToSend = activeThreadId || `${user.id}_${coach.id}`;
 
     const newMessage: Omit<Message, 'id'|'isRead'> = {
         senderId: user.id,
         senderName: user.firstName ? `${user.firstName} ${user.lastName}` : user.username,
         senderRole: user.role,
-        recipientId: COACH_ID, // All messages go to the coach
+        recipientId: coach.id, // All messages go to the coach
         text: replyText,
         date: new Date().toISOString(),
         threadId: threadIdToSend
@@ -156,10 +156,12 @@ export default function MyMessagesPage() {
                     <CardTitle>Диалоги</CardTitle>
                     <CardDescription>Всего диалогов: {sortedThreads.length}</CardDescription>
                 </div>
-                <Button size="sm" onClick={handleStartNewConversation}>
-                    <MessageSquarePlus className="mr-2"/>
-                    Написать
-                </Button>
+                {coach && (
+                  <Button size="sm" onClick={handleStartNewConversation}>
+                      <MessageSquarePlus className="mr-2"/>
+                      Написать
+                  </Button>
+                )}
             </CardHeader>
             <CardContent className="space-y-2 h-[calc(100%-8rem)] overflow-y-auto pr-2">
                 {loading ? (
@@ -177,7 +179,7 @@ export default function MyMessagesPage() {
                                 className={`p-3 border rounded-lg cursor-pointer hover:bg-muted/50 ${activeThreadId === thread[0].threadId ? 'bg-muted' : ''}`}
                             >
                                 <div className="flex justify-between items-start">
-                                    <p className={`font-semibold ${isUnread ? 'text-primary' : ''}`}>{COACH_NAME}</p>
+                                    <p className={`font-semibold ${isUnread ? 'text-primary' : ''}`}>{coach?.name || 'Тренер'}</p>
                                      <time className="text-xs text-muted-foreground whitespace-nowrap">
                                         {format(new Date(lastMessage.date), 'd MMM HH:mm', { locale: ru })}
                                     </time>
@@ -212,12 +214,12 @@ export default function MyMessagesPage() {
                             <div key={msg.id + index} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
                                 {msg.senderId !== user?.id && (
                                      <Avatar className="h-8 w-8">
-                                        <AvatarImage src={`https://i.pravatar.cc/150?u=admin_lexazver`} />
+                                        <AvatarImage src={`https://i.pravatar.cc/150?u=${msg.senderId}`} />
                                         <AvatarFallback>{getInitials(msg.senderName)}</AvatarFallback>
                                     </Avatar>
                                 )}
                                 <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                    <p className="font-bold mb-1 text-xs">{msg.senderName}</p>
+                                    <p className="font-bold mb-1 text-xs text-primary">{msg.senderName}</p>
                                     <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                     <div className={`flex items-center gap-2 mt-2 ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
                                         <time className="text-xs opacity-70">
