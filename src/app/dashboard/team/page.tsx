@@ -203,7 +203,6 @@ export default function TeamPage() {
     const { toast } = useToast();
     const [athletes, setAthletes] = useState<Athlete[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [athleteToEdit, setAthleteToEdit] = useState<Athlete | null>(null);
 
     const canManage = user?.role === 'admin' || user?.role === 'coach';
 

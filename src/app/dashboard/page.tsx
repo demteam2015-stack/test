@@ -8,7 +8,7 @@ import {
   CardTitle,
   CardFooter,
 } from '@/components/ui/card';
-import { CalendarDays, Trophy, Users, MailWarning, ArrowRight, BookUser, BrainCircuit, CreditCard, Banknote } from 'lucide-react';
+import { CalendarDays, Trophy, Users, MailWarning, ArrowRight, BookUser, BrainCircuit, CreditCard, Banknote, Loader } from 'lucide-react';
 import { differenceInDays, endOfWeek, startOfWeek } from 'date-fns';
 import { useMemo, useEffect, useState } from 'react';
 import { competitionsData } from '@/lib/data';
@@ -49,14 +49,24 @@ const getAllStoredUsers = (): UserProfile[] => {
 function AdminDashboard() {
     const [totalUsers, setTotalUsers] = useState(0);
     const [pendingRequests, setPendingRequests] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchAdminData = () => {
             setTotalUsers(getAllStoredUsers().length);
             setPendingRequests(getPendingResetRequests().length);
+            setIsLoading(false);
         }
         fetchAdminData();
     }, []);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+                <Loader className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col gap-8">
@@ -117,10 +127,22 @@ function AdminDashboard() {
 
 function CoachDashboard() {
   const [teamSize, setTeamSize] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getAthletes().then(athletes => setTeamSize(athletes.length));
+    getAthletes().then(athletes => {
+        setTeamSize(athletes.length)
+        setIsLoading(false);
+    });
   }, []);
+
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+            <Loader className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
+  }
 
   return (
       <div className="flex flex-col gap-8">
@@ -227,17 +249,21 @@ function ParentDashboard({ user }: { user: UserProfile }) {
 }
 
 function AthleteDashboard() {
+  const [weeklyEventsCount, setWeeklyEventsCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const now = useMemo(() => new Date(), []);
   
-  const weeklyEventsCount = useMemo(() => {
+  useEffect(() => {
     const allEvents = getAllEvents();
     const start = startOfWeek(now, { weekStartsOn: 1 });
     const end = endOfWeek(now, { weekStartsOn: 1 });
-    return allEvents.filter(event => {
+    setWeeklyEventsCount(allEvents.filter(event => {
       const eventDate = new Date(event.date);
       return eventDate >= start && eventDate <= end;
-    }).length;
+    }).length);
+    setIsLoading(false);
   }, [now]);
+
 
   const nextCompetition = useMemo(() => competitionsData.filter(c => new Date(c.date) >= now).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0], [now]);
   
@@ -254,6 +280,14 @@ function AthleteDashboard() {
     if (lastDigit > 1 && lastDigit < 5) return `через ${days} дня`;
     return `через ${days} дней`;
   }
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+                <Loader className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
   
   return (
       <div className="flex flex-col gap-8">

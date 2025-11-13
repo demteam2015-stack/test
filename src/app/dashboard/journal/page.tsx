@@ -37,35 +37,37 @@ export default function JournalPage() {
 
   const canManage = user?.role === 'admin' || user?.role === 'coach';
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const athletesData = await getAthletes();
-    setAthletes(athletesData);
-    
-    if (athletesData.length > 0) {
-      const savedAttendance = await getAttendanceForDay(journalDateKey);
-      let currentAttendance: {[athleteId: string]: AttendanceStatus} = {};
-      
-      if (savedAttendance && savedAttendance[journalEventId]) {
-        currentAttendance = savedAttendance[journalEventId];
-      } else {
-        // Default all to 'present' if no record for today
-        athletesData.forEach(a => {
-            currentAttendance[a.id] = 'present';
-        });
-      }
-      setAttendance(currentAttendance);
-      setInitialAttendance(JSON.parse(JSON.stringify(currentAttendance))); // Deep copy for comparison
-    }
-    
-    setIsLoading(false);
-  }, [journalDateKey]);
-
   useEffect(() => {
-    if (canManage) {
-        fetchData();
-    }
-  }, [canManage, fetchData]);
+    const fetchData = async () => {
+      if (!canManage) {
+        setIsLoading(false);
+        return;
+      };
+      setIsLoading(true);
+      const athletesData = await getAthletes();
+      setAthletes(athletesData);
+      
+      if (athletesData.length > 0) {
+        const savedAttendance = await getAttendanceForDay(journalDateKey);
+        let currentAttendance: {[athleteId: string]: AttendanceStatus} = {};
+        
+        if (savedAttendance && savedAttendance[journalEventId]) {
+          currentAttendance = savedAttendance[journalEventId];
+        } else {
+          // Default all to 'present' if no record for today
+          athletesData.forEach(a => {
+              currentAttendance[a.id] = 'present';
+          });
+        }
+        setAttendance(currentAttendance);
+        setInitialAttendance(JSON.parse(JSON.stringify(currentAttendance))); // Deep copy for comparison
+      }
+      
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [canManage, journalDateKey]);
 
   const handleStatusChange = (athleteId: string, status: AttendanceStatus) => {
     setAttendance(prev => ({
@@ -122,6 +124,14 @@ export default function JournalPage() {
       });
   }
 
+  if (isLoading) {
+    return (
+       <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+          <Loader className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+}
+
   if (!canManage) {
       return (
          <div className="flex flex-col gap-8">
@@ -138,14 +148,6 @@ export default function JournalPage() {
       );
   }
   
-  if (isLoading) {
-      return (
-         <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
-            <Loader className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-  }
-
   if (athletes.length === 0) {
       return (
          <div className="flex flex-col gap-8">

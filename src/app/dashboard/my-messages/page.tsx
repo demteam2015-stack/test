@@ -30,7 +30,11 @@ export default function MyMessagesPage() {
   const [coach, setCoach] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
-    getCoachUser().then(setCoach);
+    async function fetchCoach() {
+      const coachUser = await getCoachUser();
+      setCoach(coachUser);
+    }
+    fetchCoach();
   }, []);
 
   const fetchThreads = useCallback(async () => {
@@ -287,3 +291,5 @@ export default function MyMessagesPage() {
     </div>
   );
 }
+
+    

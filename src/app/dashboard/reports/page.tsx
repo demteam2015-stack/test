@@ -43,93 +43,92 @@ export default function ReportsPage() {
 
   const isManager = user?.role === 'admin' || user?.role === 'coach';
 
-  const generateReports = useCallback(async () => {
-    setIsLoading(true);
+  useEffect(() => {
+    const generateReports = async () => {
+        if (!user) return;
+        setIsLoading(true);
 
-    const journal = await getFullJournal();
-    const athletes: Athlete[] = await getAthletes();
-    const payments: Payment[] = await getPayments();
-    
-    // --- Find athlete profile for current user if they are an athlete ---
-    if (user?.role === 'athlete' || user?.role === 'parent') {
-        // Simple link by name for this simulation. In a real app, use IDs.
-        const currentUserAthlete = athletes.find(a => 
-            a.firstName === user.firstName && a.lastName === user.lastName
-        );
-        setUserAthleteProfile(currentUserAthlete || null);
-    }
-    
-    const attendanceMap = new Map<string, { present: number; absent: number; excused: number }>();
+        const journal = await getFullJournal();
+        const athletes: Athlete[] = await getAthletes();
+        const payments: Payment[] = await getPayments();
+        
+        // --- Find athlete profile for current user if they are an athlete ---
+        if (user?.role === 'athlete' || user?.role === 'parent') {
+            // Simple link by name for this simulation. In a real app, use IDs.
+            const currentUserAthlete = athletes.find(a => 
+                a.firstName === user.firstName && a.lastName === user.lastName
+            );
+            setUserAthleteProfile(currentUserAthlete || null);
+        }
+        
+        const attendanceMap = new Map<string, { present: number; absent: number; excused: number }>();
 
-    athletes.forEach(athlete => {
-        attendanceMap.set(athlete.id, { present: 0, absent: 0, excused: 0 });
-    });
+        athletes.forEach(athlete => {
+            attendanceMap.set(athlete.id, { present: 0, absent: 0, excused: 0 });
+        });
 
-    Object.values(journal).forEach(day => {
-        Object.values(day).forEach(event => {
-            Object.entries(event).forEach(([athleteId, status]) => {
-                if (attendanceMap.has(athleteId)) {
-                    const current = attendanceMap.get(athleteId)!;
-                    if (status === 'present') current.present++;
-                    if (status === 'absent') current.absent++;
-                    if (status === 'excused') current.excused++;
-                }
+        Object.values(journal).forEach(day => {
+            Object.values(day).forEach(event => {
+                Object.entries(event).forEach(([athleteId, status]) => {
+                    if (attendanceMap.has(athleteId)) {
+                        const current = attendanceMap.get(athleteId)!;
+                        if (status === 'present') current.present++;
+                        if (status === 'absent') current.absent++;
+                        if (status === 'excused') current.excused++;
+                    }
+                });
             });
         });
-    });
 
-    const reportData: AttendanceReport[] = athletes.map(athlete => {
-        const stats = attendanceMap.get(athlete.id)!;
-        const totalTrainingsWithStatus = stats.present + stats.absent + stats.excused;
-        const totalAttendance = stats.present + stats.absent;
-        return {
-            athleteId: athlete.id,
-            name: `${athlete.lastName} ${athlete.firstName}`,
-            ...stats,
-            total: totalTrainingsWithStatus,
-            // Calculate percentage based on attended vs missed (excused not counted against)
-            attendancePercentage: totalAttendance > 0 ? (stats.present / totalAttendance) * 100 : 0
-        };
-    }).sort((a,b) => a.name.localeCompare(b.name));
-    
-    setAttendanceReport(reportData);
+        const reportData: AttendanceReport[] = athletes.map(athlete => {
+            const stats = attendanceMap.get(athlete.id)!;
+            const totalTrainingsWithStatus = stats.present + stats.absent + stats.excused;
+            const totalAttendance = stats.present + stats.absent;
+            return {
+                athleteId: athlete.id,
+                name: `${athlete.lastName} ${athlete.firstName}`,
+                ...stats,
+                total: totalTrainingsWithStatus,
+                // Calculate percentage based on attended vs missed (excused not counted against)
+                attendancePercentage: totalAttendance > 0 ? (stats.present / totalAttendance) * 100 : 0
+            };
+        }).sort((a,b) => a.name.localeCompare(b.name));
+        
+        setAttendanceReport(reportData);
 
-    // --- Generate Financial Report (only for managers) ---
-    if(isManager) {
-        let income = 0;
-        let expenses = 0;
+        // --- Generate Financial Report (only for managers) ---
+        if(isManager) {
+            let income = 0;
+            let expenses = 0;
 
-        payments.forEach(payment => {
-            const amount = parseFloat(payment.amount);
-            if (isNaN(amount)) return;
+            payments.forEach(payment => {
+                const amount = parseFloat(payment.amount);
+                if (isNaN(amount)) return;
 
-            if (payment.status === 'Оплачено') {
-                 // Use amount directly, positive is income, negative is expense
-                if (amount > 0) {
-                    income += amount;
-                } else {
-                    expenses += Math.abs(amount);
+                if (payment.status === 'Оплачено') {
+                    // Use amount directly, positive is income, negative is expense
+                    if (amount > 0) {
+                        income += amount;
+                    } else {
+                        expenses += Math.abs(amount);
+                    }
                 }
-            }
-        });
+            });
 
-        // The logic for expenses from `deductFromBalance` creates negative payments.
-        // We'll calculate expenses based on these negative payments.
-        const allExpenses = payments
-            .filter(p => p.status === 'Оплачено' && parseFloat(p.amount) < 0)
-            .reduce((acc, p) => acc + Math.abs(parseFloat(p.amount)), 0);
+            // The logic for expenses from `deductFromBalance` creates negative payments.
+            // We'll calculate expenses based on these negative payments.
+            const allExpenses = payments
+                .filter(p => p.status === 'Оплачено' && parseFloat(p.amount) < 0)
+                .reduce((acc, p) => acc + Math.abs(parseFloat(p.amount)), 0);
 
-        setFinancialReport({ income, expenses: allExpenses, net: income - allExpenses });
-    }
+            setFinancialReport({ income, expenses: allExpenses, net: income - allExpenses });
+        }
 
-    setIsLoading(false);
+        setIsLoading(false);
+    };
+
+    generateReports();
   }, [user, isManager]);
-
-  useEffect(() => {
-    if (user) {
-      generateReports();
-    }
-  }, [user, generateReports]);
   
   const userReport = useMemo(() => {
     if (!userAthleteProfile) return null;

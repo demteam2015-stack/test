@@ -157,10 +157,13 @@ export default function UsersPage() {
   const [newPassword, setNewPassword] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<{emailText: string} | null>(null);
+  const [isDataLoading, setIsDataLoading] = useState(true);
 
   const fetchAllData = useCallback(() => {
+    setIsDataLoading(true);
     setAllUsers(getAllStoredUsers());
     setResetRequests(getPendingResetRequests().sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    setIsDataLoading(false);
   }, []);
 
   useEffect(() => {
@@ -216,7 +219,7 @@ export default function UsersPage() {
   }
 
 
-  if (loading || !user) {
+  if (loading || !user || isDataLoading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
         <Loader className="h-8 w-8 animate-spin text-primary" />
