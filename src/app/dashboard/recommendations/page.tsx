@@ -12,11 +12,11 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { MessageSquare, Lightbulb, ServerCrash, Loader, BrainCircuit, Inbox } from 'lucide-react';
+import { MessageSquare, Lightbulb, ServerCrash, Loader, BrainCircuit, Inbox, Reply } from 'lucide-react';
 import { useState, type FormEvent, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
-import { createMessage, getMessages, type Message } from '@/lib/messages-api';
+import { createMessage, getMessages, markAllMessagesAsRead, type Message } from '@/lib/messages-api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -63,13 +63,15 @@ const AthleteParentView = () => {
                 senderId: user.id,
                 senderName: user.firstName ? `${user.firstName} ${user.lastName}` : user.username,
                 senderRole: user.role,
+                senderEmail: user.email,
                 text: feedback,
-                date: new Date().toISOString()
+                date: new Date().toISOString(),
+                isRead: false
             });
 
             toast({
                 title: "Сообщение отправлено",
-                description: "Тренер получил ваше сообщение и скоро его рассмотрит.",
+                description: "Тренер получил ваше сообщение. Его можно посмотреть в разделе 'Мои сообщения'.",
             });
             
             const result = getLocalCoachResponse(feedback);
@@ -93,7 +95,7 @@ const AthleteParentView = () => {
             <form onSubmit={handleSubmit}>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Чат с тренером</CardTitle>
+                        <CardTitle>Новое сообщение тренеру</CardTitle>
                         <CardDescription>
                             Опишите ваши впечатления, проблемы или задайте вопрос. Тренер получит ваше сообщение и даст развернутый ответ.
                         </CardDescription>
@@ -114,7 +116,7 @@ const AthleteParentView = () => {
                     <CardFooter>
                         <Button type="submit" disabled={loading || !feedback}>
                             {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                            {loading ? 'Отправка...' : 'Отправить тренеру'}
+                            {loading ? 'Отправка...' : 'Отправить'}
                         </Button>
                     </CardFooter>
                 </Card>
@@ -167,6 +169,8 @@ const CoachAdminView = () => {
         const allMessages = await getMessages();
         setMessages(allMessages);
         setLoading(false);
+        // Mark all as read when the coach opens this page
+        await markAllMessagesAsRead();
     }, []);
 
     useEffect(() => {
@@ -175,7 +179,7 @@ const CoachAdminView = () => {
 
     const getInitials = (name: string) => {
         const parts = name.split(' ');
-        if (parts.length > 1) {
+        if (parts.length > 1 && parts[0] && parts[1]) {
             return `${parts[0][0]}${parts[1][0]}`;
         }
         return name.substring(0, 2);
@@ -213,7 +217,7 @@ const CoachAdminView = () => {
                                     <AvatarFallback>{getInitials(msg.senderName)}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1">
-                                    <div className="flex items-baseline justify-between">
+                                    <div className="flex items-baseline justify-between flex-wrap gap-2">
                                         <p className="font-semibold">
                                             {msg.senderName} <span className="text-xs font-normal text-muted-foreground">({roleTranslations[msg.senderRole] || msg.senderRole})</span>
                                         </p>
@@ -222,6 +226,14 @@ const CoachAdminView = () => {
                                         </time>
                                     </div>
                                     <p className="mt-2 text-sm whitespace-pre-wrap">{msg.text}</p>
+                                     <div className="mt-4">
+                                        <Button asChild variant="outline" size="sm">
+                                            <a href={`mailto:${msg.senderEmail}?subject=Ответ на ваше сообщение от ${format(new Date(msg.date), 'dd.MM.yyyy')}&body=${encodeURIComponent(`\n\n--- Ваше сообщение ---\n${msg.text}`)}`}>
+                                                <Reply className="mr-2" />
+                                                Ответить по Email
+                                            </a>
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -248,10 +260,10 @@ export default function RecommendationsPage() {
             <div>
                 <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
                     <MessageSquare className="h-8 w-8 text-primary"/>
-                    {isManager ? 'Сообщения от участников' : 'Чат с тренером'}
+                    {isManager ? 'Сообщения' : 'Новое сообщение'}
                 </h1>
                 <p className="text-muted-foreground">
-                    {isManager ? 'Просмотр обратной связи от спортсменов и родителей.' : 'Задайте вопрос или поделитесь мыслями. Тренер получит ваше сообщение.'}
+                    {isManager ? 'Просмотр обратной связи от спортсменов и родителей.' : 'Задайте вопрос тренеру или поделитесь мыслями.'}
                 </p>
             </div>
             {isManager ? <CoachAdminView /> : <AthleteParentView />}

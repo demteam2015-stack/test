@@ -14,8 +14,8 @@ import {
   BarChart,
   User,
   GraduationCap,
-  BrainCircuit,
   Inbox,
+  Mail,
 } from 'lucide-react';
 import {
   SidebarHeader,
@@ -24,16 +24,33 @@ import {
   SidebarMenuButton,
   SidebarContent,
   SidebarFooter,
+  SidebarMenuBadge,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/auth-context';
+import { useState, useEffect } from 'react';
+import { getUnreadMessagesCount } from '@/lib/messages-api';
 
 export default function MainNav() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
   
   const isManager = user?.role === 'admin' || user?.role === 'coach';
+
+  useEffect(() => {
+    if (isManager) {
+        const fetchCount = async () => {
+            const count = await getUnreadMessagesCount();
+            setUnreadCount(count);
+        }
+        fetchCount();
+        // Poll for new messages every 30 seconds
+        const interval = setInterval(fetchCount, 30000);
+        return () => clearInterval(interval);
+    }
+  }, [isManager, pathname]); // Rerun when path changes to mark as read
 
   const navLinks = [
     { href: '/dashboard', label: 'Панель', icon: Home, roles: ['admin', 'coach', 'parent', 'athlete'] },
@@ -45,10 +62,12 @@ export default function MainNav() {
     { href: '/dashboard/education', label: 'Обучение', icon: GraduationCap, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { 
       href: '/dashboard/recommendations', 
-      label: isManager ? 'Сообщения' : 'Чат с тренером', 
+      label: isManager ? 'Сообщения' : 'Новое сообщение', 
       icon: isManager ? Inbox : MessageSquare, 
-      roles: ['admin', 'coach', 'parent', 'athlete'] 
+      roles: ['admin', 'coach', 'parent', 'athlete'],
+      badge: isManager ? unreadCount : 0,
     },
+    { href: '/dashboard/my-messages', label: 'Мои сообщения', icon: Mail, roles: ['parent', 'athlete'] },
     { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award, roles: ['admin', 'coach', 'parent', 'athlete'] },
@@ -77,6 +96,9 @@ export default function MainNav() {
                 <Link href={link.href}>
                   <link.icon />
                   <span>{link.label}</span>
+                   {link.badge && link.badge > 0 && (
+                      <SidebarMenuBadge>{link.badge}</SidebarMenuBadge>
+                   )}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
