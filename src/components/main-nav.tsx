@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import {
   BarChart,
   BrainCircuit,
-  CreditCard,
   MessageSquare,
   Users,
   BookUser,
