@@ -6,9 +6,13 @@ import {
   BarChart,
   BrainCircuit,
   CreditCard,
-  Inbox,
+  MessageSquare,
   Users,
   BookUser,
+  User,
+  Shield,
+  Banknote,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
@@ -17,22 +21,22 @@ import { useEffect, useState } from 'react';
 
 const subNavigation = {
     team: [
-        { name: 'Состав команды', href: '/dashboard/team' },
-        { name: 'Журнал посещаемости', href: '/dashboard/journal', roles: ['admin', 'coach'] },
+        { name: 'Состав команды', href: '/dashboard/team', icon: Users },
+        { name: 'Журнал посещаемости', href: '/dashboard/journal', roles: ['admin', 'coach'], icon: BookUser },
     ],
     reports: [
-        { name: 'Общая статистика', href: '/dashboard/reports', roles: ['admin', 'coach']},
-        { name: 'Моя посещаемость', href: '/dashboard/reports', roles: ['athlete']},
-        { name: 'Отчеты ребенка', href: '/dashboard/my-reports', roles: ['parent']},
+        { name: 'Общая статистика', href: '/dashboard/reports', roles: ['admin', 'coach'], icon: BarChart},
+        { name: 'Моя посещаемость', href: '/dashboard/reports', roles: ['athlete'], icon: FileText},
+        { name: 'Отчеты ребенка', href: '/dashboard/my-reports', roles: ['parent'], icon: FileText},
     ],
     profile: [
-        { name: 'Мой путь', href: '/dashboard/profile' },
-        { name: 'Рекомендации', href: '/dashboard/my-messages', roles:['parent', 'athlete']},
-        { name: 'Входящие', href: '/dashboard/recommendations', roles: ['admin', 'coach']},
+        { name: 'Мой путь', href: '/dashboard/profile', icon: User },
+        { name: 'Рекомендации', href: '/dashboard/my-messages', roles:['parent', 'athlete'], icon: BrainCircuit},
+        { name: 'Входящие', href: '/dashboard/recommendations', roles: ['admin', 'coach'], icon: MessageSquare},
     ],
     admin: [
-        { name: 'Управление пользователями', href: '/dashboard/users' },
-        { name: 'Платежи', href: '/dashboard/payments' },
+        { name: 'Пользователи', href: '/dashboard/users', icon: Shield },
+        { name: 'Платежи', href: '/dashboard/payments', icon: Banknote },
     ]
 }
 
@@ -73,19 +77,21 @@ export default function MainNav() {
         if (item.roles && !item.roles.includes(user.role)) return null;
 
         const isUnread = (item.href === '/dashboard/my-messages' || item.href === '/dashboard/recommendations') && unreadCount > 0;
+        const Icon = item.icon;
 
         return (
           <Link
             key={item.name}
             href={item.href}
             className={cn(
-              'transition-colors hover:text-foreground relative',
+              'transition-colors hover:text-foreground relative flex items-center gap-2',
               pathname === item.href ? 'text-foreground' : 'text-muted-foreground'
             )}
           >
+            <Icon className="h-4 w-4" />
             {item.name}
              {isUnread && (
-                <span className="absolute top-[-2px] right-[-14px] flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{unreadCount}</span>
+                <span className="absolute top-[-8px] right-[-14px] flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{unreadCount}</span>
              )}
           </Link>
         )
