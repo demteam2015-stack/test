@@ -54,7 +54,7 @@ export default function HallOfFamePage() {
   
   // Combine image data with athlete-specific details
   const athletes = useMemo(() => {
-    return PlaceHolderImages.filter(img => img.id.startsWith('athlete-')).map(imgData => {
+    return PlaceHolderImages.filter(img => img && typeof img.id === 'string' && img.id.startsWith('athlete-')).map(imgData => {
         const details = athleteDetails[imgData.id];
         if (!details) return null;
         return {
