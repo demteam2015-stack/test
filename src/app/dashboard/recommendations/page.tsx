@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -9,14 +9,12 @@ import {
   CardTitle,
   CardFooter,
 } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { MessageSquare, Loader, Inbox, Send, ArrowLeft } from 'lucide-react';
-import { useState, type FormEvent, useEffect, useCallback, useRef } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/context/auth-context';
-import { createMessage, getMessageThreadsForUser, markThreadAsRead, type Message } from '@/lib/messages-api';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader, Inbox, Send, ArrowLeft, MessageSquare } from 'lucide-react';
+import { useAuth } from '@/context/auth-context';
+import { getMessageThreadsForUser, markThreadAsRead, createMessage, type Message } from '@/lib/messages-api';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -120,6 +118,8 @@ const CoachAdminView = () => {
     };
 
     const sortedThreads = Object.values(threads).sort((a,b) => {
+      if (a.length === 0) return 1;
+      if (b.length === 0) return -1;
       const lastMsgA = new Date(a[a.length - 1].date).getTime();
       const lastMsgB = new Date(b[b.length - 1].date).getTime();
       return lastMsgB - lastMsgA;
@@ -193,6 +193,7 @@ const CoachAdminView = () => {
                                         </Avatar>
                                     )}
                                     <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                        <p className="text-xs font-bold mb-1 opacity-80">{msg.senderName}</p>
                                         <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                         <time className={`text-xs opacity-70 mt-2 block ${msg.senderId === user?.id ? 'text-right' : 'text-left'}`}>
                                             {format(new Date(msg.date), 'HH:mm', { locale: ru })}
@@ -230,7 +231,7 @@ const CoachAdminView = () => {
                         </CardFooter>
                     </div>
                 ) : (
-                    <div className="flex flex-col h-full items-center justify-center text-center">
+                    <div className="flex flex-col h-full items-center justify-center text-center p-8">
                         <Inbox className="h-12 w-12 text-muted-foreground" />
                         <h3 className="mt-4 text-lg font-semibold">Выберите диалог</h3>
                         <p className="mt-2 text-sm text-muted-foreground">Выберите диалог из списка слева, чтобы просмотреть переписку и ответить.</p>

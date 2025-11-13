@@ -37,6 +37,13 @@ export default function MyMessagesPage() {
     const userThreads = await getMessageThreadsForUser(user.id);
     setThreads(userThreads);
     setLoading(false);
+
+    // If there is only one thread, open it automatically
+    const threadIds = Object.keys(userThreads);
+    if (threadIds.length === 1) {
+        setActiveThreadId(threadIds[0]);
+    }
+
   }, [user]);
 
   useEffect(() => {
@@ -57,44 +64,59 @@ export default function MyMessagesPage() {
   };
 
   const handleStartNewConversation = () => {
-      // Create a dummy threadId to open the new message view
-      const newThreadId = `new_${user?.id}_${Date.now()}`;
-      setThreads(prev => ({...prev, [newThreadId]: []}));
-      setActiveThreadId(newThreadId);
+      // Logic to find or create the main thread with the coach
+      const coachThreadId = `${user?.id}_${COACH_ID}`;
+      const invertedCoachThreadId = `${COACH_ID}_${user?.id}`;
+
+      if (threads[coachThreadId] || threads[invertedCoachThreadId]) {
+          setActiveThreadId(threads[coachThreadId] ? coachThreadId : invertedCoachThreadId);
+      } else {
+        // Create a temporary new thread view
+        const newThreadId = coachThreadId;
+        setThreads(prev => ({...prev, [newThreadId]: []}));
+        setActiveThreadId(newThreadId);
+      }
   }
   
   const handleReply = async () => {
-    if (!replyText || !user || !activeThreadId) return;
-    
+    if (!replyText || !user) return;
+
     setIsSending(true);
 
-    const isNewThread = activeThreadId.startsWith('new_');
-    // If it's a new thread, the threadId will be determined by the createMessage function
-    const threadIdToSend = isNewThread ? undefined : activeThreadId;
+    const isNewConversation = !activeThreadId || !threads[activeThreadId] || threads[activeThreadId].length === 0;
+    
+    // In a new conversation, the threadId is determined for the first time.
+    const threadIdToSend = activeThreadId || `${user.id}_${COACH_ID}`;
 
-    const newMessage: Omit<Message, 'id'|'isRead'|'threadId'> & {threadId?: string} = {
+    const newMessage: Omit<Message, 'id'|'isRead'> = {
         senderId: user.id,
         senderName: user.firstName ? `${user.firstName} ${user.lastName}` : user.username,
         senderRole: user.role,
-        recipientId: COACH_ID, // All replies go to the coach
+        recipientId: COACH_ID, // All messages go to the coach
         text: replyText,
         date: new Date().toISOString(),
         threadId: threadIdToSend
     };
     
-    await createMessage(newMessage);
+    const createdMessage = await createMessage(newMessage);
     setReplyText('');
     setIsSending(false);
-    await fetchThreads(); // Refresh to show the new message
     
-    // After sending, we need to find the new threadId if it was a new conversation
-    if (isNewThread) {
-        const userThreads = await getMessageThreadsForUser(user.id);
-        const newThread = Object.values(userThreads).find(thread => thread.some(m => m.text === replyText));
-        if (newThread) {
-            setActiveThreadId(newThread[0].threadId);
+    // Manually update the local state to show the new message instantly
+    setThreads(prevThreads => {
+        const newThreads = {...prevThreads};
+        const currentThread = newThreads[createdMessage.threadId] || [];
+        currentThread.push(createdMessage);
+        newThreads[createdMessage.threadId] = currentThread;
+        // If it was a temporary thread, remove the old key
+        if(activeThreadId && activeThreadId !== createdMessage.threadId) {
+            delete newThreads[activeThreadId];
         }
-    }
+        return newThreads;
+    });
+
+    // Ensure the new (or existing) thread is active
+    setActiveThreadId(createdMessage.threadId);
   }
 
   const getInitials = (name: string) => {
@@ -195,6 +217,7 @@ export default function MyMessagesPage() {
                                     </Avatar>
                                 )}
                                 <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                    <p className="text-xs font-bold mb-1 opacity-80">{msg.senderName}</p>
                                     <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                     <div className={`flex items-center gap-2 mt-2 ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
                                         <time className="text-xs opacity-70">
@@ -239,8 +262,8 @@ export default function MyMessagesPage() {
             ) : (
                 <div className="flex flex-col h-full items-center justify-center text-center p-8">
                     <Mail className="h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-semibold">Выберите диалог</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">Выберите диалог из списка слева, чтобы просмотреть переписку, или нажмите "Написать", чтобы начать новый.</p>
+                    <h3 className="mt-4 text-lg font-semibold">Выберите или начните диалог</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">Выберите диалог из списка слева или нажмите "Написать", чтобы начать новый.</p>
                 </div>
             )}
         </Card>
