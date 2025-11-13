@@ -125,7 +125,7 @@ export default function LoginPage() {
                     <DialogContent className="sm:max-w-md">
                          <form onSubmit={handleForgotPasswordSubmit}>
                             <DialogHeader>
-                                <DialogTitle>Запрос на сброс пароля</DialogTitle>
+                                <DialogTitle className="font-headline">Запрос на сброс пароля</DialogTitle>
                                 <DialogDescription>
                                     Введите email и имя пользователя. Ваш запрос будет отправлен администратору на рассмотрение.
                                 </DialogDescription>

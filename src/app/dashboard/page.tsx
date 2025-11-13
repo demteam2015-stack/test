@@ -81,7 +81,7 @@ function AdminDashboard() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
+                        <CardTitle className="text-sm font-medium font-headline">
                         Всего пользователей
                         </CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
@@ -95,7 +95,7 @@ function AdminDashboard() {
                 </Card>
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
+                        <CardTitle className="text-sm font-medium font-headline">
                         Запросы на сброс пароля
                         </CardTitle>
                         <MailWarning className="h-4 w-4 text-muted-foreground" />
@@ -110,7 +110,7 @@ function AdminDashboard() {
             </div>
              <Card>
                 <CardHeader>
-                    <CardTitle>Быстрые действия</CardTitle>
+                    <CardTitle className="font-headline">Быстрые действия</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col sm:flex-row gap-4">
                     <Button asChild>
@@ -158,7 +158,7 @@ function CoachDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium font-headline">
                 Состав команды
                 </CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
@@ -173,7 +173,7 @@ function CoachDashboard() {
         </div>
          <Card>
             <CardHeader>
-                <CardTitle>Основные инструменты</CardTitle>
+                <CardTitle className="font-headline">Основные инструменты</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-4">
                 <Button asChild variant="outline">
@@ -216,7 +216,7 @@ function ParentDashboard({ user }: { user: UserProfile }) {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
+                    <CardTitle className="text-sm font-medium font-headline">
                         Мой баланс
                     </CardTitle>
                     <Banknote className="h-4 w-4 text-muted-foreground" />
@@ -233,7 +233,7 @@ function ParentDashboard({ user }: { user: UserProfile }) {
         </div>
          <Card>
             <CardHeader>
-                <CardTitle>Быстрые действия</CardTitle>
+                <CardTitle className="font-headline">Быстрые действия</CardTitle>
             </CardHeader>
             <CardContent>
                 <Button asChild>
@@ -303,7 +303,7 @@ function AthleteDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium font-headline">
                     Тренировки на этой неделе
                 </CardTitle>
                 <CalendarDays className="h-4 w-4 text-muted-foreground" />
@@ -317,7 +317,7 @@ function AthleteDashboard() {
             </Card>
             <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Следующее соревнование</CardTitle>
+                <CardTitle className="text-sm font-medium font-headline">Следующее соревнование</CardTitle>
                 <Trophy className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -331,7 +331,7 @@ function AthleteDashboard() {
         </div>
          <Card>
             <CardHeader>
-                <CardTitle>Быстрые действия</CardTitle>
+                <CardTitle className="font-headline">Быстрые действия</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-4">
                  <Button asChild>

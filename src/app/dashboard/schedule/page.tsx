@@ -180,7 +180,7 @@ const BulkEventForm = ({ selectedDates, onEventsCreated }: { selectedDates: Date
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Новое расписание: {
+                        <DialogTitle className="font-headline">Новое расписание: {
                             {
                                 'training': 'Тренировка',
                                 'competition': 'Соревнование',
@@ -325,7 +325,7 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated, children }: { 
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>{isEditMode ? 'Редактировать событие' : 'Новое событие'}</DialogTitle>
+                        <DialogTitle className="font-headline">{isEditMode ? 'Редактировать событие' : 'Новое событие'}</DialogTitle>
                         <DialogDescription>
                            {isEditMode ? 'Измените детали и сохраните.' : 'Заполните данные о новом событии.'}
                         </DialogDescription>
@@ -535,7 +535,7 @@ export default function SchedulePage() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                            <AlertDialogTitle>Вы уверены, что хотите очистить все расписание?</AlertDialogTitle>
+                            <AlertDialogTitle className="font-headline">Вы уверены, что хотите очистить все расписание?</AlertDialogTitle>
                             <AlertDialogDescription>
                                 Это действие необратимо. Все созданные события будут удалены навсегда.
                             </AlertDialogDescription>
@@ -571,7 +571,7 @@ export default function SchedulePage() {
         </div>
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>
+                <CardTitle className="font-headline">
                     События на {format(viewDate, 'd MMMM yyyy', { locale: ru })}
                 </CardTitle>
             </CardHeader>
@@ -583,7 +583,7 @@ export default function SchedulePage() {
                                 <CardHeader>
                                     <div className="flex items-center gap-3">
                                         <EventIcon type={eventType} />
-                                        <CardTitle className="text-lg">{groupTitles[eventType]}</CardTitle>
+                                        <CardTitle className="text-lg font-headline">{groupTitles[eventType]}</CardTitle>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -633,7 +633,7 @@ export default function SchedulePage() {
                                                         </AlertDialogTrigger>
                                                         <AlertDialogContent>
                                                             <AlertDialogHeader>
-                                                            <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+                                                            <AlertDialogTitle className="font-headline">Вы уверены?</AlertDialogTitle>
                                                             <AlertDialogDescription>
                                                                 Это действие необратимо. Событие будет удалено из расписания навсегда.
                                                             </AlertDialogDescription>

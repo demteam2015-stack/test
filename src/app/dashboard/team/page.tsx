@@ -131,7 +131,7 @@ const AthleteForm = ({ onAthleteAdded, onAthleteUpdated, athleteToEdit, children
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>{isEditMode ? 'Редактировать профиль' : 'Новый спортсмен'}</DialogTitle>
+                        <DialogTitle className="font-headline">{isEditMode ? 'Редактировать профиль' : 'Новый спортсмен'}</DialogTitle>
                         <DialogDescription>
                            {isEditMode ? 'Измените данные и сохраните.' : 'Заполните данные о новом спортсмене.'}
                         </DialogDescription>
@@ -259,7 +259,7 @@ export default function TeamPage() {
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>Список спортсменов</CardTitle>
+                    <CardTitle className="font-headline">Список спортсменов</CardTitle>
                     <CardDescription>Всего в команде: {athletes.length}</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -304,7 +304,7 @@ export default function TeamPage() {
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+                                                <AlertDialogTitle className="font-headline">Вы уверены?</AlertDialogTitle>
                                                 <AlertDialogDescription>
                                                     Это действие необратимо. Спортсмен будет удален из команды.
                                                 </AlertDialogDescription>

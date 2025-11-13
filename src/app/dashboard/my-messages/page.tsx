@@ -276,7 +276,7 @@ export default function MyMessagesPage() {
         <Card className={`lg:col-span-1 ${activeThreadId && 'hidden lg:block'}`}>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>Диалоги</CardTitle>
+                    <CardTitle className="font-headline">Диалоги</CardTitle>
                     <CardDescription>Всего диалогов: {sortedThreads.length}</CardDescription>
                 </div>
                 {coach && (
@@ -320,7 +320,7 @@ export default function MyMessagesPage() {
                 ) : (
                     <div className="flex flex-col h-full items-center justify-center text-center">
                         <Inbox className="h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-4 text-lg font-semibold">У вас пока нет диалогов</h3>
+                        <h3 className="mt-4 text-lg font-semibold font-headline">У вас пока нет диалогов</h3>
                         <p className="mt-2 text-sm text-muted-foreground">Начните диалог с тренером или запросите анализ у AI.</p>
                     </div>
                 )}
@@ -335,7 +335,7 @@ export default function MyMessagesPage() {
                            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setActiveThreadId(null)}>
                                 <ArrowLeft />
                            </Button>
-                           <CardTitle>Диалог</CardTitle>
+                           <CardTitle className="font-headline">Диалог</CardTitle>
                          </div>
                     </CardHeader>
                     <CardContent className="flex-grow overflow-y-auto space-y-4 pr-2">
@@ -397,7 +397,7 @@ export default function MyMessagesPage() {
             ) : (
                 <div className="flex flex-col h-full items-center justify-center text-center p-8">
                     <Mail className="h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-semibold">Выберите или начните диалог</h3>
+                    <h3 className="mt-4 text-lg font-semibold font-headline">Выберите или начните диалог</h3>
                     <p className="mt-2 text-sm text-muted-foreground">Выберите диалог из списка слева, напишите тренеру или запросите анализ своей активности у AI-тренера.</p>
                      <Button className="mt-4" onClick={handleGetAIAnalysis} disabled={isSending || !athleteId}>
                          <BrainCircuit className="mr-2"/>

@@ -78,7 +78,7 @@ const RequisitesForm = ({ onUpdate, currentRequisites }: { onUpdate: (newRequisi
             <DialogContent className="sm:max-w-md">
                  <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Редактировать реквизиты</DialogTitle>
+                        <DialogTitle className="font-headline">Редактировать реквизиты</DialogTitle>
                         <DialogDescription>
                            Обновите информацию, которая будет отображаться для оплаты.
                         </DialogDescription>
@@ -138,7 +138,7 @@ const AmountForm = ({ onUpdate, currentAmount }: { onUpdate: (newAmount: string)
             <DialogContent className="sm:max-w-md">
                  <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Редактировать базовую сумму</DialogTitle>
+                        <DialogTitle className="font-headline">Редактировать базовую сумму</DialogTitle>
                         <DialogDescription>
                            Установите основную сумму для абонемента (без копеек).
                         </DialogDescription>
@@ -213,7 +213,7 @@ const PaymentForm = ({ onPaymentUpdated, paymentToEdit, children }: { onPaymentU
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Редактировать платёж</DialogTitle>
+                        <DialogTitle className="font-headline">Редактировать платёж</DialogTitle>
                         <DialogDescription>
                            Измените данные платежа для счёта {paymentToEdit.invoice}.
                         </DialogDescription>
@@ -327,7 +327,7 @@ const CreatePaymentForm = ({ onPaymentCreated }: { onPaymentCreated: () => void 
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Новая заявка на оплату</DialogTitle>
+                        <DialogTitle className="font-headline">Новая заявка на оплату</DialogTitle>
                         <DialogDescription>
                            Введите точную сумму, которую вы перевели. Это поможет администратору быстрее найти и подтвердить ваш платёж.
                         </DialogDescription>
@@ -539,7 +539,7 @@ export default function PaymentsPage() {
         </div>
         <Card className="lg:col-span-1 border-primary ring-2 ring-primary sticky top-24">
             <CardHeader>
-                <CardTitle>Оплата абонемента</CardTitle>
+                <CardTitle className="font-headline">Оплата абонемента</CardTitle>
                 <CardDescription>
                     Чтобы оплатить или продлить абонемент, выполните перевод по указанным реквизитам. Для быстрой идентификации вашего платежа, пожалуйста, используйте сгенерированную ниже сумму.
                 </CardDescription>
@@ -602,7 +602,7 @@ export default function PaymentsPage() {
              <div className="hidden lg:block lg:col-span-1 sticky top-24">
                 <Card className="lg:col-span-1 border-primary ring-2 ring-primary">
                     <CardHeader>
-                        <CardTitle>Оплата абонемента</CardTitle>
+                        <CardTitle className="font-headline">Оплата абонемента</CardTitle>
                         <CardDescription>
                            Чтобы оплатить или продлить абонемент, выполните перевод по указанным реквизитам.
                         </CardDescription>

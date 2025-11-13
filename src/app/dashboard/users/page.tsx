@@ -95,7 +95,7 @@ const BalanceModal = ({ user, isOpen, onClose, onBalanceUpdated }: { user: UserP
         }
 
         setIsSaving(true);
-        await updateUserBalance(currentUser.id, topUpAmount);
+        await updateUserBalance(currentUser.id, topUpAmount, 'add');
         toast({ title: 'Баланс пополнен' });
         setIsSaving(false);
         setAmount('');
@@ -107,7 +107,7 @@ const BalanceModal = ({ user, isOpen, onClose, onBalanceUpdated }: { user: UserP
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Управление балансом: {currentUser?.username}</DialogTitle>
+                    <DialogTitle className="font-headline">Управление балансом: {currentUser?.username}</DialogTitle>
                     <DialogDescription>
                         Текущий баланс: {currentUser?.balance?.toFixed(2) ?? '0.00'} руб. Введите сумму для зачисления.
                     </DialogDescription>
@@ -258,7 +258,7 @@ export default function UsersPage() {
         <TabsContent value="users-list">
           <Card>
             <CardHeader>
-              <CardTitle>Все пользователи</CardTitle>
+              <CardTitle className="font-headline">Все пользователи</CardTitle>
               <CardDescription>
                 Всего зарегистрировано {allUsers.length} аккаунтов.
               </CardDescription>
@@ -326,7 +326,7 @@ export default function UsersPage() {
         <TabsContent value="reset-requests">
           <Card>
             <CardHeader>
-              <CardTitle>Запросы на сброс пароля</CardTitle>
+              <CardTitle className="font-headline">Запросы на сброс пароля</CardTitle>
               <CardDescription>
                 Пользователи, запросившие сброс пароля. Всего запросов: {resetRequests.length}.
               </CardDescription>
@@ -399,7 +399,7 @@ export default function UsersPage() {
             {!resetResult ? (
               <>
                 <DialogHeader>
-                    <DialogTitle>Сброс пароля для {selectedRequest?.username}</DialogTitle>
+                    <DialogTitle className="font-headline">Сброс пароля для {selectedRequest?.username}</DialogTitle>
                     <DialogDescription>
                         Придумайте новый временный пароль. Старый аккаунт и все данные пользователя будут безвозвратно удалены. Будет создан новый аккаунт с этим же email/логином.
                     </DialogDescription>
@@ -427,7 +427,7 @@ export default function UsersPage() {
             ) : (
                 <>
                 <DialogHeader>
-                    <DialogTitle>Пароль сброшен. Отправьте письмо.</DialogTitle>
+                    <DialogTitle className="font-headline">Пароль сброшен. Отправьте письмо.</DialogTitle>
                     <DialogDescription>
                         Скопируйте текст ниже и вручную отправьте его пользователю на email: {selectedRequest?.email}.
                     </DialogDescription>

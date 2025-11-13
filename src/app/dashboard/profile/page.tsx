@@ -195,7 +195,7 @@ export default function ProfilePage() {
         <form onSubmit={handleSave} className="lg:col-span-1 space-y-8 sticky top-24">
             <Card>
             <CardHeader>
-                <CardTitle>Личная информация</CardTitle>
+                <CardTitle className="font-headline">Личная информация</CardTitle>
                 <CardDescription>
                 Эта информация отображается в вашем профиле.
                 </CardDescription>
@@ -270,7 +270,7 @@ export default function ProfilePage() {
         <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
-                    <CardTitle>Хроника достижений</CardTitle>
+                    <CardTitle className="font-headline">Хроника достижений</CardTitle>
                     <CardDescription>Ваш путь в команде от начала и до сегодняшнего дня.</CardDescription>
                 </CardHeader>
                 <CardContent>

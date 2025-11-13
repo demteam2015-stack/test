@@ -149,7 +149,7 @@ export default function ReportsPage() {
       return (
           <Card>
               <CardHeader>
-                  <CardTitle>Страница недоступна</CardTitle>
+                  <CardTitle className="font-headline">Страница недоступна</CardTitle>
               </CardHeader>
               <CardContent>
                   <p className="text-muted-foreground">Для просмотра отчетов вашего ребенка, пожалуйста, перейдите в специальный раздел "Мои отчеты".</p>
@@ -178,7 +178,7 @@ export default function ReportsPage() {
         <TabsContent value="attendance">
           <Card>
             <CardHeader>
-              <CardTitle>Отчет по посещаемости</CardTitle>
+              <CardTitle className="font-headline">Отчет по посещаемости</CardTitle>
               <CardDescription>
                 Сводная статистика посещений тренировок по каждому спортсмену.
               </CardDescription>
@@ -222,7 +222,7 @@ export default function ReportsPage() {
         <TabsContent value="financial">
            <Card>
             <CardHeader>
-              <CardTitle>Финансовый отчет</CardTitle>
+              <CardTitle className="font-headline">Финансовый отчет</CardTitle>
               <CardDescription>
                 Общая сводка по доходам (пополнения) и расходам (списания за тренировки).
               </CardDescription>
@@ -231,7 +231,7 @@ export default function ReportsPage() {
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Общий доход</CardTitle>
+                            <CardTitle className="text-sm font-medium font-headline">Общий доход</CardTitle>
                             <TrendingUp className="h-4 w-4 text-green-500" />
                         </CardHeader>
                         <CardContent>
@@ -245,7 +245,7 @@ export default function ReportsPage() {
                     </Card>
                      <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Общий расход</CardTitle>
+                            <CardTitle className="text-sm font-medium font-headline">Общий расход</CardTitle>
                             <TrendingDown className="h-4 w-4 text-red-500" />
                         </CardHeader>
                         <CardContent>
@@ -259,7 +259,7 @@ export default function ReportsPage() {
                     </Card>
                      <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Итого</CardTitle>
+                            <CardTitle className="text-sm font-medium font-headline">Итого</CardTitle>
                             <Wallet className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -284,7 +284,7 @@ export default function ReportsPage() {
   const renderAthleteView = () => (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><UserIcon className="size-5"/>Моя посещаемость</CardTitle>
+          <CardTitle className="font-headline flex items-center gap-2"><UserIcon className="size-5"/>Моя посещаемость</CardTitle>
           <CardDescription>
             Ваша персональная статистика посещений тренировок.
           </CardDescription>
@@ -296,7 +296,7 @@ export default function ReportsPage() {
                     <div className="grid gap-4 md:grid-cols-2">
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Посещено</CardTitle>
+                                <CardTitle className="text-sm font-medium font-headline">Посещено</CardTitle>
                                 <TrendingUp className="h-4 w-4 text-green-500" />
                             </CardHeader>
                             <CardContent>
@@ -307,7 +307,7 @@ export default function ReportsPage() {
                         </Card>
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Пропущено</CardTitle>
+                                <CardTitle className="text-sm font-medium font-headline">Пропущено</CardTitle>
                                 <TrendingDown className="h-4 w-4 text-red-500" />
                             </CardHeader>
                             <CardContent>
@@ -318,7 +318,7 @@ export default function ReportsPage() {
                         </Card>
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Уваж. причина</CardTitle>
+                                <CardTitle className="text-sm font-medium font-headline">Уваж. причина</CardTitle>
                                 <UserIcon className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
@@ -329,7 +329,7 @@ export default function ReportsPage() {
                         </Card>
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Процент посещений</CardTitle>
+                                <CardTitle className="text-sm font-medium font-headline">Процент посещений</CardTitle>
                                 <BarChart className="h-4 w-4 text-primary" />
                             </CardHeader>
                             <CardContent>

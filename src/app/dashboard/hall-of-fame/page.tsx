@@ -89,7 +89,6 @@ export default function HallOfFamePage() {
                       width={300}
                       height={300}
                       data-ai-hint={athlete.imageHint}
-                      className="object-cover w-full h-auto"
                     />
                 </div>
                <CardHeader>
