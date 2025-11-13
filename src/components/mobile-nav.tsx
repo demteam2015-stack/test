@@ -40,7 +40,7 @@ export function MobileNav() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm md:hidden">
-        <div className={`grid h-16 grid-cols-${userNavLinks.length} items-center`}>
+        <div className="grid h-16 items-center" style={{gridTemplateColumns: `repeat(${userNavLinks.length}, 1fr)`}}>
             {userNavLinks.map((link) => {
                 const isActive = (pathname.startsWith(link.href) && link.href !== '/dashboard') || pathname === link.href;
 
