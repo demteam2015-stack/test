@@ -62,10 +62,14 @@ export default function EducationPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {educationalMaterialsData.map((material) => {
+        {educationalMaterialsData.map((material, i) => {
           const isCompleted = completedCourses.has(material.id);
           return (
-            <Card key={material.id} className={`flex flex-col ${isCompleted ? 'bg-muted/50' : ''}`}>
+            <Card 
+              key={material.id} 
+              className={`flex flex-col animate-in fade-in-0 slide-in-from-bottom-4 ${isCompleted ? 'bg-muted/50' : ''}`}
+              style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
+            >
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <CardTitle className="font-headline">{material.title}</CardTitle>

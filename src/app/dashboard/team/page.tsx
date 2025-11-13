@@ -269,8 +269,12 @@ export default function TeamPage() {
                         </div>
                      ) : athletes.length > 0 ? (
                         <div className="space-y-4">
-                        {athletes.map(athlete => (
-                          <div key={athlete.id} className="relative group flex items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors">
+                        {athletes.map((athlete, i) => (
+                          <div 
+                            key={athlete.id} 
+                            className="relative group flex items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors animate-in fade-in-0 slide-in-from-bottom-4"
+                            style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
+                          >
                             <div className='flex items-center gap-4'>
                               <Avatar className="h-12 w-12">
                                   <AvatarImage src={athlete.photoURL} alt={`${athlete.lastName} ${athlete.firstName}`}/>

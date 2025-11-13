@@ -116,8 +116,12 @@ export default function CompetitionsPage() {
           <CardContent>
             <TabsContent value="upcoming">
               <div className="space-y-4">
-                {upcoming.map((comp) => (
-                    <div key={comp.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors gap-4">
+                {upcoming.map((comp, i) => (
+                    <div 
+                      key={comp.id} 
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors gap-4 animate-in fade-in-0 slide-in-from-bottom-4"
+                      style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
+                    >
                         <div className="flex-grow">
                             <p className="font-semibold">{comp.name}</p>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
@@ -152,8 +156,12 @@ export default function CompetitionsPage() {
             </TabsContent>
             <TabsContent value="results">
               <div className="space-y-4">
-                 {results.map((comp) => (
-                    <div key={comp.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors gap-4">
+                 {results.map((comp, i) => (
+                    <div 
+                      key={comp.id} 
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors gap-4 animate-in fade-in-0 slide-in-from-bottom-4"
+                      style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
+                    >
                         <div className="flex-grow">
                            <p className="font-semibold">{comp.name}</p>
                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
