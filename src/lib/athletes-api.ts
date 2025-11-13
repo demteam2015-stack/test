@@ -4,6 +4,18 @@ import { teamMembersData as initialAthletes } from './data';
 
 const ATHLETES_STORAGE_KEY = 'demyanenko_hub_athletes';
 
+export type AttestationLevel = 
+  | '10 кю' | '9 кю' | '8 кю' | '7 кю' | '6 кю' | '5 кю' 
+  | '4 кю' | '3 кю' | '2 кю' | '1 кю' | 'Черный пояс';
+  
+export const attestationLevels: AttestationLevel[] = [
+  '10 кю', '9 кю', '8 кю', '7 кю', '6 кю', '5 кю', 
+  '4 кю', '3 кю', '2 кю', '1 кю', 'Черный пояс'
+];
+
+export type AttestationStatus = 'none' | 'pending' | 'approved' | 'rejected';
+
+
 export interface Athlete {
     id: string;
     lastName: string;
@@ -12,6 +24,12 @@ export interface Athlete {
     dateOfBirth: string; // ISO string
     photoURL?: string;
     parentId?: string; // email of the parent user
+
+    // Attestation fields
+    attestationLevel?: AttestationLevel;
+    attestationStatus?: AttestationStatus;
+    attestationRequestLevel?: AttestationLevel;
+    attestationCertificateUrl?: string; // Data URL of the uploaded certificate
 }
 
 // --- Helper Functions ---
@@ -62,7 +80,8 @@ export const addAthlete = (athleteData: Omit<Athlete, 'id'>): Promise<Athlete> =
         const newAthlete: Athlete = {
             ...athleteData,
             id: `athlete_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            photoURL: athleteData.photoURL || `https://i.pravatar.cc/150?u=${Date.now()}`
+            photoURL: athleteData.photoURL || `https://i.pravatar.cc/150?u=${Date.now()}`,
+            attestationStatus: 'none',
         };
         
         athletes.push(newAthlete);

@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { useState, type FormEvent, useEffect, useMemo, useRef } from 'react';
-import { Loader, User, Trophy, Share2, Camera, GraduationCap, Star, LogOut, BadgeCheck } from 'lucide-react';
+import { Loader, User, Trophy, Share2, Camera, GraduationCap, Star, LogOut, BadgeCheck, ShieldCheck, Upload, FileClock, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { competitionsData } from '@/lib/data';
 import type { Competition } from '@/lib/data';
@@ -32,6 +32,9 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getFullName, getInitials, getAvatarUrl } from '@/lib/utils';
 import { getCompletedCourses, type CompletedCourse } from '@/lib/education-api';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getAthletes, updateAthlete, attestationLevels, type AttestationLevel, type Athlete } from '@/lib/athletes-api';
+import Image from 'next/image';
 
 // New Timeline Component
 const TimelineItem = ({ icon, date, title, description, children }: { icon: React.ReactNode, date: string, title: string, description?: string, children?: React.ReactNode }) => {
@@ -64,6 +67,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const { user, updateUser, logout } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const certificateInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -73,6 +77,13 @@ export default function ProfilePage() {
   const [completedCourses, setCompletedCourses] = useState<CompletedCourse[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Attestation state
+  const [athleteProfile, setAthleteProfile] = useState<Athlete | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<AttestationLevel | ''>('');
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [certificatePreview, setCertificatePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -81,7 +92,14 @@ export default function ProfilePage() {
       });
       getCompletedCourses(user.id).then(courses => {
         setCompletedCourses(courses);
-        setLoading(false);
+      });
+      getAthletes().then(athletes => {
+          const profile = athletes.find(a => a.id === user.id || getFullName(a.firstName, a.lastName) === getFullName(user.firstName, user.lastName));
+          if (profile) {
+              setAthleteProfile(profile);
+              setCertificatePreview(profile.attestationCertificateUrl || null);
+          }
+          setLoading(false);
       });
     }
   }, [user]);
@@ -147,20 +165,51 @@ export default function ProfilePage() {
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   }
+  
+  const handleCertificateButtonClick = () => {
+    certificateInputRef.current?.click();
+  }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'certificate') => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        updateUser({ photoURL: base64String });
-         toast({
-            title: 'Аватар обновлен!',
-        });
+        if(type === 'avatar') {
+            updateUser({ photoURL: base64String });
+            toast({ title: 'Аватар обновлен!' });
+        } else {
+            setCertificateFile(file);
+            setCertificatePreview(base64String);
+        }
       };
       reader.readAsDataURL(file);
     }
+  }
+
+  const handleAttestationSubmit = async () => {
+    if (!selectedLevel || !certificatePreview || !athleteProfile) {
+        toast({
+            variant: "destructive",
+            title: "Ошибка",
+            description: "Пожалуйста, выберите уровень и загрузите сертификат."
+        });
+        return;
+    }
+    setIsSubmitting(true);
+    await updateAthlete(athleteProfile.id, {
+        attestationRequestLevel: selectedLevel,
+        attestationCertificateUrl: certificatePreview,
+        attestationStatus: 'pending'
+    });
+    // Refresh athlete profile state
+    setAthleteProfile(prev => prev ? {...prev, attestationStatus: 'pending', attestationRequestLevel: selectedLevel, attestationCertificateUrl: certificatePreview } : null);
+    setIsSubmitting(false);
+    toast({
+        title: "Заявка отправлена",
+        description: "Ваша заявка на аттестацию отправлена на рассмотрение тренеру."
+    });
   }
   
   const handleShare = async (achievement: Competition) => {
@@ -189,6 +238,13 @@ export default function ProfilePage() {
     parent: 'Родитель',
     admin: 'Администратор',
   };
+  
+  const statusInfo = {
+      pending: { text: "На рассмотрении", icon: <FileClock className="h-4 w-4 text-yellow-500" />, color: "text-yellow-500" },
+      approved: { text: "Подтверждено", icon: <CheckCircle className="h-4 w-4 text-green-500" />, color: "text-green-500" },
+      rejected: { text: "Отклонено", icon: <XCircle className="h-4 w-4 text-red-500" />, color: "text-red-500" },
+      none: { text: "Нет заявки", icon: <></>, color: ""},
+  }[athleteProfile?.attestationStatus || 'none'];
 
   return (
     <div className="flex flex-col gap-8">
@@ -234,7 +290,7 @@ export default function ProfilePage() {
                         <input
                             type="file"
                             ref={fileInputRef}
-                            onChange={handleFileChange}
+                            onChange={(e) => handleFileChange(e, 'avatar')}
                             className="hidden"
                             accept="image/png, image/jpeg, image/gif"
                         />
@@ -283,6 +339,85 @@ export default function ProfilePage() {
             </CardFooter>
             </Card>
         </form>
+
+        {(user.role === 'athlete' || user.role === 'parent') && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Аттестация</CardTitle>
+                    <CardDescription>Подайте заявку на подтверждение вашего уровня (кю/дан).</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {athleteProfile?.attestationStatus === 'approved' && (
+                         <div className="p-4 bg-green-500/10 text-green-500 rounded-lg flex items-center gap-3">
+                            <CheckCircle className="h-5 w-5"/>
+                            <div>
+                                <p className="font-bold">Ваш уровень подтвержден!</p>
+                                <p className="text-sm">Текущий уровень: {athleteProfile.attestationLevel}</p>
+                            </div>
+                        </div>
+                    )}
+                     {athleteProfile?.attestationStatus === 'pending' && (
+                         <div className="p-4 bg-yellow-500/10 text-yellow-500 rounded-lg flex items-center gap-3">
+                            <FileClock className="h-5 w-5"/>
+                            <div>
+                                <p className="font-bold">Заявка на рассмотрении</p>
+                                <p className="text-sm">Запрошенный уровень: {athleteProfile.attestationRequestLevel}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {athleteProfile?.attestationStatus !== 'pending' && (
+                        <>
+                         <div className="grid gap-2">
+                            <Label htmlFor="attestation-level">Выберите ваш текущий уровень</Label>
+                            <Select onValueChange={(v) => setSelectedLevel(v as AttestationLevel)} value={selectedLevel} disabled={isSubmitting}>
+                                <SelectTrigger id="attestation-level">
+                                    <SelectValue placeholder="Выберите кю/дан" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {attestationLevels.map(level => (
+                                        <SelectItem key={level} value={level}>{level}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label>Сертификат</Label>
+                            {certificatePreview ? (
+                                <div className="relative">
+                                    <Image src={certificatePreview} alt="Превью сертификата" width={300} height={200} className="rounded-md border"/>
+                                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => { setCertificateFile(null); setCertificatePreview(null); }}>
+                                        <XCircle className="h-4 w-4"/>
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button variant="outline" onClick={handleCertificateButtonClick} disabled={isSubmitting}>
+                                    <Upload className="mr-2"/> Загрузить файл
+                                </Button>
+                            )}
+                            <input
+                                type="file"
+                                ref={certificateInputRef}
+                                onChange={(e) => handleFileChange(e, 'certificate')}
+                                className="hidden"
+                                accept="image/png, image/jpeg"
+                            />
+                        </div>
+                        </>
+                    )}
+
+                </CardContent>
+                {athleteProfile?.attestationStatus !== 'pending' && athleteProfile?.attestationStatus !== 'approved' && (
+                    <CardFooter>
+                        <Button className="w-full" onClick={handleAttestationSubmit} disabled={!selectedLevel || !certificatePreview || isSubmitting}>
+                             {isSubmitting && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                             Отправить на проверку
+                        </Button>
+                    </CardFooter>
+                )}
+            </Card>
+        )}
+
 
         <Card>
           <CardHeader>

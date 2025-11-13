@@ -9,7 +9,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { Users, PlusCircle, Trash2, Edit, Loader, CalendarIcon } from "lucide-react";
+import { Users, PlusCircle, Trash2, Edit, Loader, CalendarIcon, Shield } from "lucide-react";
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -43,6 +43,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
+import { Badge } from '@/components/ui/badge';
 
 
 const AthleteForm = ({ onAthleteAdded, onAthleteUpdated, athleteToEdit, children }: { onAthleteAdded: () => void, onAthleteUpdated: () => void, athleteToEdit: Athlete | null, children: React.ReactNode }) => {
@@ -280,7 +281,14 @@ export default function TeamPage() {
                                   <AvatarFallback>{getInitials(athlete.firstName, athlete.lastName)}</AvatarFallback>
                               </Avatar>
                               <div>
-                                <p className="font-semibold">{`${athlete.lastName} ${athlete.firstName} ${athlete.middleName || ''}`.trim()}</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="font-semibold">{`${athlete.lastName} ${athlete.firstName} ${athlete.middleName || ''}`.trim()}</p>
+                                    {athlete.attestationStatus === 'approved' && athlete.attestationLevel && (
+                                        <Badge variant="secondary" className="flex items-center gap-1">
+                                            <Shield className="h-3 w-3" /> {athlete.attestationLevel}
+                                        </Badge>
+                                    )}
+                                </div>
                                 <div className="text-sm text-muted-foreground space-y-1 mt-1">
                                     <p>Дата рождения: {formatDateOfBirth(athlete.dateOfBirth)}</p>
                                     {athlete.parentId && <p>Email родителя: {athlete.parentId}</p>}
