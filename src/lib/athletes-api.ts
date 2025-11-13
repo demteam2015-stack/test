@@ -30,6 +30,7 @@ export interface Athlete {
     attestationStatus?: AttestationStatus;
     attestationRequestLevel?: AttestationLevel;
     attestationCertificateUrl?: string; // Data URL of the uploaded certificate
+    attestationRequestDate?: string; // ISO string for when the request was made
 }
 
 // --- Helper Functions ---

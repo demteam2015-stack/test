@@ -218,7 +218,8 @@ export default function ProfilePage() {
     await updateAthlete(athleteProfile.id, {
         attestationRequestLevel: selectedLevel,
         attestationCertificateUrl: certificatePreview,
-        attestationStatus: 'pending'
+        attestationStatus: 'pending',
+        attestationRequestDate: new Date().toISOString(),
     });
     // Refresh athlete profile state
     setAthleteProfile(prev => prev ? {...prev, attestationStatus: 'pending', attestationRequestLevel: selectedLevel, attestationCertificateUrl: certificatePreview } : null);

@@ -11,16 +11,18 @@ import {
   GraduationCap,
   User,
   Shield,
+  CheckBadge,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
   { href: '/dashboard', label: 'Панель', icon: Home, roles: ['admin', 'coach', 'parent', 'athlete']},
-  { href: '/dashboard/profile', label: 'Профиль', icon: User, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/team', label: 'Команда', icon: Users, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar, roles: ['admin', 'coach', 'parent', 'athlete']},
-  { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete']},
+  { href: '/dashboard/competitions', label: 'Сорев-я', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete']},
+  { href: '/dashboard/attestation', label: 'Аттестация', icon: CheckBadge, roles: ['admin', 'coach']},
+  { href: '/dashboard/profile', label: 'Профиль', icon: User, roles: ['admin', 'coach', 'parent', 'athlete']},
 ];
 
 
@@ -29,13 +31,13 @@ export function MobileNav() {
   const { user } = useAuth();
 
   if (!user) return null;
+  
+  const userNavLinks = navLinks.filter(link => link.roles.includes(user.role));
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm md:hidden">
-        <div className="grid h-16 grid-cols-5 items-center">
-            {navLinks.map((link) => {
-                if (!link.roles.includes(user.role)) return null;
-
+        <div className={`grid h-16 grid-cols-${userNavLinks.length} items-center`}>
+            {userNavLinks.map((link) => {
                 const isActive = (pathname.startsWith(link.href) && link.href !== '/dashboard') || pathname === link.href;
 
                 return (
@@ -48,7 +50,7 @@ export function MobileNav() {
                         )}
                     >
                         <link.icon className="h-6 w-6" />
-                        <span className="text-xs">{link.label}</span>
+                        <span className="text-xs text-center">{link.label}</span>
                     </Link>
                 );
             })}
