@@ -91,7 +91,7 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl font-headline">Вход</CardTitle>
+          <CardTitle className="text-2xl">Вход</CardTitle>
           <CardDescription>
             Введите свои данные для входа в аккаунт.
           </CardDescription>
@@ -125,7 +125,7 @@ export default function LoginPage() {
                     <DialogContent className="sm:max-w-md">
                          <form onSubmit={handleForgotPasswordSubmit}>
                             <DialogHeader>
-                                <DialogTitle className="font-headline">Запрос на сброс пароля</DialogTitle>
+                                <DialogTitle>Запрос на сброс пароля</DialogTitle>
                                 <DialogDescription>
                                     Введите email и имя пользователя. Ваш запрос будет отправлен администратору на рассмотрение.
                                 </DialogDescription>

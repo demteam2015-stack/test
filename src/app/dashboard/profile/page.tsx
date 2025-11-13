@@ -179,7 +179,7 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <User className="size-8 text-primary"/>
             Мой путь чемпиона
         </h1>
@@ -192,7 +192,7 @@ export default function ProfilePage() {
         <form onSubmit={handleSave} className="lg:col-span-1 space-y-8 sticky top-24">
             <Card>
             <CardHeader>
-                <CardTitle className="font-headline">Личная информация</CardTitle>
+                <CardTitle>Личная информация</CardTitle>
                 <CardDescription>
                 Эта информация отображается в вашем профиле.
                 </CardDescription>
@@ -267,7 +267,7 @@ export default function ProfilePage() {
         <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">Хроника достижений</CardTitle>
+                    <CardTitle>Хроника достижений</CardTitle>
                     <CardDescription>Ваш путь в команде от начала и до сегодняшнего дня.</CardDescription>
                 </CardHeader>
                 <CardContent>

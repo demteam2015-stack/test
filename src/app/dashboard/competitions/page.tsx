@@ -51,7 +51,7 @@ export default function CompetitionsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           <Trophy className="size-8 text-primary" />
           Соревнования
         </h1>
@@ -65,7 +65,7 @@ export default function CompetitionsPage() {
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <CardTitle className="font-headline">Список соревнований</CardTitle>
+                <CardTitle>Список соревнований</CardTitle>
                 <CardDescription>
                   Быстрый доступ к предстоящим событиям и результатам.
                 </CardDescription>

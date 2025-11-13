@@ -180,7 +180,7 @@ const CoachAdminView = () => {
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-15rem)]">
             <Card className={`lg:col-span-1 ${activeThreadId && 'hidden lg:block'}`}>
                 <CardHeader>
-                    <CardTitle className="font-headline">Входящие диалоги</CardTitle>
+                    <CardTitle>Входящие диалоги</CardTitle>
                     <CardDescription>Всего диалогов: {Object.keys(threads).length}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2 h-[calc(100%-8rem)] overflow-y-auto pr-2">
@@ -215,7 +215,7 @@ const CoachAdminView = () => {
                     ) : (
                         <div className="flex flex-col h-full items-center justify-center text-center">
                             <Inbox className="h-12 w-12 text-muted-foreground" />
-                            <h3 className="mt-4 text-lg font-semibold font-headline">Входящих сообщений нет</h3>
+                            <h3 className="mt-4 text-lg font-semibold">Входящих сообщений нет</h3>
                             <p className="mt-2 text-sm text-muted-foreground">Как только кто-то отправит сообщение, оно появится здесь.</p>
                         </div>
                     )}
@@ -230,7 +230,7 @@ const CoachAdminView = () => {
                                <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setActiveThreadId(null)}>
                                     <ArrowLeft />
                                </Button>
-                               <CardTitle className="font-headline">Диалог с {activeThreadParticipantName}</CardTitle>
+                               <CardTitle>Диалог с {activeThreadParticipantName}</CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent className="flex-grow overflow-y-auto space-y-4 pr-2">
@@ -287,7 +287,7 @@ const CoachAdminView = () => {
                 ) : (
                     <div className="flex flex-col h-full items-center justify-center text-center p-8">
                         <Inbox className="h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-4 text-lg font-semibold font-headline">Выберите диалог</h3>
+                        <h3 className="mt-4 text-lg font-semibold">Выберите диалог</h3>
                         <p className="mt-2 text-sm text-muted-foreground">Выберите диалог из списка слева, чтобы просмотреть переписку и ответить.</p>
                     </div>
                 )}
@@ -306,7 +306,7 @@ export default function RecommendationsPage() {
     return (
         <div className="grid gap-8">
             <div>
-                <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
                     <MessageSquare className="h-8 w-8 text-primary"/>
                     Сообщения
                 </h1>
@@ -317,7 +317,7 @@ export default function RecommendationsPage() {
             {isManager ? <CoachAdminView /> : (
                  <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline">Неверная страница</CardTitle>
+                        <CardTitle>Неверная страница</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-muted-foreground">Чтобы отправить новое сообщение или просмотреть историю, пожалуйста, перейдите в раздел "Рекомендации" в меню.</p>

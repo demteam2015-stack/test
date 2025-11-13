@@ -28,7 +28,7 @@ export default function LandingPage() {
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
-                  <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline bg-clip-text text-transparent bg-gradient-to-r from-primary via-green-400 to-primary">
+                  <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none bg-clip-text text-transparent bg-gradient-to-r from-primary via-green-400 to-primary">
                     Достигайте вершин вместе
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
@@ -59,7 +59,7 @@ export default function LandingPage() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">Ключевые возможности</div>
-                <h2 className="text-3xl font-bold font-headline tracking-tighter sm:text-5xl">Все, что нужно для побед</h2>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Все, что нужно для побед</h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                   Наша платформа предоставляет полный набор инструментов для организации тренировочного процесса и анализа результатов.
                 </p>
@@ -70,7 +70,7 @@ export default function LandingPage() {
                 <div className="rounded-full bg-primary/10 p-4 text-primary">
                     <CalendarDays className="h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-bold font-headline">Управление расписанием</h3>
+                <h3 className="text-xl font-bold">Управление расписанием</h3>
                 <p className="text-muted-foreground">
                   Создавайте и просматривайте актуальный календарь тренировок, соревнований и других событий команды.
                 </p>
@@ -79,7 +79,7 @@ export default function LandingPage() {
                 <div className="rounded-full bg-primary/10 p-4 text-primary">
                     <BarChart className="h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-bold font-headline">Анализ прогресса</h3>
+                <h3 className="text-xl font-bold">Анализ прогресса</h3>
                 <p className="text-muted-foreground">
                   Отслеживайте посещаемость, финансовый баланс и результаты соревнований в удобных отчетах.
                 </p>
@@ -88,7 +88,7 @@ export default function LandingPage() {
                  <div className="rounded-full bg-primary/10 p-4 text-primary">
                     <BrainCircuit className="h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-bold font-headline">AI-Тренер</h3>
+                <h3 className="text-xl font-bold">AI-Тренер</h3>
                 <p className="text-muted-foreground">
                   Получайте персональные рекомендации и ответы на ваши вопросы от нашего виртуального помощника.
                 </p>

@@ -180,7 +180,7 @@ const BulkEventForm = ({ selectedDates, onEventsCreated }: { selectedDates: Date
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle className="font-headline">Новое расписание: {
+                        <DialogTitle>Новое расписание: {
                             {
                                 'training': 'Тренировка',
                                 'competition': 'Соревнование',
@@ -325,7 +325,7 @@ const EventForm = ({ onEventCreated, eventToEdit, onEventUpdated, children }: { 
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle className="font-headline">{isEditMode ? 'Редактировать событие' : 'Новое событие'}</DialogTitle>
+                        <DialogTitle>{isEditMode ? 'Редактировать событие' : 'Новое событие'}</DialogTitle>
                         <DialogDescription>
                            {isEditMode ? 'Измените детали и сохраните.' : 'Заполните данные о новом событии.'}
                         </DialogDescription>
@@ -516,7 +516,7 @@ export default function SchedulePage() {
     <div className="flex flex-col gap-8">
         <div className="flex flex-col flex-wrap sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
                     <CalendarIcon className="size-8 text-primary"/>
                     Расписание
                 </h1>
@@ -535,7 +535,7 @@ export default function SchedulePage() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                            <AlertDialogTitle className="font-headline">Вы уверены, что хотите очистить все расписание?</AlertDialogTitle>
+                            <AlertDialogTitle>Вы уверены, что хотите очистить все расписание?</AlertDialogTitle>
                             <AlertDialogDescription>
                                 Это действие необратимо. Все созданные события будут удалены навсегда.
                             </AlertDialogDescription>
@@ -571,7 +571,7 @@ export default function SchedulePage() {
         </div>
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle className="font-headline">
+                <CardTitle>
                     События на {format(viewDate, 'd MMMM yyyy', { locale: ru })}
                 </CardTitle>
             </CardHeader>
@@ -583,7 +583,7 @@ export default function SchedulePage() {
                                 <CardHeader>
                                     <div className="flex items-center gap-3">
                                         <EventIcon type={eventType} />
-                                        <CardTitle className="text-lg font-headline">{groupTitles[eventType]}</CardTitle>
+                                        <CardTitle className="text-lg">{groupTitles[eventType]}</CardTitle>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -633,7 +633,7 @@ export default function SchedulePage() {
                                                         </AlertDialogTrigger>
                                                         <AlertDialogContent>
                                                             <AlertDialogHeader>
-                                                            <AlertDialogTitle className="font-headline">Вы уверены?</AlertDialogTitle>
+                                                            <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
                                                             <AlertDialogDescription>
                                                                 Это действие необратимо. Событие будет удалено из расписания навсегда.
                                                             </AlertDialogDescription>

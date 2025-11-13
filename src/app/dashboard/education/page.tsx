@@ -52,7 +52,7 @@ export default function EducationPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           <GraduationCap className="size-8 text-primary" />
           Обучающие материалы
         </h1>
@@ -72,7 +72,7 @@ export default function EducationPage() {
             >
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
-                  <CardTitle className="font-headline">{material.title}</CardTitle>
+                  <CardTitle>{material.title}</CardTitle>
                   {getIcon(material.type)}
                 </div>
                 <CardDescription>

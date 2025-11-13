@@ -131,7 +131,7 @@ const AthleteForm = ({ onAthleteAdded, onAthleteUpdated, athleteToEdit, children
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle className="font-headline">{isEditMode ? 'Редактировать профиль' : 'Новый спортсмен'}</DialogTitle>
+                        <DialogTitle>{isEditMode ? 'Редактировать профиль' : 'Новый спортсмен'}</DialogTitle>
                         <DialogDescription>
                            {isEditMode ? 'Измените данные и сохраните.' : 'Заполните данные о новом спортсмене.'}
                         </DialogDescription>
@@ -240,7 +240,7 @@ export default function TeamPage() {
         <div className="flex flex-col gap-8">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+                    <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
                         <Users className="size-8 text-primary"/>
                         Состав команды
                     </h1>
@@ -259,7 +259,7 @@ export default function TeamPage() {
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">Список спортсменов</CardTitle>
+                    <CardTitle>Список спортсменов</CardTitle>
                     <CardDescription>Всего в команде: {athletes.length}</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -304,7 +304,7 @@ export default function TeamPage() {
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle className="font-headline">Вы уверены?</AlertDialogTitle>
+                                                <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
                                                 <AlertDialogDescription>
                                                     Это действие необратимо. Спортсмен будет удален из команды.
                                                 </AlertDialogDescription>

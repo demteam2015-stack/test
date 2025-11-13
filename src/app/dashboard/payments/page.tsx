@@ -78,7 +78,7 @@ const RequisitesForm = ({ onUpdate, currentRequisites }: { onUpdate: (newRequisi
             <DialogContent className="sm:max-w-md">
                  <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle className="font-headline">Редактировать реквизиты</DialogTitle>
+                        <DialogTitle>Редактировать реквизиты</DialogTitle>
                         <DialogDescription>
                            Обновите информацию, которая будет отображаться для оплаты.
                         </DialogDescription>
@@ -138,7 +138,7 @@ const AmountForm = ({ onUpdate, currentAmount }: { onUpdate: (newAmount: string)
             <DialogContent className="sm:max-w-md">
                  <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle className="font-headline">Редактировать базовую сумму</DialogTitle>
+                        <DialogTitle>Редактировать базовую сумму</DialogTitle>
                         <DialogDescription>
                            Установите основную сумму для абонемента (без копеек).
                         </DialogDescription>
@@ -213,7 +213,7 @@ const PaymentForm = ({ onPaymentUpdated, paymentToEdit, children }: { onPaymentU
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle className="font-headline">Редактировать платёж</DialogTitle>
+                        <DialogTitle>Редактировать платёж</DialogTitle>
                         <DialogDescription>
                            Измените данные платежа для счёта {paymentToEdit.invoice}.
                         </DialogDescription>
@@ -327,7 +327,7 @@ const CreatePaymentForm = ({ onPaymentCreated }: { onPaymentCreated: () => void 
             <DialogContent className="sm:max-w-md">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle className="font-headline">Новая заявка на оплату</DialogTitle>
+                        <DialogTitle>Новая заявка на оплату</DialogTitle>
                         <DialogDescription>
                            Введите точную сумму, которую вы перевели. Это поможет администратору быстрее найти и подтвердить ваш платёж.
                         </DialogDescription>
@@ -429,7 +429,7 @@ export default function PaymentsPage() {
   const renderAdminOrCoachView = () => (
     <Card>
         <CardHeader>
-          <CardTitle className="font-headline">История платежей</CardTitle>
+          <CardTitle>История платежей</CardTitle>
           <CardDescription>
             Просмотр всех транзакций в системе. Подтвердите получение оплаты здесь.
           </CardDescription>
@@ -490,7 +490,7 @@ export default function PaymentsPage() {
         <div className="space-y-8">
             <Card>
                 <CardHeader>
-                  <CardTitle className="font-headline">История моих платежей</CardTitle>
+                  <CardTitle>История моих платежей</CardTitle>
                   <CardDescription>
                     Ваши последние транзакции по абонементам.
                   </CardDescription>
@@ -539,7 +539,7 @@ export default function PaymentsPage() {
         </div>
         <Card className="lg:col-span-1 border-primary ring-2 ring-primary sticky top-24">
             <CardHeader>
-                <CardTitle className="font-headline">Оплата абонемента</CardTitle>
+                <CardTitle>Оплата абонемента</CardTitle>
                 <CardDescription>
                     Чтобы оплатить или продлить абонемент, выполните перевод по указанным реквизитам. Для быстрой идентификации вашего платежа, пожалуйста, используйте сгенерированную ниже сумму.
                 </CardDescription>
@@ -584,7 +584,7 @@ export default function PaymentsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           <CreditCard className="size-8 text-primary" />
           Оплата и абонементы
         </h1>
@@ -602,7 +602,7 @@ export default function PaymentsPage() {
              <div className="hidden lg:block lg:col-span-1 sticky top-24">
                 <Card className="lg:col-span-1 border-primary ring-2 ring-primary">
                     <CardHeader>
-                        <CardTitle className="font-headline">Оплата абонемента</CardTitle>
+                        <CardTitle>Оплата абонемента</CardTitle>
                         <CardDescription>
                            Чтобы оплатить или продлить абонемент, выполните перевод по указанным реквизитам.
                         </CardDescription>

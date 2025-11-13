@@ -67,7 +67,7 @@ export default function HallOfFamePage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline tracking-tight">
+        <h1 className="text-3xl font-bold tracking-tight">
           Зал славы
         </h1>
         <p className="text-muted-foreground">
@@ -92,7 +92,7 @@ export default function HallOfFamePage() {
                     />
                 </div>
                <CardHeader>
-                <CardTitle className="font-headline">{athlete.name}</CardTitle>
+                <CardTitle>{athlete.name}</CardTitle>
                 <CardDescription className="flex items-center gap-2">
                     <Trophy className="h-4 w-4 text-yellow-500" />
                     {athlete.achievements}

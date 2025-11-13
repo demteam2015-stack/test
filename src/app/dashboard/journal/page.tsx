@@ -136,7 +136,7 @@ export default function JournalPage() {
       return (
          <div className="flex flex-col gap-8">
             <div>
-                <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
                     <BookUser className="size-8 text-primary"/>
                     Журнал посещаемости
                 </h1>
@@ -152,7 +152,7 @@ export default function JournalPage() {
       return (
          <div className="flex flex-col gap-8">
             <div>
-                <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
                     <BookUser className="size-8 text-primary"/>
                     Журнал посещаемости
                 </h1>
@@ -164,7 +164,7 @@ export default function JournalPage() {
                 <CardContent className="pt-6">
                     <div className="flex flex-col h-60 items-center justify-center rounded-lg border-2 border-dashed border-border text-center">
                         <UsersIcon className="h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-4 text-lg font-semibold font-headline">Сначала заполните состав команды</h3>
+                        <h3 className="mt-4 text-lg font-semibold">Сначала заполните состав команды</h3>
                         <p className="mt-2 text-sm text-muted-foreground">Перейдите в раздел "Команда", чтобы добавить спортсменов.</p>
                         <Button asChild className="mt-4">
                             <Link href="/dashboard/team">
@@ -181,7 +181,7 @@ export default function JournalPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <BookUser className="size-8 text-primary"/>
             Журнал посещаемости
         </h1>
@@ -192,7 +192,7 @@ export default function JournalPage() {
       
       <Card>
         <CardHeader>
-            <CardTitle className="font-headline">Общая посещаемость</CardTitle>
+            <CardTitle>Общая посещаемость</CardTitle>
             <CardDescription>Список всех спортсменов в команде.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

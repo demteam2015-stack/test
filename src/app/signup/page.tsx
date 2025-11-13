@@ -72,7 +72,7 @@ export default function SignupPage() {
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl font-headline">Регистрация</CardTitle>
+          <CardTitle className="text-2xl">Регистрация</CardTitle>
           <CardDescription>
             Создайте свой аккаунт, чтобы начать.
           </CardDescription>
