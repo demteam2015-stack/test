@@ -234,7 +234,7 @@ export default function UsersPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+        <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
             <Users className="size-8 text-primary"/>
             Управление пользователями
         </h1>
@@ -258,7 +258,7 @@ export default function UsersPage() {
         <TabsContent value="users-list">
           <Card>
             <CardHeader>
-              <CardTitle>Все пользователи</CardTitle>
+              <CardTitle className="font-headline">Все пользователи</CardTitle>
               <CardDescription>
                 Всего зарегистрировано {allUsers.length} аккаунтов.
               </CardDescription>
@@ -326,7 +326,7 @@ export default function UsersPage() {
         <TabsContent value="reset-requests">
           <Card>
             <CardHeader>
-              <CardTitle>Запросы на сброс пароля</CardTitle>
+              <CardTitle className="font-headline">Запросы на сброс пароля</CardTitle>
               <CardDescription>
                 Пользователи, запросившие сброс пароля. Всего запросов: {resetRequests.length}.
               </CardDescription>
@@ -399,7 +399,7 @@ export default function UsersPage() {
             {!resetResult ? (
               <>
                 <DialogHeader>
-                    <DialogTitle>Сброс пароля для {selectedRequest?.username}</DialogTitle>
+                    <DialogTitle className="font-headline">Сброс пароля для {selectedRequest?.username}</DialogTitle>
                     <DialogDescription>
                         Придумайте новый временный пароль. Старый аккаунт и все данные пользователя будут безвозвратно удалены. Будет создан новый аккаунт с этим же email/логином.
                     </DialogDescription>
@@ -427,7 +427,7 @@ export default function UsersPage() {
             ) : (
                 <>
                 <DialogHeader>
-                    <DialogTitle>Пароль сброшен. Отправьте письмо.</DialogTitle>
+                    <DialogTitle className="font-headline">Пароль сброшен. Отправьте письмо.</DialogTitle>
                     <DialogDescription>
                         Скопируйте текст ниже и вручную отправьте его пользователю на email: {selectedRequest?.email}.
                     </DialogDescription>
@@ -451,3 +451,5 @@ export default function UsersPage() {
     </div>
   );
 }
+
+    
