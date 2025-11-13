@@ -8,7 +8,7 @@ import {
   CardTitle,
   CardFooter,
 } from '@/components/ui/card';
-import { CalendarDays, Trophy, Users, MailWarning, ArrowRight, BookUser, MessageSquare, CreditCard, Banknote, Loader } from 'lucide-react';
+import { CalendarDays, Trophy, Users, MailWarning, ArrowRight, BookUser, MessageSquare, CreditCard, Banknote, Loader, Activity } from 'lucide-react';
 import { differenceInDays, endOfWeek, startOfWeek } from 'date-fns';
 import { useMemo, useEffect, useState } from 'react';
 import { competitionsData } from '@/lib/data';
@@ -78,7 +78,7 @@ function AdminDashboard() {
                 Обзор системы и управление пользователями.
                 </p>
             </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
@@ -106,21 +106,15 @@ function AdminDashboard() {
                         Ожидают вашего действия.
                         </p>
                     </CardContent>
+                     <CardFooter>
+                        <Button size="sm" variant="outline" asChild>
+                            <Link href="/dashboard/users">
+                                Посмотреть запросы <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                    </CardFooter>
                 </Card>
             </div>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Быстрые действия</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col sm:flex-row gap-4">
-                    <Button asChild>
-                        <Link href="/dashboard/users">
-                            Перейти к управлению пользователями
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                    </Button>
-                </CardContent>
-            </Card>
         </div>
     );
 }
@@ -155,7 +149,7 @@ function CoachDashboard() {
             </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -169,29 +163,36 @@ function CoachDashboard() {
                 Активные участники в вашей команде.
                 </p>
             </CardContent>
+             <CardFooter>
+                <Button size="sm" variant="outline" asChild>
+                    <Link href="/dashboard/team">
+                        Управление командой <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                </Button>
+            </CardFooter>
             </Card>
         </div>
          <Card>
             <CardHeader>
                 <CardTitle>Основные инструменты</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row gap-4">
-                <Button asChild variant="outline">
-                    <Link href="/dashboard/team">
-                        <Users className="mr-2 h-4 w-4" />
-                        Управление командой
-                    </Link>
-                </Button>
+            <CardContent className="flex flex-col sm:flex-row flex-wrap gap-4">
                 <Button asChild>
                     <Link href="/dashboard/journal">
                         <BookUser className="mr-2 h-4 w-4" />
                         Открыть журнал
                     </Link>
                 </Button>
-                <Button asChild>
+                <Button asChild variant="secondary">
                     <Link href="/dashboard/schedule">
                          <CalendarDays className="mr-2 h-4 w-4" />
                         Редактировать расписание
+                    </Link>
+                </Button>
+                 <Button asChild variant="outline">
+                    <Link href="/dashboard/reports">
+                         <Activity className="mr-2 h-4 w-4" />
+                        Посмотреть отчеты
                     </Link>
                 </Button>
             </CardContent>
@@ -213,8 +214,8 @@ function ParentDashboard({ user }: { user: UserProfile }) {
             </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Card className="bg-gradient-to-br from-primary/10 to-transparent">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
                         Мой баланс
@@ -222,28 +223,23 @@ function ParentDashboard({ user }: { user: UserProfile }) {
                     <Banknote className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">
+                    <div className="text-2xl font-bold text-primary">
                         {user?.balance !== undefined ? `${user.balance.toFixed(2)} руб.` : '0.00 руб.'}
                     </div>
                     <p className="text-xs text-muted-foreground">
                         Средства для оплаты тренировок.
                     </p>
                 </CardContent>
+                <CardFooter>
+                     <Button asChild size="sm">
+                        <Link href="/dashboard/payments">
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Пополнить и посмотреть историю
+                        </Link>
+                    </Button>
+                </CardFooter>
             </Card>
         </div>
-         <Card>
-            <CardHeader>
-                <CardTitle>Быстрые действия</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <Button asChild>
-                    <Link href="/dashboard/payments">
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Пополнить баланс и история
-                    </Link>
-                </Button>
-            </CardContent>
-        </Card>
     </div>
   )
 }
@@ -272,8 +268,8 @@ function AthleteDashboard() {
   const renderDays = (days: number | null) => {
     if (days === null) return 'Нет данных';
     if (days < 0) return 'Прошло';
-    if (days === 0) return 'Сегодня';
-    if (days === 1) return 'Завтра';
+    if (days === 0) return 'Сегодня!';
+    if (days === 1) return 'Завтра!';
     const lastDigit = days % 10;
     if (days > 10 && days < 20) return `через ${days} дней`;
     if (lastDigit === 1) return `через ${days} день`;
@@ -300,7 +296,7 @@ function AthleteDashboard() {
             </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -321,8 +317,8 @@ function AthleteDashboard() {
                 <Trophy className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{renderDays(daysUntilCompetition)}</div>
-                <p className="text-xs text-muted-foreground">{nextCompetition?.name || 'Нет предстоящих соревнований'}</p>
+                <div className="text-2xl font-bold text-primary">{renderDays(daysUntilCompetition)}</div>
+                <p className="text-xs text-muted-foreground truncate">{nextCompetition?.name || 'Нет предстоящих соревнований'}</p>
             </CardContent>
             </Card>
              <div className="md:col-span-2 lg:col-span-1">
@@ -332,15 +328,16 @@ function AthleteDashboard() {
          <Card>
             <CardHeader>
                 <CardTitle>Быстрые действия</CardTitle>
+                <CardDescription>Самые важные разделы для вас.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row gap-4">
+            <CardContent className="flex flex-col sm:flex-row flex-wrap gap-4">
                  <Button asChild>
                     <Link href="/dashboard/my-messages">
                        <MessageSquare className="mr-2 h-4 w-4" />
                         Рекомендации и сообщения
                     </Link>
                 </Button>
-                <Button asChild variant="outline">
+                <Button asChild variant="secondary">
                     <Link href="/dashboard/schedule">
                        <CalendarDays className="mr-2 h-4 w-4" />
                         Посмотреть расписание

@@ -28,7 +28,7 @@ const mainNavLinks = [
   { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/education', label: 'Обучение', icon: GraduationCap, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award, roles: ['admin', 'coach', 'parent', 'athlete']},
-  { href: '/dashboard/attestation', label: 'Аттестация', icon: Award, roles: ['admin', 'coach']},
+  { href: '/dashboard/attestation', label: 'Аттестация', icon: ShieldCheck, roles: ['admin', 'coach']},
   { href: '/dashboard/reports', label: 'Отчеты', icon: BarChart, roles: ['admin', 'coach', 'athlete']},
   { href: '/dashboard/my-reports', label: 'Мои Отчеты', icon: BarChart, roles: ['parent']},
   { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard, roles: ['admin', 'coach', 'parent', 'athlete']},
