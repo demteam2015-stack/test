@@ -58,13 +58,14 @@ export interface Competition {
   status: 'Предстоящий' | 'Завершенный';
   result?: string;
   registrationStatus?: 'Зарегистрирован' | 'Не зарегистрирован' | 'В ожидании';
+  coordinates: { lat: number; lng: number };
 }
 
 export const competitionsData: Competition[] = [
-    { id: 'comp1', name: 'Чемпионат города', date: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString(), location: 'Городской стадион', status: 'Предстоящий', registrationStatus: 'Зарегистрирован'},
-    { id: 'comp2', name: 'Национальный отбор', date: new Date(new Date().setDate(new Date().getDate() + 45)).toISOString(), location: 'Национальный спортивный комплекс', status: 'Предстоящий', registrationStatus: 'Не зарегистрирован'},
-    { id: 'comp3', name: 'Кубок ветеранов', date: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString(), location: 'Стадион "Ветеран"', status: 'Завершенный', result: '1-е место'},
-    { id: 'comp4', name: 'Открытый ринг', date: new Date(new Date().setDate(new Date().getDate() - 90)).toISOString(), location: 'Клуб "Легион"', status: 'Завершенный', result: 'Участие'},
+    { id: 'comp1', name: 'Чемпионат города (Киев)', date: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString(), location: 'Киев, Украина', status: 'Предстоящий', registrationStatus: 'Зарегистрирован', coordinates: { lat: 50.4501, lng: 30.5234 }},
+    { id: 'comp2', name: 'Национальный отбор (Львов)', date: new Date(new Date().setDate(new Date().getDate() + 45)).toISOString(), location: 'Львов, Украина', status: 'Предстоящий', registrationStatus: 'Не зарегистрирован', coordinates: { lat: 49.8397, lng: 24.0297 }},
+    { id: 'comp3', name: 'Кубок ветеранов (Берлин)', date: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString(), location: 'Берлин, Германия', status: 'Завершенный', result: '1-е место', coordinates: { lat: 52.5200, lng: 13.4050 }},
+    { id: 'comp4', name: 'Открытый ринг (Варшава)', date: new Date(new Date().setDate(new Date().getDate() - 90)).toISOString(), location: 'Варшава, Польша', status: 'Завершенный', result: 'Участие', coordinates: { lat: 52.2297, lng: 21.0122 }},
 ];
 
 // --- TEAM MEMBERS DATA ---
