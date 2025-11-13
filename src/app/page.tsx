@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/icons";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CalendarDays, BarChart, BrainCircuit } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -53,6 +53,50 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-muted/30">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">Ключевые возможности</div>
+                <h2 className="text-3xl font-bold font-headline tracking-tighter sm:text-5xl">Все, что нужно для побед</h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  Наша платформа предоставляет полный набор инструментов для организации тренировочного процесса и анализа результатов.
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-3 lg:gap-12">
+              <div className="flex flex-col justify-center space-y-4 text-center items-center">
+                <div className="rounded-full bg-primary/10 p-4 text-primary">
+                    <CalendarDays className="h-8 w-8" />
+                </div>
+                <h3 className="text-xl font-bold font-headline">Управление расписанием</h3>
+                <p className="text-muted-foreground">
+                  Создавайте и просматривайте актуальный календарь тренировок, соревнований и других событий команды.
+                </p>
+              </div>
+              <div className="flex flex-col justify-center space-y-4 text-center items-center">
+                <div className="rounded-full bg-primary/10 p-4 text-primary">
+                    <BarChart className="h-8 w-8" />
+                </div>
+                <h3 className="text-xl font-bold font-headline">Анализ прогресса</h3>
+                <p className="text-muted-foreground">
+                  Отслеживайте посещаемость, финансовый баланс и результаты соревнований в удобных отчетах.
+                </p>
+              </div>
+              <div className="flex flex-col justify-center space-y-4 text-center items-center">
+                 <div className="rounded-full bg-primary/10 p-4 text-primary">
+                    <BrainCircuit className="h-8 w-8" />
+                </div>
+                <h3 className="text-xl font-bold font-headline">AI-Тренер</h3>
+                <p className="text-muted-foreground">
+                  Получайте персональные рекомендации и ответы на ваши вопросы от нашего виртуального помощника.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
         <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} Центр команды Демьяненко. Все права защищены.</p>
