@@ -12,9 +12,10 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { MessageSquare, Lightbulb, ServerCrash, Loader } from 'lucide-react';
+import { MessageSquare, Lightbulb, ServerCrash, Loader, BrainCircuit } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/auth-context';
 
 // Локальный "мозг" тренера
 const getLocalCoachResponse = (text: string): string => {
@@ -22,9 +23,9 @@ const getLocalCoachResponse = (text: string): string => {
     
     // Приоритетные ключевые слова
     if (lowerCaseText.includes('устал') || lowerCaseText.includes('тяжело') || lowerCaseText.includes('не могу')) {
-        return `### Я тебя услышал.
+        return `Я тебя услышал.
 
-Спасибо, что поделился своими ощущениями. Очень важно прислушиваться к своему телу, и я рад, что ты доверяешь мне в этом. Усталость — это сигнал, который мы не можем игнорировать.
+Спасибо, что поделился своими ощущениями. Очень важно прислушиваться к своему телу. Усталость — это сигнал, который мы не можем игнорировать.
 
 **Что происходит:**
 Похоже, что накопившаяся нагрузка превышает твою текущую способность к восстановлению. Наша цель — становиться сильнее, а не истощать себя.
@@ -37,7 +38,7 @@ const getLocalCoachResponse = (text: string): string => {
     }
     
     if (lowerCaseText.includes('техника') || lowerCaseText.includes('удар') || lowerCaseText.includes('прием')) {
-        return `### Отличный вопрос по технике!
+        return `Отличный вопрос по технике!
 
 Рад, что ты сфокусирован на деталях — именно в них кроется мастерство.
 
@@ -52,7 +53,7 @@ const getLocalCoachResponse = (text: string): string => {
     }
 
     if (lowerCaseText.includes('совет') || lowerCaseText.includes('мотивация') || lowerCaseText.includes('помощь')) {
-         return `### Спасибо, что обратился.
+         return `Спасибо, что обратился.
 
 Ценю твое доверие. Иногда всем нам нужен взгляд со стороны или дополнительный стимул.
 
@@ -67,13 +68,13 @@ const getLocalCoachResponse = (text: string): string => {
     }
     
     if (lowerCaseText.includes('спасибо') || lowerCaseText.includes('благодарю')) {
-        return `### Всегда пожалуйста!
+        return `Всегда пожалуйста!
 
 Рад быть полезным. Твоя обратная связь важна для меня и для всей команды. Продолжай в том же духе!`;
     }
 
     // Ответ по умолчанию
-    return `### Спасибо за твое сообщение.
+    return `Спасибо за твое сообщение.
 
 Я внимательно изучил его. Это важная информация для меня. 
 
@@ -86,11 +87,14 @@ const getLocalCoachResponse = (text: string): string => {
 
 
 export default function RecommendationsPage() {
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [feedback, setFeedback] = useState('');
     const [response, setResponse] = useState('');
     const [error, setError] = useState('');
     const { toast } = useToast();
+
+  const isManager = user?.role === 'admin' || user?.role === 'coach';
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -108,7 +112,9 @@ export default function RecommendationsPage() {
     setTimeout(() => {
         try {
             const result = getLocalCoachResponse(feedback);
-            setResponse(result);
+            // Re-format for markdown-like display
+            const formattedResult = result.replace(/### (.*?)\n/g, '### $1\n\n');
+            setResponse(formattedResult);
         } catch (err: any) {
             setError(err.message || "Не удалось получить ответ от тренера.");
         } finally {
@@ -116,17 +122,27 @@ export default function RecommendationsPage() {
         }
     }, 500); // 0.5 секунды задержки
   }
+  
+  const PageIcon = isManager ? BrainCircuit : MessageSquare;
+  const pageTitle = isManager ? "Рекомендации AI" : "Чат с тренером";
+  const pageDescription = isManager ? "Получите советы от AI-ассистента по управлению командой и тренировочным процессом." : "Задайте вопрос или поделитесь мыслями. Тренер проанализирует и даст совет.";
+  const cardTitle = "Новый запрос";
+  const cardDescription = isManager ? "Опишите ситуацию или задайте вопрос AI-ассистенту." : "Опишите ваши впечатления, проблемы или задайте вопрос. Тренер проанализирует ваше сообщение и даст развернутый ответ.";
+  const placeholderText = isManager ? "Например: 'Как лучше мотивировать спортсмена после поражения?' или 'Посоветуй упражнения на выносливость'." : "Например: 'Тренер, последние тренировки кажутся слишком интенсивными, я не успеваю восстанавливаться.' или 'У меня вопрос по технике выполнения...'.";
+  const buttonText = isManager ? "Отправить AI-ассистенту" : "Отправить тренеру";
+  const responseTitle = isManager ? "Ответ AI-ассистента" : "Ответ тренера";
+
 
   return (
     <div className="grid gap-8">
       <div className="flex flex-col gap-8">
         <div>
           <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
-            <MessageSquare className="h-8 w-8 text-primary"/>
-            Чат с тренером
+            <PageIcon className="h-8 w-8 text-primary"/>
+            {pageTitle}
           </h1>
           <p className="text-muted-foreground">
-            Задайте вопрос или поделитесь мыслями. Тренер проанализирует и даст совет.
+            {pageDescription}
           </p>
         </div>
       </div>
@@ -135,9 +151,9 @@ export default function RecommendationsPage() {
         <form onSubmit={handleSubmit}>
             <Card>
                 <CardHeader>
-                    <CardTitle>Новое сообщение</CardTitle>
+                    <CardTitle>{cardTitle}</CardTitle>
                     <CardDescription>
-                        Опишите ваши впечатления, проблемы или задайте вопрос. Тренер проанализирует ваше сообщение и даст развернутый ответ.
+                       {cardDescription}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -145,7 +161,7 @@ export default function RecommendationsPage() {
                         <Label htmlFor="feedback-input">Ваше сообщение</Label>
                         <Textarea 
                             id="feedback-input" 
-                            placeholder="Например: 'Тренер, последние тренировки кажутся слишком интенсивными, я не успеваю восстанавливаться.' или 'У меня вопрос по технике выполнения...'." 
+                            placeholder={placeholderText} 
                             rows={5}
                             value={feedback}
                             onChange={(e) => setFeedback(e.target.value)}
@@ -156,7 +172,7 @@ export default function RecommendationsPage() {
                 <CardFooter>
                     <Button type="submit" disabled={loading || !feedback}>
                         {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                        {loading ? 'Анализ...' : 'Отправить тренеру'}
+                        {loading ? 'Анализ...' : buttonText}
                     </Button>
                 </CardFooter>
             </Card>
@@ -175,8 +191,8 @@ export default function RecommendationsPage() {
         <Card className="min-h-[300px]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="text-primary"/>
-                Ответ тренера
+                <PageIcon className="text-primary"/>
+                {responseTitle}
             </CardTitle>
             <CardDescription>
               Ответ появится здесь после анализа вашего сообщения.
@@ -190,14 +206,19 @@ export default function RecommendationsPage() {
                     <p className="mt-2 text-sm text-muted-foreground">Пожалуйста, подождите.</p>
                 </div>
             ) : response ? (
-              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-muted p-4">
-                <p>{response}</p>
+              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap rounded-md bg-muted p-4 space-y-4">
+                {response.split('\n\n').map((paragraph, index) => {
+                    if (paragraph.startsWith('###')) {
+                        return <h3 key={index} className="text-lg font-semibold font-headline">{paragraph.replace('###', '').trim()}</h3>
+                    }
+                    return <p key={index}>{paragraph}</p>
+                })}
               </div>
             ) : (
                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border text-center h-60">
                     <Lightbulb className="h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-semibold">Ожидание ввода</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">Напишите сообщение тренеру в форме выше.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Напишите сообщение в форме выше.</p>
                 </div>
             )}
           </CardContent>

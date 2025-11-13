@@ -14,6 +14,7 @@ import {
   BarChart,
   User,
   GraduationCap,
+  BrainCircuit,
 } from 'lucide-react';
 import {
   SidebarHeader,
@@ -41,7 +42,12 @@ export default function MainNav() {
     { href: '/dashboard/journal', label: 'Журнал', icon: BookUser, roles: ['admin', 'coach'] },
     { href: '/dashboard/reports', label: 'Отчеты', icon: BarChart, roles: ['admin', 'coach', 'athlete', 'parent'] },
     { href: '/dashboard/education', label: 'Обучение', icon: GraduationCap, roles: ['admin', 'coach', 'parent', 'athlete'] },
-    { href: '/dashboard/recommendations', label: 'Чат с тренером', icon: MessageSquare, roles: ['admin', 'coach', 'parent', 'athlete'] },
+    { 
+      href: '/dashboard/recommendations', 
+      label: isManager ? 'Рекомендации AI' : 'Чат с тренером', 
+      icon: isManager ? BrainCircuit : MessageSquare, 
+      roles: ['admin', 'coach', 'parent', 'athlete'] 
+    },
     { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award, roles: ['admin', 'coach', 'parent', 'athlete'] },
