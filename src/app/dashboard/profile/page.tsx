@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { useState, type FormEvent, useEffect, useMemo, useRef } from 'react';
-import { Loader, User, Trophy, Share2, Camera, GraduationCap, Star, LogOut } from 'lucide-react';
+import { Loader, User, Trophy, Share2, Camera, GraduationCap, Star, LogOut, BadgeCheck } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { competitionsData } from '@/lib/data';
 import type { Competition } from '@/lib/data';
@@ -240,7 +240,12 @@ export default function ProfilePage() {
                         />
                     </div>
                     <div className="text-center">
-                        <p className="text-xl font-bold">{getFullName(user.firstName, user.lastName)}</p>
+                        <p className="text-xl font-bold flex items-center justify-center gap-2">
+                           {getFullName(user.firstName, user.lastName)}
+                           {user.role === 'admin' && (
+                            <BadgeCheck className="h-5 w-5 text-primary" />
+                           )}
+                        </p>
                         <p className="text-sm text-muted-foreground">{user.username} ({user.email})</p>
                         <Badge variant="outline" className="mt-2">{roleTranslations[user.role] || user.role}</Badge>
                     </div>

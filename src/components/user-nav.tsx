@@ -15,7 +15,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
-import { CreditCard, LogOut, Settings, User as UserIcon, Shield, Repeat } from 'lucide-react';
+import { CreditCard, LogOut, Settings, User as UserIcon, Shield, Repeat, BadgeCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth, type UserProfile } from '@/context/auth-context';
 import { getFullName, getInitials, getAvatarUrl } from '@/lib/utils';
@@ -72,8 +72,9 @@ export function UserNav() {
           <>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">
+                <p className="text-sm font-medium leading-none flex items-center gap-2">
                   {getFullName(user.firstName, user.lastName)}
+                  {user.role === 'admin' && <BadgeCheck className="h-4 w-4 text-primary" />}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user.email}

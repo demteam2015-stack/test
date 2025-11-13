@@ -49,7 +49,7 @@ const saveMessagesToStorage = (messages: Message[]) => {
  * This is a simplified approach for the local application.
  * It will return the first one it finds.
  */
-export const getCoachUser = async (): Promise<{id: string, name: string} | null> => {
+export const getCoachUser = async (): Promise<{id: string, name: string, role: 'admin' | 'coach'} | null> => {
     if (typeof window === 'undefined') return null;
 
     for (let i = 0; i < localStorage.length; i++) {
@@ -58,8 +58,8 @@ export const getCoachUser = async (): Promise<{id: string, name: string} | null>
             try {
                 const storedUser = JSON.parse(localStorage.getItem(key) || '{}');
                 if (storedUser.username === 'lexazver' || storedUser.email === 'lexazver@gmail.com') {
-                    // For this app, we hardcode the coach's display name as we can't decrypt it here.
-                    return { id: storedUser.id, name: "Тренер" };
+                    // This is a placeholder as we can't decrypt role here. We assume admin.
+                    return { id: storedUser.id, name: "Тренер", role: 'admin' };
                 }
             } catch (e) {
                 // Ignore parse errors
