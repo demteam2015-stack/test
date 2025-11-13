@@ -78,8 +78,12 @@ export const addAthlete = (athleteData: Omit<Athlete, 'id'>): Promise<Athlete> =
     return new Promise((resolve) => {
         const athletes = getAthletesFromStorage();
         const newAthlete: Athlete = {
-            ...athleteData,
             id: `athlete_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            firstName: athleteData.firstName,
+            lastName: athleteData.lastName,
+            middleName: athleteData.middleName,
+            dateOfBirth: athleteData.dateOfBirth,
+            parentId: athleteData.parentId,
             photoURL: athleteData.photoURL || `https://i.pravatar.cc/150?u=${Date.now()}`,
             attestationStatus: 'none',
         };

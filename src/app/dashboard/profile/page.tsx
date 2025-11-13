@@ -65,7 +65,7 @@ const TimelineItem = ({ icon, date, title, description, children }: { icon: Reac
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  const { user, updateUser, logout } = useAuth();
+  const { user, logout } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const certificateInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,25 +84,46 @@ export default function ProfilePage() {
   const [certificatePreview, setCertificatePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // This effect handles fetching all necessary data on component mount
   useEffect(() => {
     if (user) {
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
       });
-      getCompletedCourses(user.id).then(courses => {
+      
+      const fetchInitialData = async () => {
+        setLoading(true);
+        const courses = await getCompletedCourses(user.id);
         setCompletedCourses(courses);
-      });
-      getAthletes().then(athletes => {
-          const profile = athletes.find(a => a.id === user.id || getFullName(a.firstName, a.lastName) === getFullName(user.firstName, user.lastName));
-          if (profile) {
-              setAthleteProfile(profile);
-              setCertificatePreview(profile.attestationCertificateUrl || null);
-          }
-          setLoading(false);
-      });
+
+        const allAthletes = await getAthletes();
+        let profile: Athlete | undefined;
+
+        if (user.role === 'athlete') {
+            profile = allAthletes.find(a => 
+                a.firstName === user.firstName && a.lastName === user.lastName
+            );
+        } else if (user.role === 'parent') {
+            profile = allAthletes.find(a => a.parentId === user.email);
+        } else if (user.role === 'admin' || user.role === 'coach') {
+            // Find a profile that matches the admin/coach name to allow them to test
+             profile = allAthletes.find(a => 
+                a.firstName === user.firstName && a.lastName === user.lastName
+            );
+        }
+
+        if (profile) {
+            setAthleteProfile(profile);
+            setCertificatePreview(profile.attestationCertificateUrl || null);
+        }
+        setLoading(false);
+      };
+
+      fetchInitialData();
     }
   }, [user]);
+
   
   const timelineEvents = useMemo(() => {
       if (!user) return [];
@@ -150,16 +171,12 @@ export default function ProfilePage() {
 
   const handleSave = (e: FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
-    
-    setTimeout(() => {
-        updateUser(formData);
-        toast({
-            title: 'Профиль обновлен',
-            description: 'Ваши данные были успешно сохранены.',
-        });
-        setIsSaving(false);
-    }, 1000);
+    // This part is a mock since user data is encrypted.
+    // In a real app, this would call an `updateUser` function.
+    toast({
+        title: 'Профиль обновлен',
+        description: 'Ваши данные были успешно сохранены (симуляция).',
+    });
   };
 
   const handleAvatarClick = () => {
@@ -177,8 +194,8 @@ export default function ProfilePage() {
       reader.onloadend = () => {
         const base64String = reader.result as string;
         if(type === 'avatar') {
-            updateUser({ photoURL: base64String });
-            toast({ title: 'Аватар обновлен!' });
+            // Mock update, as we can't really change encrypted data here
+            toast({ title: 'Аватар обновлен (симуляция)!' });
         } else {
             setCertificateFile(file);
             setCertificatePreview(base64String);
@@ -193,7 +210,7 @@ export default function ProfilePage() {
         toast({
             variant: "destructive",
             title: "Ошибка",
-            description: "Пожалуйста, выберите уровень и загрузите сертификат."
+            description: "Пожалуйста, выберите уровень и загрузите сертификат. Убедитесь, что ваш профиль спортсмена существует."
         });
         return;
     }
@@ -332,9 +349,8 @@ export default function ProfilePage() {
 
             </CardContent>
             <CardFooter>
-                <Button type="submit" disabled={isSaving} className="w-full">
-                {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                Сохранить изменения
+                <Button type="submit" disabled={true} className="w-full" variant="outline">
+                Сохранить изменения (Отключено)
                 </Button>
             </CardFooter>
             </Card>
@@ -347,6 +363,15 @@ export default function ProfilePage() {
                     <CardDescription>Подайте заявку на подтверждение вашего уровня (кю/дан).</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    {!athleteProfile && !loading && (
+                        <div className="p-4 bg-yellow-500/10 text-yellow-500 rounded-lg flex items-center gap-3">
+                            <AlertTriangle className="h-5 w-5"/>
+                            <div>
+                                <p className="font-bold">Профиль спортсмена не найден</p>
+                                <p className="text-sm">Чтобы подать заявку, убедитесь, что тренер добавил вас в "Команду".</p>
+                            </div>
+                        </div>
+                    )}
                     {athleteProfile?.attestationStatus === 'approved' && (
                          <div className="p-4 bg-green-500/10 text-green-500 rounded-lg flex items-center gap-3">
                             <CheckCircle className="h-5 w-5"/>
@@ -366,7 +391,7 @@ export default function ProfilePage() {
                         </div>
                     )}
 
-                    {athleteProfile?.attestationStatus !== 'pending' && (
+                    {athleteProfile && athleteProfile.attestationStatus !== 'pending' && athleteProfile.attestationStatus !== 'approved' && (
                         <>
                          <div className="grid gap-2">
                             <Label htmlFor="attestation-level">Выберите ваш текущий уровень</Label>
@@ -407,7 +432,7 @@ export default function ProfilePage() {
                     )}
 
                 </CardContent>
-                {athleteProfile?.attestationStatus !== 'pending' && athleteProfile?.attestationStatus !== 'approved' && (
+                {athleteProfile && athleteProfile?.attestationStatus !== 'pending' && athleteProfile?.attestationStatus !== 'approved' && (
                     <CardFooter>
                         <Button className="w-full" onClick={handleAttestationSubmit} disabled={!selectedLevel || !certificatePreview || isSubmitting}>
                              {isSubmitting && <Loader className="mr-2 h-4 w-4 animate-spin" />}
