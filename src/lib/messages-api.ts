@@ -1,13 +1,14 @@
 'use client';
 
-const MESSAGES_STORAGE_KEY = 'demyanenko_hub_messages_v1';
+const MESSAGES_STORAGE_KEY = 'demyanenko_hub_messages_v2'; // Version bump for new structure
 
 export interface Message {
     id: string;
     senderId: string;
     senderName: string;
-    senderEmail: string;
     senderRole: 'athlete' | 'coach' | 'parent' | 'admin';
+    recipientId?: string; // ID of the recipient (e.g., coach's ID)
+    threadId: string; // To group conversations
     text: string;
     date: string; // ISO string
     isRead: boolean;
@@ -44,12 +45,13 @@ const saveMessagesToStorage = (messages: Message[]) => {
 /**
  * Creates and saves a new message.
  */
-export const createMessage = (messageData: Omit<Message, 'id'>): Promise<Message> => {
+export const createMessage = (messageData: Omit<Message, 'id' | 'isRead'>): Promise<Message> => {
     return new Promise((resolve) => {
         const messages = getMessagesFromStorage();
         const newMessage: Message = {
             ...messageData,
             id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            isRead: false,
         };
         
         messages.push(newMessage);
@@ -71,38 +73,57 @@ export const getMessages = (): Promise<Message[]> => {
 
 
 /**
- * Fetches all messages for a specific user.
+ * Fetches all messages for a specific user, grouped by thread.
  */
-export const getMessagesForUser = (userId: string): Promise<MessageWithReadStatus[]> => {
+export const getMessageThreadsForUser = (userId: string): Promise<Record<string, Message[]>> => {
     return new Promise((resolve) => {
         const messages = getMessagesFromStorage();
-        const userMessages = messages
-            .filter(msg => msg.senderId === userId)
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        resolve(userMessages);
+        const threads: Record<string, Message[]> = {};
+
+        messages.forEach(msg => {
+            // A user is part of a thread if they are the sender or recipient
+            if (msg.senderId === userId || msg.recipientId === userId) {
+                 if (!threads[msg.threadId]) {
+                    threads[msg.threadId] = [];
+                }
+                threads[msg.threadId].push(msg);
+            }
+        });
+        
+        // Sort messages within each thread
+        for (const threadId in threads) {
+            threads[threadId].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        }
+
+        resolve(threads);
     });
 };
 
 
 /**
- * Marks all messages as read.
+ * Marks messages in a thread as read by a specific user.
  */
-export const markAllMessagesAsRead = (): Promise<void> => {
+export const markThreadAsRead = (threadId: string, readerId: string): Promise<void> => {
     return new Promise((resolve) => {
         let messages = getMessagesFromStorage();
-        messages = messages.map(msg => ({ ...msg, isRead: true }));
+        messages.forEach(msg => {
+            // Mark as read if the message is in the thread and the reader is the recipient
+            if (msg.threadId === threadId && msg.recipientId === readerId && !msg.isRead) {
+                msg.isRead = true;
+            }
+        });
         saveMessagesToStorage(messages);
         resolve();
     });
 };
 
 /**
- * Counts unread messages.
+ * Counts unread messages for a specific user.
  */
-export const getUnreadMessagesCount = (): Promise<number> => {
+export const getUnreadMessagesCountForUser = (userId: string): Promise<number> => {
     return new Promise((resolve) => {
         const messages = getMessagesFromStorage();
-        const count = messages.filter(msg => !msg.isRead).length;
+        const count = messages.filter(msg => msg.recipientId === userId && !msg.isRead).length;
         resolve(count);
     });
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -8,86 +8,214 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Mail, Check, CheckCheck, Loader, Inbox } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Mail, Check, CheckCheck, Loader, Inbox, Send, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
-import { getMessagesForUser, type MessageWithReadStatus } from '@/lib/messages-api';
+import { getMessageThreadsForUser, markThreadAsRead, createMessage, type Message } from '@/lib/messages-api';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
+// Assume a single coach for simplicity
+const COACH_ID = 'admin_lexazver';
+
 export default function MyMessagesPage() {
   const { user } = useAuth();
-  const [messages, setMessages] = useState<MessageWithReadStatus[]>([]);
+  const [threads, setThreads] = useState<Record<string, Message[]>>({});
   const [loading, setLoading] = useState(true);
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const fetchMessages = useCallback(async () => {
+  const fetchThreads = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const userMessages = await getMessagesForUser(user.id);
-    setMessages(userMessages);
+    const userThreads = await getMessageThreadsForUser(user.id);
+    setThreads(userThreads);
     setLoading(false);
   }, [user]);
 
   useEffect(() => {
-    fetchMessages();
-  }, [fetchMessages]);
+    fetchThreads();
+  }, [fetchThreads]);
+  
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [activeThreadId, threads]);
+
+  const handleThreadSelect = async (threadId: string) => {
+    setActiveThreadId(threadId);
+    if(user) {
+        await markThreadAsRead(threadId, user.id);
+        // Refresh threads to update unread status visually
+        fetchThreads();
+    }
+  };
+  
+  const handleReply = async () => {
+    if (!replyText || !user || !activeThreadId) return;
+    
+    setIsSending(true);
+
+    const newMessage: Omit<Message, 'id'|'isRead'> = {
+        senderId: user.id,
+        senderName: user.firstName ? `${user.firstName} ${user.lastName}` : user.username,
+        senderRole: user.role,
+        recipientId: COACH_ID, // All replies go to the coach
+        threadId: activeThreadId,
+        text: replyText,
+        date: new Date().toISOString(),
+    };
+    
+    await createMessage(newMessage);
+    setReplyText('');
+    setIsSending(false);
+    fetchThreads(); // Refresh to show the new message
+  }
+
+  const getInitials = (name: string) => {
+    const parts = name.split(' ');
+    if (parts.length > 1 && parts[0] && parts[1]) {
+      return `${parts[0][0]}${parts[1][0]}`;
+    }
+    return name.substring(0, 2);
+  };
+  
+  const sortedThreads = Object.values(threads).sort((a,b) => {
+      const lastMsgA = new Date(a[a.length - 1].date).getTime();
+      const lastMsgB = new Date(b[b.length - 1].date).getTime();
+      return lastMsgB - lastMsgA;
+  });
+
+  const activeThread = activeThreadId ? threads[activeThreadId] : null;
 
   return (
     <div className="grid gap-8">
-        <div>
-            <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
-                <Mail className="h-8 w-8 text-primary"/>
-                Мои отправленные сообщения
-            </h1>
-            <p className="text-muted-foreground">
-                История ваших обращений к тренеру и их статус.
-            </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+            <Mail className="h-8 w-8 text-primary"/>
+            Мои сообщения
+        </h1>
+        <p className="text-muted-foreground">
+            История ваших диалогов с тренером.
+        </p>
+      </div>
 
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-15rem)]">
+        <Card className={`lg:col-span-1 ${activeThreadId && 'hidden lg:block'}`}>
             <CardHeader>
-                <CardTitle>История обращений</CardTitle>
-                <CardDescription>
-                    Всего отправлено: {messages.length}
-                </CardDescription>
+                <CardTitle>Диалоги</CardTitle>
+                 <CardDescription>Всего диалогов: {Object.keys(threads).length}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-2 h-[calc(100%-8rem)] overflow-y-auto pr-2">
                 {loading ? (
-                    <div className="flex items-center justify-center h-60">
+                    <div className="flex items-center justify-center h-full">
                         <Loader className="h-8 w-8 animate-spin text-primary" />
                     </div>
-                ) : messages.length > 0 ? (
-                    <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                        {messages.map(msg => (
-                            <div key={msg.id} className="flex flex-col gap-2 p-4 border rounded-lg bg-muted/30">
-                                <div className="flex items-baseline justify-between">
-                                    <time className="text-xs text-muted-foreground">
-                                        {format(new Date(msg.date), 'd MMMM yyyy, HH:mm', { locale: ru })}
+                ) : sortedThreads.length > 0 ? (
+                     sortedThreads.map(thread => {
+                        const lastMessage = thread[thread.length - 1];
+                        const isUnread = lastMessage.recipientId === user?.id && !lastMessage.isRead;
+                        return (
+                            <div 
+                                key={thread[0].threadId}
+                                onClick={() => handleThreadSelect(thread[0].threadId)}
+                                className={`p-3 border rounded-lg cursor-pointer hover:bg-muted/50 ${activeThreadId === thread[0].threadId ? 'bg-muted' : ''}`}
+                            >
+                                <div className="flex justify-between items-start">
+                                    <p className={`font-semibold ${isUnread ? 'text-primary' : ''}`}>Тренер</p>
+                                     <time className="text-xs text-muted-foreground whitespace-nowrap">
+                                        {format(new Date(lastMessage.date), 'd MMM HH:mm', { locale: ru })}
                                     </time>
-                                    {msg.isRead ? (
-                                        <div className="flex items-center gap-1 text-xs text-blue-400">
-                                            <CheckCheck size={16} />
-                                            <span>прочитано</span>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                            <Check size={16} />
-                                            <span>отправлено</span>
-                                        </div>
-                                    )}
                                 </div>
-                                <p className="mt-1 text-sm whitespace-pre-wrap">{msg.text}</p>
+                                <p className="text-sm text-muted-foreground truncate">{lastMessage.text}</p>
                             </div>
-                        ))}
-                    </div>
+                        )
+                    })
                 ) : (
-                    <div className="flex flex-col h-60 items-center justify-center rounded-lg border-2 border-dashed border-border text-center">
+                    <div className="flex flex-col h-full items-center justify-center text-center">
                         <Inbox className="h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-4 text-lg font-semibold">Вы еще не отправляли сообщений</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Перейдите в раздел "Новое сообщение", чтобы задать вопрос тренеру.</p>
+                        <h3 className="mt-4 text-lg font-semibold">У вас пока нет диалогов</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">Начните новый диалог в разделе "Новое сообщение".</p>
                     </div>
                 )}
             </CardContent>
         </Card>
+        
+        <Card className={`lg:col-span-2 ${!activeThreadId && 'hidden lg:flex'}`}>
+            {activeThread ? (
+                 <div className="flex flex-col h-full">
+                     <CardHeader className="flex-shrink-0">
+                         <div className="flex items-center gap-4">
+                           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setActiveThreadId(null)}>
+                                <ArrowLeft />
+                           </Button>
+                           <CardTitle>Диалог с тренером</CardTitle>
+                         </div>
+                    </CardHeader>
+                    <CardContent className="flex-grow overflow-y-auto space-y-4 pr-2">
+                       {activeThread.map(msg => (
+                            <div key={msg.id} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
+                                {msg.senderId !== user?.id && (
+                                     <Avatar className="h-8 w-8">
+                                        <AvatarImage src={`https://i.pravatar.cc/150?u=admin_lexazver`} />
+                                        <AvatarFallback>{getInitials(msg.senderName)}</AvatarFallback>
+                                    </Avatar>
+                                )}
+                                <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                    <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                                    <div className={`flex items-center gap-2 mt-2 ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
+                                        <time className="text-xs opacity-70">
+                                            {format(new Date(msg.date), 'HH:mm', { locale: ru })}
+                                        </time>
+                                         {msg.senderId === user?.id && (
+                                            msg.isRead ? <CheckCheck size={16} /> : <Check size={16} />
+                                         )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        <div ref={messagesEndRef} />
+                    </CardContent>
+                     <CardContent className="flex-shrink-0 pt-4 border-t">
+                         <div className="relative">
+                            <Textarea 
+                                placeholder="Напишите ответ..." 
+                                value={replyText}
+                                onChange={e => setReplyText(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleReply();
+                                    }
+                                }}
+                                disabled={isSending}
+                                className="pr-20"
+                            />
+                            <Button 
+                                type="submit" 
+                                size="icon" 
+                                className="absolute top-1/2 right-2 -translate-y-1/2" 
+                                onClick={handleReply}
+                                disabled={isSending || !replyText}
+                            >
+                                {isSending ? <Loader className="animate-spin" /> : <Send />}
+                            </Button>
+                        </div>
+                    </CardContent>
+                 </div>
+            ) : (
+                <div className="flex flex-col h-full items-center justify-center text-center">
+                    <Mail className="h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-4 text-lg font-semibold">Выберите диалог</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">Выберите диалог из списка слева, чтобы просмотреть переписку.</p>
+                </div>
+            )}
+        </Card>
+
+      </div>
     </div>
   );
 }

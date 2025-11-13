@@ -30,7 +30,7 @@ import { Logo } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/auth-context';
 import { useState, useEffect } from 'react';
-import { getUnreadMessagesCount } from '@/lib/messages-api';
+import { getUnreadMessagesCountForUser } from '@/lib/messages-api';
 
 export default function MainNav() {
   const pathname = usePathname();
@@ -40,9 +40,9 @@ export default function MainNav() {
   const isManager = user?.role === 'admin' || user?.role === 'coach';
 
   useEffect(() => {
-    if (isManager) {
+    if (user) {
         const fetchCount = async () => {
-            const count = await getUnreadMessagesCount();
+            const count = await getUnreadMessagesCountForUser(user.id);
             setUnreadCount(count);
         }
         fetchCount();
@@ -50,7 +50,7 @@ export default function MainNav() {
         const interval = setInterval(fetchCount, 30000);
         return () => clearInterval(interval);
     }
-  }, [isManager, pathname]); // Rerun when path changes to mark as read
+  }, [user, pathname]); // Rerun when path changes to mark as read
 
   const navLinks = [
     { href: '/dashboard', label: 'Панель', icon: Home, roles: ['admin', 'coach', 'parent', 'athlete'] },
@@ -62,12 +62,24 @@ export default function MainNav() {
     { href: '/dashboard/education', label: 'Обучение', icon: GraduationCap, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { 
       href: '/dashboard/recommendations', 
-      label: isManager ? 'Сообщения' : 'Новое сообщение', 
-      icon: isManager ? Inbox : MessageSquare, 
-      roles: ['admin', 'coach', 'parent', 'athlete'],
-      badge: isManager ? unreadCount : 0,
+      label: 'Новое сообщение', 
+      icon: MessageSquare, 
+      roles: ['parent', 'athlete'],
     },
-    { href: '/dashboard/my-messages', label: 'Мои сообщения', icon: Mail, roles: ['parent', 'athlete'] },
+    { 
+      href: '/dashboard/recommendations', 
+      label: 'Сообщения', 
+      icon: Inbox, 
+      roles: ['admin', 'coach'],
+      badge: unreadCount,
+    },
+    { 
+      href: '/dashboard/my-messages', 
+      label: 'Мои сообщения', 
+      icon: Mail, 
+      roles: ['parent', 'athlete'],
+      badge: unreadCount,
+    },
     { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award, roles: ['admin', 'coach', 'parent', 'athlete'] },
@@ -87,7 +99,7 @@ export default function MainNav() {
       <SidebarContent>
         <SidebarMenu>
           {navLinks.filter(link => link.roles.includes(user.role)).map((link) => (
-            <SidebarMenuItem key={link.href}>
+            <SidebarMenuItem key={link.href + link.label}>
               <SidebarMenuButton
                 asChild
                 isActive={pathname === link.href}
