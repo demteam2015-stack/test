@@ -208,8 +208,8 @@ export default function MyMessagesPage() {
                          </div>
                     </CardHeader>
                     <CardContent className="flex-grow overflow-y-auto space-y-4 pr-2">
-                       {activeThread.map(msg => (
-                            <div key={msg.id} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
+                       {activeThread.map((msg, index) => (
+                            <div key={msg.id + index} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
                                 {msg.senderId !== user?.id && (
                                      <Avatar className="h-8 w-8">
                                         <AvatarImage src={`https://i.pravatar.cc/150?u=admin_lexazver`} />
@@ -217,7 +217,7 @@ export default function MyMessagesPage() {
                                     </Avatar>
                                 )}
                                 <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                    <p className="text-xs font-bold mb-1 opacity-80">{msg.senderName}</p>
+                                    <p className="font-bold mb-1 text-xs">{msg.senderName}</p>
                                     <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                     <div className={`flex items-center gap-2 mt-2 ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
                                         <time className="text-xs opacity-70">
