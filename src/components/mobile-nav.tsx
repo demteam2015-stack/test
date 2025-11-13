@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Award,
   Calendar,
   Home,
   Trophy,
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
+import { BeltIcon } from './icons';
 
 const navLinks = [
   { href: '/dashboard', label: 'Панель', icon: Home, roles: ['admin', 'coach', 'parent', 'athlete']},
@@ -22,7 +22,7 @@ const navLinks = [
   { href: '/dashboard/competitions', label: 'Сорев-я', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard, roles: ['parent', 'athlete']},
   { href: '/dashboard/my-messages', label: 'AI-Коуч', icon: MessageSquare, roles: ['parent', 'athlete']},
-  { href: '/dashboard/attestation', label: 'Аттестация', icon: Award, roles: ['admin', 'coach']},
+  { href: '/dashboard/attestation', label: 'Аттестация', icon: BeltIcon, roles: ['admin', 'coach']},
   { href: '/dashboard/profile', label: 'Профиль', icon: User, roles: ['admin', 'coach', 'parent', 'athlete']},
 ];
 
