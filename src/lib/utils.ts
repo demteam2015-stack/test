@@ -38,9 +38,10 @@ export const getAvatarUrl = (userId: string, username?: string) => {
         if (adminImage) return adminImage.imageUrl;
       }
 
-      if (username === 'AI-Тренер') {
+      if (username === 'AI-Тренер' || userId === 'ai_coach_id') {
          // Return a specific avatar for the AI
-         return '/images/ai-avatar.png'; // Make sure this image exists in public/images
+         // This is a placeholder, you should have a real image here.
+         return "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M12 8V4H8'%3e%3c/path%3e%3crect x='4' y='12' width='16' height='8' rx='2'%3e%3c/rect%3e%3cpath d='M12 12v8'%3e%3c/path%3e%3cpath d='M16 4v4'%3e%M16 8h4'%3e%3c/path%3e%3c/svg%3e";
       }
 
       const userImage = PlaceHolderImages.find(img => img.id === `user-${userId.substring(0, 4)}`);

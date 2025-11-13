@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { useState, type FormEvent, useEffect, useMemo, useRef } from 'react';
-import { Loader, User, Award, Trophy, Share2, Camera, GraduationCap, Calendar, Star, Trash2 } from 'lucide-react';
+import { Loader, User, Trophy, Share2, Camera, GraduationCap, Star, Trash2 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { competitionsData } from '@/lib/data';
 import type { Competition } from '@/lib/data';
@@ -190,7 +190,7 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <User className="size-8 text-primary"/>
             Мой путь чемпиона
         </h1>

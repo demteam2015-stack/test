@@ -276,7 +276,7 @@ export default function MyMessagesPage() {
         <Card className={`lg:col-span-1 ${activeThreadId && 'hidden lg:block'}`}>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>Диалоги</CardTitle>
+                    <CardTitle className="font-headline">Диалоги</CardTitle>
                     <CardDescription>Всего диалогов: {sortedThreads.length}</CardDescription>
                 </div>
                 {coach && (
@@ -335,7 +335,7 @@ export default function MyMessagesPage() {
                            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setActiveThreadId(null)}>
                                 <ArrowLeft />
                            </Button>
-                           <CardTitle>Диалог</CardTitle>
+                           <CardTitle className="font-headline">Диалог</CardTitle>
                          </div>
                     </CardHeader>
                     <CardContent className="flex-grow overflow-y-auto space-y-4 pr-2">
