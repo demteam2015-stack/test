@@ -54,7 +54,7 @@ const getAllUsers = (): UserProfile[] => {
 
 
 const CoachAdminView = () => {
-    const { user, adminGetUserProfile } = useAuth();
+    const { user } = useAuth();
     const [threads, setThreads] = useState<Record<string, Message[]>>({});
     const [participants, setParticipants] = useState<Record<string, UserProfile>>({});
     const [loading, setLoading] = useState(true);
@@ -157,6 +157,7 @@ const CoachAdminView = () => {
 
     const getParticipantForThread = (thread: Message[]) => {
         if (!user || thread.length === 0) return null;
+        
         // Find the first message not sent by the current user (the coach)
         const otherUserMsg = thread.find(m => m.senderId !== user.id);
         if (otherUserMsg) {
@@ -243,7 +244,7 @@ const CoachAdminView = () => {
                                 <div key={msg.id + index} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
                                     {msg.senderId !== user?.id && sender && (
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={getAvatarUrl(sender.id, sender.username)} />
+                                            <AvatarImage src={getAvatarUrl(sender.id, senderName)} />
                                             <AvatarFallback>{getInitials(senderName)}</AvatarFallback>
                                         </Avatar>
                                     )}
@@ -322,11 +323,11 @@ export default function RecommendationsPage() {
                         <CardTitle>Неверная страница</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">Чтобы отправить новое сообщение или просмотреть историю, пожалуйста, перейдите в раздел "Мои сообщения" в меню слева.</p>
+                        <p className="text-muted-foreground">Чтобы отправить новое сообщение или просмотреть историю, пожалуйста, перейдите в раздел "Рекомендации" в меню слева.</p>
                     </CardContent>
                     <CardFooter>
                         <Button asChild>
-                            <Link href="/dashboard/my-messages">Перейти в Мои сообщения</Link>
+                            <Link href="/dashboard/my-messages">Перейти в Рекомендации</Link>
                         </Button>
                     </CardFooter>
                 </Card>

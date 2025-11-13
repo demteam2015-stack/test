@@ -16,6 +16,7 @@ import {
   GraduationCap,
   Inbox,
   Mail,
+  BrainCircuit,
 } from 'lucide-react';
 import {
   SidebarHeader,
@@ -58,10 +59,21 @@ export default function MainNav() {
     { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/team', label: 'Команда', icon: Users, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { href: '/dashboard/journal', label: 'Журнал', icon: BookUser, roles: ['admin', 'coach'] },
-    { href: '/dashboard/reports', label: 'Отчеты', icon: BarChart, roles: ['admin', 'coach', 'athlete', 'parent'] },
+    { 
+      href: '/dashboard/reports', 
+      label: 'Отчеты', 
+      icon: BarChart, 
+      roles: user?.role === 'parent' ? [] : ['admin', 'coach', 'athlete']  // Hide for parents as they have a different view
+    },
+    { 
+      href: '/dashboard/my-reports', 
+      label: 'Мои отчеты', 
+      icon: BarChart, 
+      roles: ['parent'] 
+    },
     { href: '/dashboard/education', label: 'Обучение', icon: GraduationCap, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { 
-      href: '/dashboard/recommendations', 
+      href: '/dashboard/messages', 
       label: 'Сообщения', 
       icon: Inbox, 
       roles: ['admin', 'coach'],
@@ -69,8 +81,8 @@ export default function MainNav() {
     },
     { 
       href: '/dashboard/my-messages', 
-      label: 'Мои сообщения', 
-      icon: Mail, 
+      label: 'Рекомендации', 
+      icon: BrainCircuit, 
       roles: ['parent', 'athlete'],
       badge: unreadCount,
     },

@@ -23,6 +23,8 @@ import { getAthletes, type Athlete } from '@/lib/athletes-api';
 import { getPayments, type Payment } from '@/lib/payments-api';
 import { useAuth } from '@/context/auth-context';
 import { AttendanceChart } from '@/components/attendance-chart';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 type AttendanceReport = {
   athleteId: string;
@@ -54,9 +56,9 @@ export default function ReportsPage() {
         
         // --- Find athlete profile for current user if they are an athlete ---
         if (user?.role === 'athlete' || user?.role === 'parent') {
-            // Simple link by name for this simulation. In a real app, use IDs.
+            const userFullName = `${user.lastName} ${user.firstName}`;
             const currentUserAthlete = athletes.find(a => 
-                a.firstName === user.firstName && a.lastName === user.lastName
+                `${a.lastName} ${a.firstName}` === userFullName
             );
             setUserAthleteProfile(currentUserAthlete || null);
         }
@@ -141,6 +143,24 @@ export default function ReportsPage() {
           <Loader className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+  
+  if(user?.role === 'parent') {
+      return (
+          <Card>
+              <CardHeader>
+                  <CardTitle>Страница недоступна</CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <p className="text-muted-foreground">Для просмотра отчетов вашего ребенка, пожалуйста, перейдите в специальный раздел "Мои отчеты".</p>
+              </CardContent>
+              <CardFooter>
+                  <Button asChild>
+                      <Link href="/dashboard/my-reports">Перейти к отчетам</Link>
+                  </Button>
+              </CardFooter>
+          </Card>
+      );
   }
 
   const renderManagerView = () => (

@@ -7,20 +7,72 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter
+  CardFooter,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail, Check, CheckCheck, Loader, Inbox, Send, ArrowLeft, MessageSquarePlus } from 'lucide-react';
+import { Mail, Check, CheckCheck, Loader, Inbox, Send, ArrowLeft, MessageSquarePlus, BrainCircuit } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { getMessageThreadsForUser, markThreadAsRead, createMessage, type Message, getCoachUser } from '@/lib/messages-api';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { getFullName, getInitials, getAvatarUrl } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { getFullJournal } from '@/lib/journal-api';
+import { competitionsData } from '@/lib/data';
+
+
+// Mock AI analysis function
+const getAIAnalysis = async (userId: string): Promise<string> => {
+    const journal = await getFullJournal();
+    const userCompetitions = competitionsData.filter(c => c.status === 'Завершенный');
+
+    let attendanceSummary = '';
+    let totalPresent = 0;
+    let totalAbsent = 0;
+
+    Object.values(journal).forEach(day => {
+        Object.values(day).forEach(event => {
+            if (event[userId]) {
+                if (event[userId] === 'present') totalPresent++;
+                if (event[userId] === 'absent') totalAbsent++;
+            }
+        });
+    });
+
+    if (totalPresent + totalAbsent > 0) {
+        const attendancePercentage = (totalPresent / (totalPresent + totalAbsent)) * 100;
+        attendanceSummary = `Анализ посещаемости:
+- Всего посещено: ${totalPresent}
+- Всего пропущено: ${totalAbsent}
+- Процент посещаемости: ${attendancePercentage.toFixed(0)}%
+
+Твой процент посещаемости - это хороший показатель дисциплины. ${attendancePercentage > 80 ? 'Так держать!' : 'Постарайся не пропускать тренировки, чтобы быстрее достичь цели.'}`
+    } else {
+        attendanceSummary = 'Недостаточно данных о посещаемости для анализа. Начни отмечаться в журнале!'
+    }
+
+    let competitionSummary = '';
+    if (userCompetitions.length > 0) {
+        competitionSummary = `\n\nАнализ соревнований:
+${userCompetitions.map(c => `- "${c.name}": результат - ${c.result}`).join('\n')}
+
+${userCompetitions.some(c => c.result?.includes('1')) ? 'Поздравляю с призовыми местами! Это отличный результат.' : 'Каждое соревнование - это ценный опыт. Продолжай работать над собой.'}`
+    }
+
+    return `Здравствуйте! Я ваш AI-тренер. Я проанализировал вашу активность в приложении.
+
+${attendanceSummary}
+${competitionSummary}
+
+Общая рекомендация: продолжайте регулярно тренироваться и не забывайте оставлять обратную связь после занятий. Это поможет мне давать более точные советы. Если у вас есть конкретный вопрос, задайте его.`;
+}
+
 
 export default function MyMessagesPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [threads, setThreads] = useState<Record<string, Message[]>>({});
   const [loading, setLoading] = useState(true);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
@@ -43,18 +95,11 @@ export default function MyMessagesPage() {
     const userThreads = await getMessageThreadsForUser(user.id);
     setThreads(userThreads);
     setLoading(false);
-
-    // If there is only one thread, open it automatically
-    const threadIds = Object.keys(userThreads);
-    if (threadIds.length === 1 && !activeThreadId) {
-        setActiveThreadId(threadIds[0]);
-    }
-
-  }, [user, activeThreadId]);
+  }, [user]);
 
   useEffect(() => {
     fetchThreads();
-  }, [user]);
+  }, [fetchThreads]);
   
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -92,6 +137,42 @@ export default function MyMessagesPage() {
         setActiveThreadId(newThreadId);
       }
   }
+
+  const handleGetAIAnalysis = async () => {
+      if (!user || !coach) return;
+      setIsSending(true);
+
+      const analysisText = await getAIAnalysis(user.id);
+
+      const threadId = `${user.id}_${coach.id}`;
+      setActiveThreadId(threadId);
+
+      const aiMessage: Omit<Message, 'id'|'isRead'> = {
+        senderId: coach.id,
+        senderName: "AI-Тренер",
+        senderRole: 'coach',
+        recipientId: user.id,
+        text: analysisText,
+        date: new Date().toISOString(),
+        threadId: threadId,
+      };
+
+      const createdMessage = await createMessage(aiMessage);
+      
+      setThreads(prev => {
+        const newThreads = {...prev};
+        if (!newThreads[threadId]) newThreads[threadId] = [];
+        newThreads[threadId].push(createdMessage);
+        return newThreads;
+      });
+
+      toast({
+          title: "Отчет от AI-Тренера готов",
+          description: "Анализ вашей активности доступен в чате."
+      });
+
+      setIsSending(false);
+  }
   
   const handleReply = async () => {
     if (!replyText || !user || !coach) return;
@@ -103,7 +184,7 @@ export default function MyMessagesPage() {
 
     const newMessage: Omit<Message, 'id'|'isRead'> = {
         senderId: user.id,
-        senderName: user.firstName ? `${user.firstName} ${user.lastName}` : user.username,
+        senderName: getFullName(user.firstName, user.lastName) || user.username,
         senderRole: user.role,
         recipientId: coach.id, // All messages go to the coach
         text: replyText,
@@ -113,9 +194,7 @@ export default function MyMessagesPage() {
     
     const createdMessage = await createMessage(newMessage);
     setReplyText('');
-    setIsSending(false);
     
-    // Manually update the local state to show the new message instantly
     setThreads(prevThreads => {
         const newThreads = {...prevThreads};
         const currentThread = newThreads[createdMessage.threadId] || [];
@@ -130,27 +209,8 @@ export default function MyMessagesPage() {
 
     // Ensure the new (or existing) thread is active
     setActiveThreadId(createdMessage.threadId);
+    setIsSending(false);
   }
-
-  const getInitials = (name: string) => {
-    const parts = name.split(' ');
-    if (parts.length > 1 && parts[0] && parts[1]) {
-      return `${parts[0][0]}${parts[1][0]}`;
-    }
-    return name.substring(0, 2);
-  };
-  
-    const getAvatarUrl = (userId: string) => {
-        const adminImage = PlaceHolderImages.find(img => img.id === 'user-lexazver');
-        if (adminImage && coach && userId === coach.id) {
-            return adminImage.imageUrl;
-        }
-
-        const userImage = PlaceHolderImages.find(img => img.id === `user-${userId.substring(0, 4)}`);
-        if (userImage) return userImage.imageUrl;
-        
-        return `https://i.pravatar.cc/150?u=${userId}`;
-    }
 
   const sortedThreads = Object.values(threads)
     .filter(thread => thread.length > 0) // Don't show dummy 'new' threads in the list
@@ -167,10 +227,10 @@ export default function MyMessagesPage() {
       <div>
         <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
             <Mail className="h-8 w-8 text-primary"/>
-            Мои сообщения
+            Центр рекомендаций
         </h1>
         <p className="text-muted-foreground">
-            История ваших диалогов с тренером.
+            Ваш личный диалог с тренером и AI-помощником.
         </p>
       </div>
 
@@ -184,7 +244,7 @@ export default function MyMessagesPage() {
                 {coach && (
                   <Button size="sm" onClick={handleStartNewConversation}>
                       <MessageSquarePlus className="mr-2"/>
-                      Написать
+                      Написать тренеру
                   </Button>
                 )}
             </CardHeader>
@@ -196,6 +256,7 @@ export default function MyMessagesPage() {
                 ) : sortedThreads.length > 0 ? (
                      sortedThreads.map(thread => {
                         const lastMessage = thread[thread.length - 1];
+                        const otherParticipantName = lastMessage.senderId === user?.id ? (lastMessage.recipientId === coach?.id ? "Тренер" : "AI-Тренер") : lastMessage.senderName;
                         const isUnread = lastMessage.recipientId === user?.id && !lastMessage.isRead;
                         return (
                             <div 
@@ -204,7 +265,7 @@ export default function MyMessagesPage() {
                                 className={`p-3 border rounded-lg cursor-pointer hover:bg-muted/50 ${activeThreadId === thread[0].threadId ? 'bg-muted' : ''}`}
                             >
                                 <div className="flex justify-between items-start">
-                                    <p className={`font-semibold ${isUnread ? 'text-primary' : ''}`}>{coach?.name || 'Тренер'}</p>
+                                    <p className={`font-semibold ${isUnread ? 'text-primary' : ''}`}>{otherParticipantName}</p>
                                      <time className="text-xs text-muted-foreground whitespace-nowrap">
                                         {format(new Date(lastMessage.date), 'd MMM HH:mm', { locale: ru })}
                                     </time>
@@ -217,7 +278,7 @@ export default function MyMessagesPage() {
                     <div className="flex flex-col h-full items-center justify-center text-center">
                         <Inbox className="h-12 w-12 text-muted-foreground" />
                         <h3 className="mt-4 text-lg font-semibold">У вас пока нет диалогов</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Нажмите "Написать", чтобы начать диалог с тренером.</p>
+                        <p className="mt-2 text-sm text-muted-foreground">Начните диалог с тренером или запросите анализ у AI.</p>
                     </div>
                 )}
             </CardContent>
@@ -231,7 +292,7 @@ export default function MyMessagesPage() {
                            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setActiveThreadId(null)}>
                                 <ArrowLeft />
                            </Button>
-                           <CardTitle>Диалог с тренером</CardTitle>
+                           <CardTitle>Диалог</CardTitle>
                          </div>
                     </CardHeader>
                     <CardContent className="flex-grow overflow-y-auto space-y-4 pr-2">
@@ -239,12 +300,12 @@ export default function MyMessagesPage() {
                             <div key={msg.id + index} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
                                 {msg.senderId !== user?.id && (
                                      <Avatar className="h-8 w-8">
-                                        <AvatarImage src={getAvatarUrl(msg.senderId)} />
+                                        <AvatarImage src={getAvatarUrl(msg.senderId, msg.senderName)} />
                                         <AvatarFallback>{getInitials(msg.senderName)}</AvatarFallback>
                                     </Avatar>
                                 )}
-                                <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                    <p className="font-bold mb-1 text-xs text-primary">{msg.senderName}</p>
+                                <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : (msg.senderName === "AI-Тренер" ? 'bg-secondary' : 'bg-muted')}`}>
+                                    <p className="font-bold mb-1 text-xs">{msg.senderName}</p>
                                     <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                     <div className={`flex items-center gap-2 mt-2 ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
                                         <time className="text-xs opacity-70">
@@ -259,10 +320,14 @@ export default function MyMessagesPage() {
                         ))}
                         <div ref={messagesEndRef} />
                     </CardContent>
-                     <CardFooter className="flex-shrink-0 pt-4 border-t">
+                     <CardFooter className="flex-shrink-0 pt-4 border-t gap-2">
+                         <Button variant="outline" onClick={handleGetAIAnalysis} disabled={isSending}>
+                             <BrainCircuit className="mr-2"/>
+                             Запросить анализ у AI
+                         </Button>
                          <div className="relative w-full">
                             <Textarea 
-                                placeholder="Напишите ответ..." 
+                                placeholder="Напишите ответ тренеру..." 
                                 value={replyText}
                                 onChange={e => setReplyText(e.target.value)}
                                 onKeyDown={(e) => {
@@ -290,7 +355,11 @@ export default function MyMessagesPage() {
                 <div className="flex flex-col h-full items-center justify-center text-center p-8">
                     <Mail className="h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-semibold">Выберите или начните диалог</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">Выберите диалог из списка слева или нажмите "Написать", чтобы начать новый.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Выберите диалог из списка слева, напишите тренеру или запросите анализ своей активности у AI-тренера.</p>
+                     <Button className="mt-4" onClick={handleGetAIAnalysis} disabled={isSending}>
+                         <BrainCircuit className="mr-2"/>
+                         Получить анализ от AI
+                     </Button>
                 </div>
             )}
         </Card>
@@ -299,5 +368,3 @@ export default function MyMessagesPage() {
     </div>
   );
 }
-
-    
