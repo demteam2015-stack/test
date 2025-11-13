@@ -54,7 +54,7 @@ export default function MyMessagesPage() {
 
   useEffect(() => {
     fetchThreads();
-  }, [fetchThreads]);
+  }, [user]);
   
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

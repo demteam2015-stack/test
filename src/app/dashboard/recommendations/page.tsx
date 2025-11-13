@@ -87,14 +87,6 @@ const CoachAdminView = () => {
         setLoading(false);
     }, [user]);
     
-    const fetchThreads = useCallback(async () => {
-        if (!user) return;
-        setLoading(true);
-        const coachThreads = await getMessageThreadsForUser(user.id);
-        setThreads(coachThreads);
-        setLoading(false);
-    }, [user]);
-
     useEffect(() => {
         fetchThreadsAndParticipants();
     }, [fetchThreadsAndParticipants]);
@@ -107,7 +99,15 @@ const CoachAdminView = () => {
         setActiveThreadId(threadId);
         if(user) {
             await markThreadAsRead(threadId, user.id);
-            fetchThreads(); // Refresh to update unread count
+            setThreads(prev => {
+                const newThreads = {...prev};
+                if (newThreads[threadId]) {
+                    newThreads[threadId] = newThreads[threadId].map(msg => 
+                        msg.recipientId === user.id ? { ...msg, isRead: true } : msg
+                    );
+                }
+                return newThreads;
+            });
         }
     };
 
@@ -135,11 +135,9 @@ const CoachAdminView = () => {
         
         setThreads(prev => {
             const newThreads = {...prev};
-            if(newThreads[activeThreadId]) {
-                 newThreads[activeThreadId] = [...newThreads[activeThreadId], createdMessage];
-            } else {
-                 newThreads[activeThreadId] = [createdMessage];
-            }
+            const currentThread = newThreads[createdMessage.threadId] || [];
+            currentThread.push(createdMessage);
+            newThreads[createdMessage.threadId] = currentThread;
             return newThreads;
         });
         
