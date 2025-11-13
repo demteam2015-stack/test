@@ -35,6 +35,12 @@
       "description": "Female tennis player serving the ball.",
       "imageUrl": "https://images.unsplash.com/photo-1554068884-65b1bdf692b8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0ZW5uaXMlMjBwbGF5ZXIlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM5NjE5NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "tennis player"
+    },
+    {
+      "id": "user-lexazver",
+      "description": "Admin user avatar",
+      "imageUrl": "lexazver@31536000.1794487021854.ctYUwZcSRqp5km8WalmorOTRcM_CrEMnKz35SXDpwCI.eQOiHC6rjDb783-4o0aET6mZcZTWNP6FOnkPhCgBJFQ.webp",
+      "imageHint": "user avatar"
     }
   ]
 }

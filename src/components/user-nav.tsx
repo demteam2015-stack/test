@@ -66,7 +66,12 @@ export function UserNav() {
       }
   }
 
-  const getAvatarUrl = (userId: string) => {
+  const getAvatarUrl = (userId: string, username?: string) => {
+      if (username === 'lexazver') {
+        const adminImage = PlaceHolderImages.find(img => img.id === 'user-lexazver');
+        if (adminImage) return adminImage.imageUrl;
+      }
+
       const userImage = PlaceHolderImages.find(img => img.id === `user-${userId.substring(0, 4)}`);
       if (userImage) return userImage.imageUrl;
 
@@ -87,7 +92,7 @@ export function UserNav() {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
            <Avatar className="h-9 w-9">
               <AvatarImage
-                src={user.photoURL ?? getAvatarUrl(user.id)}
+                src={user.photoURL ?? getAvatarUrl(user.id, user.username)}
                 alt={getFullName(user.firstName, user.lastName)}
               />
               <AvatarFallback>
