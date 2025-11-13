@@ -44,7 +44,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 const REQUISITES_KEY = 'payment_requisites';
-const DEFAULT_REQUISITES = '+380 XX XXX-XX-XX';
+const DEFAULT_REQUISITES = '';
 const BASE_AMOUNT_KEY = 'payment_base_amount';
 const DEFAULT_BASE_AMOUNT = '1000';
 
