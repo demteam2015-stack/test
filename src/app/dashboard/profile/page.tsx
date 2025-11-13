@@ -13,9 +13,10 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useState, type FormEvent, useEffect, useMemo } from 'react';
-import { Loader, User, Award, Trophy } from 'lucide-react';
+import { Loader, User, Award, Trophy, Share2 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { competitionsData } from '@/lib/data';
+import type { Competition } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 
 export default function ProfilePage() {
@@ -65,6 +66,36 @@ export default function ProfilePage() {
         });
         setIsSaving(false);
     }, 1000);
+  };
+  
+  const handleShare = async (achievement: Competition) => {
+    const text = `Отличное достижение! ${user?.firstName} ${user?.lastName} показал(а) результат "${achievement.result}" на соревновании "${achievement.name}"! #командаДемьяненко`;
+    const shareData = {
+        title: 'Мое достижение!',
+        text: text,
+        url: window.location.href,
+    };
+    
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+        } catch (err) {
+            console.error("Share failed:", err);
+            // Fallback to clipboard if share fails (e.g., user cancels)
+            copyToClipboard(text);
+        }
+    } else {
+        // Fallback for browsers that don't support Web Share API
+        copyToClipboard(text);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: 'Скопировано в буфер обмена!',
+      description: 'Вы можете вставить этот текст в любую социальную сеть.',
+    });
   };
 
   const roleTranslations: { [key: string]: string } = {
@@ -169,12 +200,23 @@ export default function ProfilePage() {
             <CardContent className="space-y-4">
                 {achievements.length > 0 ? (
                     achievements.map(comp => (
-                        <div key={comp.id} className="flex items-start gap-4 p-3 rounded-md border bg-muted/30">
-                            <Trophy className="h-8 w-8 mt-1 text-yellow-500" />
-                            <div>
-                                <p className="font-semibold">{comp.name}</p>
-                                <p className="text-sm text-muted-foreground">{comp.result ? `Результат: ${comp.result}`: 'Участие'}</p>
+                        <div key={comp.id} className="flex items-start justify-between gap-4 p-3 rounded-md border bg-muted/30">
+                            <div className="flex items-start gap-4">
+                                <Trophy className="h-8 w-8 mt-1 text-yellow-500 shrink-0" />
+                                <div>
+                                    <p className="font-semibold">{comp.name}</p>
+                                    <p className="text-sm text-muted-foreground">{comp.result ? `Результат: ${comp.result}`: 'Участие'}</p>
+                                </div>
                             </div>
+                             <Button 
+                                variant="ghost" 
+                                size="icon"
+                                className="h-8 w-8 shrink-0"
+                                onClick={() => handleShare(comp)}
+                                aria-label="Поделиться достижением"
+                             >
+                                <Share2 className="h-4 w-4" />
+                             </Button>
                         </div>
                     ))
                 ) : (
