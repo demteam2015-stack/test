@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { useState, type FormEvent, useEffect, useMemo, useRef } from 'react';
-import { Loader, User, Trophy, Share2, Camera, GraduationCap, Star, LogOut, BadgeCheck, ShieldCheck, Upload, FileClock, CheckCircle, XCircle } from 'lucide-react';
+import { Loader, User, Trophy, Share2, Camera, GraduationCap, Star, LogOut, BadgeCheck, ShieldCheck, Upload, FileClock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { competitionsData } from '@/lib/data';
 import type { Competition } from '@/lib/data';
@@ -102,14 +102,14 @@ export default function ProfilePage() {
 
         if (user.role === 'athlete') {
             profile = allAthletes.find(a => 
-                a.firstName === user.firstName && a.lastName === user.lastName
+                getFullName(a.firstName, a.lastName) === getFullName(user.firstName, user.lastName)
             );
         } else if (user.role === 'parent') {
             profile = allAthletes.find(a => a.parentId === user.email);
         } else if (user.role === 'admin' || user.role === 'coach') {
             // Find a profile that matches the admin/coach name to allow them to test
              profile = allAthletes.find(a => 
-                a.firstName === user.firstName && a.lastName === user.lastName
+                getFullName(a.firstName, a.lastName) === getFullName(user.firstName, user.lastName)
             );
         }
 
@@ -315,9 +315,8 @@ export default function ProfilePage() {
                     <div className="text-center">
                         <p className="text-xl font-bold flex items-center justify-center gap-2">
                            {getFullName(user.firstName, user.lastName)}
-                           {user.role === 'admin' && (
-                            <BadgeCheck className="h-5 w-5 text-primary" />
-                           )}
+                           {user.role === 'admin' && <BadgeCheck className="h-5 w-5 text-primary" />}
+                           {user.role === 'coach' && <ShieldCheck className="h-5 w-5 text-blue-500" />}
                         </p>
                         <p className="text-sm text-muted-foreground">{user.username} ({user.email})</p>
                         <Badge variant="outline" className="mt-2">{roleTranslations[user.role] || user.role}</Badge>
@@ -447,23 +446,20 @@ export default function ProfilePage() {
         <Card>
           <CardHeader>
             <CardTitle>Опасная зона</CardTitle>
-            <CardDescription>
-              Дополнительные действия с вашим аккаунтом.
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline">
+                <Button variant="destructive" className="w-full">
                   <LogOut className="mr-2 h-4 w-4" />
-                  Выйти из аккаунта
+                  Выйти со всех устройств
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Вы уверены, что хотите выйти?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Это действие завершит вашу текущую сессию. Вы сможете снова войти в систему, используя свой пароль.
+                    Это действие завершит вашу текущую сессию на этом устройстве. Вы сможете снова войти в систему, используя свой пароль. Это не удалит ваши данные.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

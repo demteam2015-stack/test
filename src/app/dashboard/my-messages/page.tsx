@@ -12,7 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail, Check, CheckCheck, Loader, Inbox, Send, ArrowLeft, MessageSquarePlus, BrainCircuit, BadgeCheck } from 'lucide-react';
+import { Mail, Check, CheckCheck, Loader, Inbox, Send, ArrowLeft, MessageSquarePlus, BrainCircuit, BadgeCheck, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { getMessageThreadsForUser, markThreadAsRead, createMessage, type Message, getCoachUser } from '@/lib/messages-api';
 import { format } from 'date-fns';
@@ -296,12 +296,13 @@ export default function MyMessagesPage() {
                         const lastMessage = thread[thread.length - 1];
                         if (!lastMessage) return null;
                         
+                        const isFromCoach = lastMessage.senderId === coach?.id;
                         const otherParticipantName = lastMessage.senderId === athleteId 
-                          ? (lastMessage.recipientId === coach?.id ? "Тренер" : "AI-Тренер") 
+                          ? (isFromCoach ? coach?.name : "AI-Тренер") 
                           : lastMessage.senderName;
                         
                         const isUnread = lastMessage.recipientId === athleteId && !lastMessage.isRead;
-                        const isCoachAdmin = lastMessage.senderId === coach?.id && coach?.role === 'admin';
+                        
                         return (
                             <div 
                                 key={thread[0].threadId}
@@ -311,7 +312,8 @@ export default function MyMessagesPage() {
                                 <div className="flex justify-between items-start">
                                     <p className={`font-semibold flex items-center gap-1.5 ${isUnread ? 'text-primary' : ''}`}>
                                         {otherParticipantName}
-                                        {isCoachAdmin && <BadgeCheck className="h-4 w-4 text-primary" />}
+                                        {isFromCoach && coach?.role === 'admin' && <BadgeCheck className="h-4 w-4 text-primary" />}
+                                        {isFromCoach && coach?.role === 'coach' && <ShieldCheck className="h-4 w-4 text-blue-500" />}
                                     </p>
                                      <time className="text-xs text-muted-foreground whitespace-nowrap">
                                         {format(new Date(lastMessage.date), 'd MMM HH:mm', { locale: ru })}
@@ -354,7 +356,8 @@ export default function MyMessagesPage() {
                                 <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === athleteId ? 'bg-primary text-primary-foreground' : (msg.senderName === "AI-Тренер" ? 'bg-secondary' : 'bg-muted')}`}>
                                     <p className="font-bold mb-1 text-xs flex items-center gap-1.5">
                                         {msg.senderName}
-                                        {msg.senderRole === 'admin' && <BadgeCheck className="h-3 w-3" />}
+                                        {msg.senderRole === 'admin' && <BadgeCheck className="h-3 w-3 text-primary" />}
+                                        {msg.senderRole === 'coach' && <ShieldCheck className="h-3 w-3 text-blue-500" />}
                                     </p>
                                     <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                     <div className={`flex items-center gap-2 mt-2 ${msg.senderId === athleteId ? 'justify-end' : 'justify-start'}`}>

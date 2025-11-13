@@ -12,7 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader, Inbox, Send, ArrowLeft, MessageSquare } from 'lucide-react';
+import { Loader, Inbox, Send, ArrowLeft, MessageSquare, ShieldCheck, BadgeCheck } from 'lucide-react';
 import { useAuth, type UserProfile } from '@/context/auth-context';
 import { getMessageThreadsForUser, markThreadAsRead, createMessage, type Message } from '@/lib/messages-api';
 import { format } from 'date-fns';
@@ -123,7 +123,7 @@ const CoachAdminView = () => {
 
         const newMessageData: Omit<Message, 'id'|'isRead'> = {
             senderId: user.id,
-            senderName: "Тренер", // Coach always sends as "Тренер"
+            senderName: getFullName(user.firstName, user.lastName) || user.username,
             senderRole: user.role,
             recipientId: otherParticipantId,
             threadId: activeThreadId,
@@ -246,7 +246,11 @@ const CoachAdminView = () => {
                                         </Avatar>
                                     )}
                                     <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                        <p className="text-xs font-bold mb-1 text-primary">{msg.senderName}</p>
+                                        <p className="text-xs font-bold mb-1 flex items-center gap-1.5 text-primary">
+                                            {msg.senderName}
+                                            {msg.senderRole === 'admin' && <BadgeCheck className="h-3 w-3 text-primary" />}
+                                            {msg.senderRole === 'coach' && <ShieldCheck className="h-3 w-3 text-blue-500" />}
+                                        </p>
                                         <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                         <time className={`text-xs opacity-70 mt-2 block ${msg.senderId === user?.id ? 'text-right' : 'text-left'}`}>
                                             {format(new Date(msg.date), 'HH:mm', { locale: ru })}
