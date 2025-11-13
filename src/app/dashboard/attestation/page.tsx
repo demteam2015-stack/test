@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 import { getAthletes, updateAthlete, type Athlete } from '@/lib/athletes-api';
-import { Loader, User, Check, X, Eye } from 'lucide-react';
+import { Loader, User, Check, X, Eye, Award } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import Image from 'next/image';
-import { BeltIcon } from '@/components/icons';
 
 export default function AttestationPage() {
   const { user } = useAuth();
@@ -98,7 +97,7 @@ export default function AttestationPage() {
         <div className="flex flex-col gap-8">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-                    <BeltIcon className="size-8 text-primary"/>
+                    <Award className="size-8 text-primary"/>
                     Аттестация
                 </h1>
                 <p className="text-muted-foreground">
@@ -113,7 +112,7 @@ export default function AttestationPage() {
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <BeltIcon className="size-8 text-primary" />
+          <Award className="size-8 text-primary" />
           Аттестация
         </h1>
         <p className="text-muted-foreground">
