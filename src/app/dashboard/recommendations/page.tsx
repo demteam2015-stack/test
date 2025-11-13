@@ -145,8 +145,8 @@ const CoachAdminView = () => {
         const currentThread = threads[activeThreadId];
         if (!currentThread || currentThread.length === 0) return;
 
-        const originalSender = currentThread.find(m => m.senderId !== user.id);
-        if (!originalSender) return;
+        const otherParticipant = currentThread.find(m => m.senderId !== user.id);
+        if (!otherParticipant) return;
 
         setIsSending(true);
 
@@ -154,7 +154,7 @@ const CoachAdminView = () => {
             senderId: user.id,
             senderName: COACH_NAME,
             senderRole: user.role,
-            recipientId: originalSender.senderId,
+            recipientId: otherParticipant.senderId,
             threadId: activeThreadId,
             text: replyText,
             date: new Date().toISOString(),
@@ -181,7 +181,7 @@ const CoachAdminView = () => {
     });
 
     const activeThread = activeThreadId ? threads[activeThreadId] : null;
-    const activeThreadSenderName = activeThread ? activeThread[0].senderName : '';
+    const activeThreadSenderName = activeThread ? activeThread.find(m => m.senderId !== user?.id)?.senderName || 'Участник' : '';
 
     return (
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-15rem)]">
