@@ -12,16 +12,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useState, type FormEvent, useEffect, useMemo } from 'react';
-import { Loader, User, Award, Trophy, Share2 } from 'lucide-react';
+import { useState, type FormEvent, useEffect, useMemo, useRef } from 'react';
+import { Loader, User, Award, Trophy, Share2, Camera } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { competitionsData } from '@/lib/data';
 import type { Competition } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
+import { UserNav } from '@/components/user-nav';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getFullName, getInitials, getAvatarUrl } from '@/lib/utils';
 
 export default function ProfilePage() {
   const { toast } = useToast();
   const { user, updateUser } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -67,6 +71,25 @@ export default function ProfilePage() {
         setIsSaving(false);
     }, 1000);
   };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        updateUser({ photoURL: base64String });
+         toast({
+            title: 'Аватар обновлен!',
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  }
   
   const handleShare = async (achievement: Competition) => {
     const text = `Отличное достижение! ${user?.firstName} ${user?.lastName} показал(а) результат "${achievement.result}" на соревновании "${achievement.name}"! #командаДемьяненко`;
@@ -118,74 +141,104 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8 items-start">
-        <form onSubmit={handleSave} className="lg:col-span-2">
-            <Card>
-            <CardHeader>
-                <CardTitle>Личная информация</CardTitle>
-                <CardDescription>
-                Эта информация будет видна другим участникам команды.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                    <Label htmlFor="firstName">Имя</Label>
+        <div className="lg:col-span-2 space-y-8">
+           <form onSubmit={handleSave}>
+                <Card>
+                <CardHeader>
+                    <CardTitle>Личная информация</CardTitle>
+                    <CardDescription>
+                    Эта информация будет видна другим участникам команды.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="flex items-center gap-6">
+                         <div className="relative group">
+                            <Avatar className="h-24 w-24">
+                                <AvatarImage
+                                    src={user.photoURL ?? getAvatarUrl(user.id, user.username)}
+                                    alt={getFullName(user.firstName, user.lastName)}
+                                />
+                                <AvatarFallback className="text-3xl">
+                                    {getInitials(user.firstName, user.lastName)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <button
+                                type="button"
+                                onClick={handleAvatarClick}
+                                className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                            >
+                                <Camera className="h-8 w-8 text-white" />
+                            </button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="hidden"
+                                accept="image/png, image/jpeg, image/gif"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 flex-1">
+                            <div className="space-y-2">
+                                <Label htmlFor="firstName">Имя</Label>
+                                <Input
+                                id="firstName"
+                                name="firstName"
+                                value={formData.firstName}
+                                onChange={handleInputChange}
+                                disabled={isSaving}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="lastName">Фамилия</Label>
+                                <Input
+                                id="lastName"
+                                name="lastName"
+                                value={formData.lastName}
+                                onChange={handleInputChange}
+                                disabled={isSaving}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                    <Label htmlFor="email">Email (для входа)</Label>
                     <Input
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    disabled={isSaving}
+                        id="email"
+                        name="email"
+                        value={user.email || ''}
+                        disabled
+                        aria-readonly
                     />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="lastName">Фамилия</Label>
+                    </div>
+                    <div className="space-y-2">
+                    <Label htmlFor="username">Имя пользователя (логин)</Label>
                     <Input
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    disabled={isSaving}
+                        id="username"
+                        name="username"
+                        value={user.username || ''}
+                        disabled
+                        aria-readonly
                     />
-                </div>
-                </div>
-                <div className="space-y-2">
-                <Label htmlFor="email">Email (для входа)</Label>
-                <Input
-                    id="email"
-                    name="email"
-                    value={user.email || ''}
-                    disabled
-                    aria-readonly
-                />
-                </div>
-                <div className="space-y-2">
-                <Label htmlFor="username">Имя пользователя (логин)</Label>
-                <Input
-                    id="username"
-                    name="username"
-                    value={user.username || ''}
-                    disabled
-                    aria-readonly
-                />
-                </div>
-                <div className="space-y-2">
-                <Label>Роль</Label>
-                <Input
-                    value={roleTranslations[user.role] || user.role}
-                    disabled
-                    aria-readonly
-                />
-                </div>
-            </CardContent>
-            <CardFooter>
-                <Button type="submit" disabled={isSaving}>
-                {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                Сохранить изменения
-                </Button>
-            </CardFooter>
-            </Card>
-        </form>
+                    </div>
+                    <div className="space-y-2">
+                    <Label>Роль</Label>
+                    <Input
+                        value={roleTranslations[user.role] || user.role}
+                        disabled
+                        aria-readonly
+                    />
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Button type="submit" disabled={isSaving}>
+                    {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                    Сохранить изменения
+                    </Button>
+                </CardFooter>
+                </Card>
+            </form>
+        </div>
 
         <Card>
             <CardHeader>

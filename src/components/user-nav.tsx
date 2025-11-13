@@ -18,7 +18,8 @@ import {
 import { CreditCard, LogOut, Settings, User as UserIcon, Shield, Repeat } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth, type UserProfile } from '@/context/auth-context';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { getFullName, getInitials, getAvatarUrl } from '@/lib/utils';
+
 
 export function UserNav() {
   const router = useRouter();
@@ -28,16 +29,6 @@ export function UserNav() {
     logout();
     router.push('/login');
   };
-
-  const getInitials = (firstName?: string, lastName?: string) => {
-    if (!firstName || !lastName) return 'U';
-    return `${firstName[0]}${lastName[0]}`;
-  };
-
-  const getFullName = (firstName?: string, lastName?: string) => {
-    if (!firstName && !lastName) return 'Атлет';
-    return `${firstName} ${lastName}`;
-  }
   
   if (!user) {
     return null;
@@ -61,24 +52,6 @@ export function UserNav() {
           setTimeout(() => window.location.reload(), 100);
       }
   }
-
-  const getAvatarUrl = (userId: string, username?: string) => {
-      if (username === 'lexazver' || userId === 'initial_admin_id_placeholder') {
-        const adminImage = PlaceHolderImages.find(img => img.id === 'user-lexazver');
-        if (adminImage) return adminImage.imageUrl;
-      }
-
-      const userImage = PlaceHolderImages.find(img => img.id === `user-${userId.substring(0, 4)}`);
-      if (userImage) return userImage.imageUrl;
-
-      const athleteImages = PlaceHolderImages.filter(img => img.id.startsWith('athlete-'));
-      if(athleteImages.length > 0) {
-        const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return athleteImages[hash % athleteImages.length].imageUrl;
-      }
-      return `https://i.pravatar.cc/150?u=${userId}`;
-  }
-
 
   return (
     <DropdownMenu>
