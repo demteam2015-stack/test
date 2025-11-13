@@ -158,10 +158,10 @@ export default function UsersPage() {
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<{emailText: string} | null>(null);
 
-  const fetchAllData = () => {
+  const fetchAllData = useCallback(() => {
     setAllUsers(getAllStoredUsers());
     setResetRequests(getPendingResetRequests().sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-  }
+  }, []);
 
   useEffect(() => {
     if (!loading && user?.role !== 'admin') {
@@ -170,7 +170,7 @@ export default function UsersPage() {
     if(user?.role === 'admin') {
       fetchAllData();
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, fetchAllData]);
   
   const totalUsersPages = Math.ceil(allUsers.length / ITEMS_PER_PAGE);
   const totalRequestsPages = Math.ceil(resetRequests.length / ITEMS_PER_PAGE);

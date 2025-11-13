@@ -12,7 +12,7 @@ import { CalendarDays, Trophy, Users, MailWarning, ArrowRight, BookUser, BrainCi
 import { differenceInDays, endOfWeek, startOfWeek } from 'date-fns';
 import { useMemo, useEffect, useState } from 'react';
 import { competitionsData } from '@/lib/data';
-import { useAuth } from '@/context/auth-context';
+import { useAuth, type UserProfile } from '@/context/auth-context';
 import { getPendingResetRequests } from '@/lib/reset-api';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -51,8 +51,11 @@ function AdminDashboard() {
     const [pendingRequests, setPendingRequests] = useState(0);
 
     useEffect(() => {
-        setTotalUsers(getAllStoredUsers().length);
-        setPendingRequests(getPendingResetRequests().length);
+        const fetchAdminData = () => {
+            setTotalUsers(getAllStoredUsers().length);
+            setPendingRequests(getPendingResetRequests().length);
+        }
+        fetchAdminData();
     }, []);
 
     return (
@@ -298,7 +301,7 @@ function AthleteDashboard() {
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-4">
                  <Button asChild>
-                    <Link href="/dashboard/recommendations">
+                    <Link href="/dashboard/my-messages">
                        <BrainCircuit className="mr-2 h-4 w-4" />
                         Рекомендации AI-тренера
                     </Link>
