@@ -19,22 +19,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, Trophy, Globe as GlobeIcon, MapPin, Calendar } from 'lucide-react';
+import { ArrowRight, Trophy, MapPin, Calendar } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton';
-
-const Globe = dynamic(() => import('@/components/globe'), {
-    ssr: false,
-    loading: () => <Skeleton className="h-[400px] w-full rounded-lg" />,
-});
 
 export default function CompetitionsPage() {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const upcoming = useMemo(
     () =>
@@ -59,43 +47,18 @@ export default function CompetitionsPage() {
         day: 'numeric'
     });
   }
-  
-  const globePoints = useMemo(() => {
-    return competitionsData.map(c => ({
-        lat: c.coordinates.lat,
-        lng: c.coordinates.lng,
-        label: c.name,
-        result: c.result || c.status,
-    }))
-  }, []);
 
   return (
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
           <Trophy className="size-8 text-primary" />
-          Карта Достижений
+          Соревнования
         </h1>
         <p className="text-muted-foreground">
           Исследуйте географию наших побед и предстоящих вызовов.
         </p>
       </div>
-
-       <Card className="overflow-hidden">
-        <CardHeader>
-           <div className="flex items-center gap-3">
-              <GlobeIcon className="h-6 w-6 text-primary" />
-              <CardTitle className="font-headline">Интерактивный глобус</CardTitle>
-           </div>
-          <CardDescription>Вращайте глобус, чтобы увидеть места соревнований. Наведите на маркер для деталей.</CardDescription>
-        </CardHeader>
-        <CardContent>
-           <div className="h-[400px] w-full rounded-lg border bg-muted/20 relative">
-             {isClient && <Globe pointsData={globePoints} />}
-           </div>
-        </CardContent>
-      </Card>
-
 
       <Card>
         <Tabs defaultValue="upcoming">
