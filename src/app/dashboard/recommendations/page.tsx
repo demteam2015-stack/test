@@ -27,82 +27,23 @@ const COACH_NAME = 'Тренер';
 // --- Components for different roles ---
 
 const AthleteParentView = () => {
-    const { user } = useAuth();
-    const { toast } = useToast();
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-        if (!message || !user) return;
-
-        setLoading(true);
-
-        try {
-            // A new message always starts a new thread, identified by the sender's ID and current timestamp
-            const threadId = `${user.id}_${Date.now()}`;
-
-            await createMessage({
-                senderId: user.id,
-                senderName: user.firstName ? `${user.firstName} ${user.lastName}` : user.username,
-                senderRole: user.role,
-                recipientId: COACH_ID, // All messages go to the coach
-                threadId: threadId,
-                text: message,
-                date: new Date().toISOString(),
-            });
-
-            toast({
-                title: "Сообщение отправлено",
-                description: "Тренер получил ваше сообщение. Ответ появится в разделе 'Мои сообщения'.",
-            });
-            
-            setMessage('');
-
-        } catch (err: any) {
-             toast({
-                variant: 'destructive',
-                title: "Ошибка",
-                description: "Не удалось отправить сообщение.",
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-    
+    // This view is now deprecated and functionality is moved to my-messages page.
+    // We can show a simple message or redirect.
     return (
-        <div className="space-y-8">
-            <form onSubmit={handleSubmit}>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Новое сообщение тренеру</CardTitle>
-                        <CardDescription>
-                            Опишите ваши впечатления, проблемы или задайте вопрос. Тренер получит ваше сообщение и ответит в ближайшее время.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid w-full gap-2">
-                            <Label htmlFor="feedback-input">Ваше сообщение</Label>
-                            <Textarea 
-                                id="feedback-input" 
-                                placeholder="Например: 'Тренер, последние тренировки кажутся слишком интенсивными, я не успеваю восстанавливаться.' или 'У меня вопрос по технике выполнения...'"
-                                rows={5}
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                disabled={loading}
-                            />
-                        </div>
-                    </CardContent>
-                    <CardFooter>
-                        <Button type="submit" disabled={loading || !message}>
-                            {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                            {loading ? 'Отправка...' : 'Отправить'}
-                        </Button>
-                    </CardFooter>
-                </Card>
-            </form>
-        </div>
-    );
+        <Card>
+            <CardHeader>
+                <CardTitle>Новое сообщение</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground">Чтобы отправить новое сообщение или просмотреть историю, пожалуйста, перейдите в раздел "Мои сообщения".</p>
+            </CardContent>
+            <CardFooter>
+                 <Button asChild>
+                    <a href="/dashboard/my-messages">Перейти в Мои сообщения</a>
+                 </Button>
+            </CardFooter>
+        </Card>
+    )
 };
 
 const CoachAdminView = () => {
@@ -145,8 +86,12 @@ const CoachAdminView = () => {
         const currentThread = threads[activeThreadId];
         if (!currentThread || currentThread.length === 0) return;
 
+        // Find the other person in the conversation
         const otherParticipant = currentThread.find(m => m.senderId !== user.id);
-        if (!otherParticipant) return;
+        if (!otherParticipant) {
+            console.error("Could not find recipient for the reply.");
+            return;
+        }
 
         setIsSending(true);
 
@@ -197,6 +142,7 @@ const CoachAdminView = () => {
                         </div>
                     ) : sortedThreads.length > 0 ? (
                         sortedThreads.map(thread => {
+                            if (thread.length === 0) return null;
                             const lastMessage = thread[thread.length - 1];
                             const sender = thread.find(m => m.senderId !== user?.id) || thread[0];
                             const isUnread = lastMessage.recipientId === user?.id && !lastMessage.isRead;
@@ -256,8 +202,8 @@ const CoachAdminView = () => {
                             ))}
                             <div ref={messagesEndRef} />
                         </CardContent>
-                        <CardContent className="flex-shrink-0 pt-4 border-t">
-                            <div className="relative">
+                        <CardFooter className="flex-shrink-0 pt-4 border-t">
+                            <div className="relative w-full">
                                 <Textarea 
                                     placeholder="Напишите ответ..." 
                                     value={replyText}
@@ -281,7 +227,7 @@ const CoachAdminView = () => {
                                     {isSending ? <Loader className="animate-spin" /> : <Send />}
                                 </Button>
                             </div>
-                        </CardContent>
+                        </CardFooter>
                     </div>
                 ) : (
                     <div className="flex flex-col h-full items-center justify-center text-center">
@@ -305,7 +251,7 @@ export default function RecommendationsPage() {
             <div>
                 <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
                     <MessageSquare className="h-8 w-8 text-primary"/>
-                    {isManager ? 'Сообщения' : 'Новое сообщение'}
+                    {isManager ? 'Сообщения' : 'Мои сообщения'}
                 </h1>
                 <p className="text-muted-foreground">
                     {isManager ? 'Просмотр и ответы на сообщения от спортсменов и родителей.' : 'Задайте вопрос тренеру или поделитесь мыслями.'}

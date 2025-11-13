@@ -7,11 +7,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail, Check, CheckCheck, Loader, Inbox, Send, ArrowLeft } from 'lucide-react';
+import { Mail, Check, CheckCheck, Loader, Inbox, Send, ArrowLeft, MessageSquarePlus } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { getMessageThreadsForUser, markThreadAsRead, createMessage, type Message } from '@/lib/messages-api';
 import { format } from 'date-fns';
@@ -19,6 +20,7 @@ import { ru } from 'date-fns/locale';
 
 // Assume a single coach for simplicity
 const COACH_ID = 'admin_lexazver';
+const COACH_NAME = 'Тренер';
 
 export default function MyMessagesPage() {
   const { user } = useAuth();
@@ -53,26 +55,46 @@ export default function MyMessagesPage() {
         fetchThreads();
     }
   };
+
+  const handleStartNewConversation = () => {
+      // Create a dummy threadId to open the new message view
+      const newThreadId = `new_${user?.id}_${Date.now()}`;
+      setThreads(prev => ({...prev, [newThreadId]: []}));
+      setActiveThreadId(newThreadId);
+  }
   
   const handleReply = async () => {
     if (!replyText || !user || !activeThreadId) return;
     
     setIsSending(true);
 
-    const newMessage: Omit<Message, 'id'|'isRead'> = {
+    const isNewThread = activeThreadId.startsWith('new_');
+    // If it's a new thread, the threadId will be determined by the createMessage function
+    const threadIdToSend = isNewThread ? undefined : activeThreadId;
+
+    const newMessage: Omit<Message, 'id'|'isRead'|'threadId'> & {threadId?: string} = {
         senderId: user.id,
         senderName: user.firstName ? `${user.firstName} ${user.lastName}` : user.username,
         senderRole: user.role,
         recipientId: COACH_ID, // All replies go to the coach
-        threadId: activeThreadId,
         text: replyText,
         date: new Date().toISOString(),
+        threadId: threadIdToSend
     };
     
     await createMessage(newMessage);
     setReplyText('');
     setIsSending(false);
-    fetchThreads(); // Refresh to show the new message
+    await fetchThreads(); // Refresh to show the new message
+    
+    // After sending, we need to find the new threadId if it was a new conversation
+    if (isNewThread) {
+        const userThreads = await getMessageThreadsForUser(user.id);
+        const newThread = Object.values(userThreads).find(thread => thread.some(m => m.text === replyText));
+        if (newThread) {
+            setActiveThreadId(newThread[0].threadId);
+        }
+    }
   }
 
   const getInitials = (name: string) => {
@@ -83,7 +105,9 @@ export default function MyMessagesPage() {
     return name.substring(0, 2);
   };
   
-  const sortedThreads = Object.values(threads).sort((a,b) => {
+  const sortedThreads = Object.values(threads)
+    .filter(thread => thread.length > 0) // Don't show dummy 'new' threads in the list
+    .sort((a,b) => {
       const lastMsgA = new Date(a[a.length - 1].date).getTime();
       const lastMsgB = new Date(b[b.length - 1].date).getTime();
       return lastMsgB - lastMsgA;
@@ -105,9 +129,15 @@ export default function MyMessagesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-15rem)]">
         <Card className={`lg:col-span-1 ${activeThreadId && 'hidden lg:block'}`}>
-            <CardHeader>
-                <CardTitle>Диалоги</CardTitle>
-                 <CardDescription>Всего диалогов: {Object.keys(threads).length}</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Диалоги</CardTitle>
+                    <CardDescription>Всего диалогов: {sortedThreads.length}</CardDescription>
+                </div>
+                <Button size="sm" onClick={handleStartNewConversation}>
+                    <MessageSquarePlus className="mr-2"/>
+                    Написать
+                </Button>
             </CardHeader>
             <CardContent className="space-y-2 h-[calc(100%-8rem)] overflow-y-auto pr-2">
                 {loading ? (
@@ -125,7 +155,7 @@ export default function MyMessagesPage() {
                                 className={`p-3 border rounded-lg cursor-pointer hover:bg-muted/50 ${activeThreadId === thread[0].threadId ? 'bg-muted' : ''}`}
                             >
                                 <div className="flex justify-between items-start">
-                                    <p className={`font-semibold ${isUnread ? 'text-primary' : ''}`}>Тренер</p>
+                                    <p className={`font-semibold ${isUnread ? 'text-primary' : ''}`}>{COACH_NAME}</p>
                                      <time className="text-xs text-muted-foreground whitespace-nowrap">
                                         {format(new Date(lastMessage.date), 'd MMM HH:mm', { locale: ru })}
                                     </time>
@@ -138,7 +168,7 @@ export default function MyMessagesPage() {
                     <div className="flex flex-col h-full items-center justify-center text-center">
                         <Inbox className="h-12 w-12 text-muted-foreground" />
                         <h3 className="mt-4 text-lg font-semibold">У вас пока нет диалогов</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Начните новый диалог в разделе "Новое сообщение".</p>
+                        <p className="mt-2 text-sm text-muted-foreground">Нажмите "Написать", чтобы начать диалог с тренером.</p>
                     </div>
                 )}
             </CardContent>
@@ -171,7 +201,7 @@ export default function MyMessagesPage() {
                                             {format(new Date(msg.date), 'HH:mm', { locale: ru })}
                                         </time>
                                          {msg.senderId === user?.id && (
-                                            msg.isRead ? <CheckCheck size={16} /> : <Check size={16} />
+                                            msg.isRead ? <CheckCheck size={16} className="text-blue-400" /> : <Check size={16} />
                                          )}
                                     </div>
                                 </div>
@@ -179,8 +209,8 @@ export default function MyMessagesPage() {
                         ))}
                         <div ref={messagesEndRef} />
                     </CardContent>
-                     <CardContent className="flex-shrink-0 pt-4 border-t">
-                         <div className="relative">
+                     <CardFooter className="flex-shrink-0 pt-4 border-t">
+                         <div className="relative w-full">
                             <Textarea 
                                 placeholder="Напишите ответ..." 
                                 value={replyText}
@@ -204,13 +234,13 @@ export default function MyMessagesPage() {
                                 {isSending ? <Loader className="animate-spin" /> : <Send />}
                             </Button>
                         </div>
-                    </CardContent>
+                    </CardFooter>
                  </div>
             ) : (
-                <div className="flex flex-col h-full items-center justify-center text-center">
+                <div className="flex flex-col h-full items-center justify-center text-center p-8">
                     <Mail className="h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-semibold">Выберите диалог</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">Выберите диалог из списка слева, чтобы просмотреть переписку.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Выберите диалог из списка слева, чтобы просмотреть переписку, или нажмите "Написать", чтобы начать новый.</p>
                 </div>
             )}
         </Card>

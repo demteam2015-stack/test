@@ -62,12 +62,6 @@ export default function MainNav() {
     { href: '/dashboard/education', label: 'Обучение', icon: GraduationCap, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { 
       href: '/dashboard/recommendations', 
-      label: 'Новое сообщение', 
-      icon: MessageSquare, 
-      roles: ['parent', 'athlete'],
-    },
-    { 
-      href: '/dashboard/recommendations', 
       label: 'Сообщения', 
       icon: Inbox, 
       roles: ['admin', 'coach'],

@@ -44,12 +44,28 @@ const saveMessagesToStorage = (messages: Message[]) => {
 
 /**
  * Creates and saves a new message.
+ * It will try to find an existing thread between the sender and recipient,
+ * or create a new one if it doesn't exist.
  */
-export const createMessage = (messageData: Omit<Message, 'id' | 'isRead'>): Promise<Message> => {
+export const createMessage = (messageData: Omit<Message, 'id' | 'isRead' | 'threadId'> & {threadId?: string}): Promise<Message> => {
     return new Promise((resolve) => {
         const messages = getMessagesFromStorage();
+
+        let threadId = messageData.threadId;
+
+        // If no threadId is provided, try to find an existing one or create a new one.
+        // This is key for ensuring a single dialogue between two users.
+        if (!threadId) {
+            const existingThread = messages.find(m => 
+                (m.senderId === messageData.senderId && m.recipientId === messageData.recipientId) ||
+                (m.senderId === messageData.recipientId && m.recipientId === messageData.senderId)
+            );
+            threadId = existingThread ? existingThread.threadId : `${messageData.senderId}_${messageData.recipientId}`;
+        }
+        
         const newMessage: Message = {
             ...messageData,
+            threadId: threadId,
             id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             isRead: false,
         };
@@ -60,6 +76,7 @@ export const createMessage = (messageData: Omit<Message, 'id' | 'isRead'>): Prom
         resolve(newMessage);
     });
 };
+
 
 /**
  * Fetches all messages, sorted with the newest first.
