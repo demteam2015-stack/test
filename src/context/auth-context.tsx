@@ -182,7 +182,6 @@ type AuthContextType = {
   updateUserBalance: (userId: string, amount: number, operation: 'add' | 'subtract') => Promise<void>;
   deductFromBalance: (parentEmail: string, amount: number, description: string) => Promise<void>;
   adminGetUserProfile: (userId: string) => Promise<UserProfile | null>;
-  clearCacheAndLogout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -352,10 +351,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    setUser(null);
-    setIsAdmin(false);
-    sessionStorage.removeItem(SESSION_STORAGE_KEY);
-    localStorage.removeItem(ADMIN_PERMAROLE_KEY);
+    if(typeof window !== 'undefined'){
+      setUser(null);
+      setIsAdmin(false);
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      localStorage.removeItem(ADMIN_PERMAROLE_KEY);
+      window.location.href = '/login';
+    }
   };
   
   const updateUser = async (updatedProfile: Partial<Omit<UserProfile, 'id' | 'username' | 'email'>>) => {
@@ -568,18 +570,9 @@ Email: ${newUser.email}
 Администрация команды.
     `;
   }
-  
-  const clearCacheAndLogout = () => {
-    if(typeof window !== 'undefined'){
-      logout(); // ensures session is cleared
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.href = '/login';
-    }
-  }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, login, signup, logout, updateUser, checkUserExists, adminResetPassword, getUserByEmail, updateUserBalance, deductFromBalance, adminGetUserProfile, clearCacheAndLogout }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, login, signup, logout, updateUser, checkUserExists, adminResetPassword, getUserByEmail, updateUserBalance, deductFromBalance, adminGetUserProfile }}>
       {children}
     </AuthContext.Provider>
   );

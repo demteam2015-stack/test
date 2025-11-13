@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { useState, type FormEvent, useEffect, useMemo, useRef } from 'react';
-import { Loader, User, Trophy, Share2, Camera, GraduationCap, Star, Trash2 } from 'lucide-react';
+import { Loader, User, Trophy, Share2, Camera, GraduationCap, Star, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { competitionsData } from '@/lib/data';
 import type { Competition } from '@/lib/data';
@@ -62,7 +62,7 @@ const TimelineItem = ({ icon, date, title, description, children }: { icon: Reac
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  const { user, updateUser, clearCacheAndLogout } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -190,7 +190,7 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2 font-headline">
             <User className="size-8 text-primary"/>
             Мой путь чемпиона
         </h1>
@@ -280,33 +280,31 @@ export default function ProfilePage() {
           <CardHeader>
             <CardTitle className="font-headline">Опасная зона</CardTitle>
             <CardDescription>
-              Действия в этой зоне необратимы. Будьте осторожны.
+              Дополнительные действия с вашим аккаунтом.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Очистить локальное хранилище
+                <Button variant="outline">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Выйти из аккаунта
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Вы абсолютно уверены?</AlertDialogTitle>
+                  <AlertDialogTitle>Вы уверены, что хотите выйти?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Это действие необратимо. Все данные приложения, включая все
-                    аккаунты, расписания, историю платежей и другие записи, будут
-                    навсегда удалены из вашего браузера.
+                    Это действие завершит вашу текущую сессию. Вы сможете снова войти в систему, используя свой пароль. Все ваши данные останутся в безопасности.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Отмена</AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={clearCacheAndLogout}
+                    onClick={logout}
                     className="bg-destructive hover:bg-destructive/90"
                   >
-                    Да, удалить все данные
+                    Да, выйти
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
