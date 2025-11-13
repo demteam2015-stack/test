@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { MessageSquare, Lightbulb, ServerCrash, Loader } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 // Локальный "мозг" тренера
 const getLocalCoachResponse = (text: string): string => {
@@ -89,6 +90,7 @@ export default function RecommendationsPage() {
     const [feedback, setFeedback] = useState('');
     const [response, setResponse] = useState('');
     const [error, setError] = useState('');
+    const { toast } = useToast();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -96,6 +98,11 @@ export default function RecommendationsPage() {
     setLoading(true);
     setError('');
     setResponse('');
+
+    toast({
+        title: "Сообщение отправлено",
+        description: "Тренер скоро его проанализирует.",
+    });
 
     // Имитация задержки для "размышлений" AI
     setTimeout(() => {
