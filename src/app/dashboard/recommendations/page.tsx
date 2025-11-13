@@ -13,33 +13,61 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader, Inbox, Send, ArrowLeft, MessageSquare } from 'lucide-react';
-import { useAuth } from '@/context/auth-context';
+import { useAuth, type UserProfile } from '@/context/auth-context';
 import { getMessageThreadsForUser, markThreadAsRead, createMessage, type Message } from '@/lib/messages-api';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { getFullName, getInitials, getAvatarUrl } from '@/lib/utils';
+import Link from 'next/link';
 
 const CoachAdminView = () => {
-    const { user } = useAuth();
+    const { user, adminGetUserProfile } = useAuth();
     const [threads, setThreads] = useState<Record<string, Message[]>>({});
+    const [participants, setParticipants] = useState<Record<string, UserProfile>>({});
     const [loading, setLoading] = useState(true);
     const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
     const [replyText, setReplyText] = useState('');
     const [isSending, setIsSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+    const fetchThreadsAndParticipants = useCallback(async () => {
+        if (!user) return;
+        setLoading(true);
+
+        const coachThreads = await getMessageThreadsForUser(user.id);
+        
+        const participantIds = new Set<string>();
+        Object.values(coachThreads).forEach(thread => {
+            thread.forEach(msg => {
+                if (msg.senderId !== user.id) participantIds.add(msg.senderId);
+                if (msg.recipientId && msg.recipientId !== user.id) participantIds.add(msg.recipientId);
+            });
+        });
+
+        const participantsData: Record<string, UserProfile> = {};
+        for (const pId of participantIds) {
+            const participantProfile = await adminGetUserProfile(pId);
+            if (participantProfile) {
+                participantsData[pId] = participantProfile;
+            }
+        }
+        
+        setParticipants(participantsData);
+        setThreads(coachThreads);
+        setLoading(false);
+    }, [user, adminGetUserProfile]);
+    
     const fetchThreads = useCallback(async () => {
         if (!user) return;
         setLoading(true);
-        // In coach's view, their ID is the recipient ID for all threads
         const coachThreads = await getMessageThreadsForUser(user.id);
         setThreads(coachThreads);
         setLoading(false);
     }, [user]);
 
     useEffect(() => {
-        fetchThreads();
-    }, [fetchThreads]);
+        fetchThreadsAndParticipants();
+    }, [fetchThreadsAndParticipants]);
     
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -59,8 +87,8 @@ const CoachAdminView = () => {
         const currentThread = threads[activeThreadId];
         if (!currentThread || currentThread.length === 0) return;
 
-        // Find the other person in the conversation
-        const otherParticipant = currentThread.find(m => m.senderId !== user.id);
+        const otherParticipantId = activeThreadId.replace(user.id, '').replace('_', '');
+        const otherParticipant = participants[otherParticipantId];
         if (!otherParticipant) {
             console.error("Could not find recipient for the reply.");
             return;
@@ -70,9 +98,9 @@ const CoachAdminView = () => {
 
         const newMessage: Omit<Message, 'id'|'isRead'> = {
             senderId: user.id,
-            senderName: user.firstName ? `${user.firstName} ${user.lastName}` : user.username,
+            senderName: getFullName(user.firstName, user.lastName),
             senderRole: user.role,
-            recipientId: otherParticipant.senderId,
+            recipientId: otherParticipant.id,
             threadId: activeThreadId,
             text: replyText,
             date: new Date().toISOString(),
@@ -81,39 +109,31 @@ const CoachAdminView = () => {
         await createMessage(newMessage);
         setReplyText('');
         setIsSending(false);
+        // We only need to refresh the messages, not participants again
         fetchThreads();
     };
 
-    const getInitials = (name: string) => {
-        const parts = name.split(' ');
-        if (parts.length > 1 && parts[0] && parts[1]) {
-            return `${parts[0][0]}${parts[1][0]}`;
-        }
-        return name.substring(0, 2);
-    };
-
-    const getAvatarUrl = (userId: string, isCoach: boolean) => {
-        const adminImage = PlaceHolderImages.find(img => img.id === 'user-lexazver');
-        if (adminImage && isCoach) {
-            return adminImage.imageUrl;
-        }
-
-        const userImage = PlaceHolderImages.find(img => img.id === `user-${userId.substring(0, 4)}`);
-        if (userImage) return userImage.imageUrl;
-        
-        return `https://i.pravatar.cc/150?u=${userId}`;
-    }
-
-    const sortedThreads = Object.values(threads).sort((a,b) => {
-      if (a.length === 0) return 1;
-      if (b.length === 0) return -1;
-      const lastMsgA = new Date(a[a.length - 1].date).getTime();
-      const lastMsgB = new Date(b[b.length - 1].date).getTime();
-      return lastMsgB - lastMsgA;
+    const sortedThreads = Object.entries(threads)
+      .filter(([,thread]) => thread.length > 0)
+      .sort(([,a],[,b]) => {
+        const lastMsgA = new Date(a[a.length - 1].date).getTime();
+        const lastMsgB = new Date(b[b.length - 1].date).getTime();
+        return lastMsgB - lastMsgA;
     });
 
     const activeThread = activeThreadId ? threads[activeThreadId] : null;
-    const activeThreadSenderName = activeThread ? activeThread.find(m => m.senderId !== user?.id)?.senderName || 'Участник' : '';
+
+    const getParticipantForThread = (thread: Message[]) => {
+        if (!user || thread.length === 0) return null;
+        const otherUserMsg = thread.find(m => m.senderId !== user.id);
+        if (otherUserMsg) return participants[otherUserMsg.senderId];
+        // Case where coach started convo but other user hasn't replied
+        const otherUserId = thread[0].threadId.replace(user.id, '').replace('_', '');
+        return participants[otherUserId];
+    }
+    
+    const activeParticipant = activeThread ? getParticipantForThread(activeThread) : null;
+    const activeThreadParticipantName = activeParticipant ? getFullName(activeParticipant.firstName, activeParticipant.lastName) : 'Участник';
 
     return (
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-15rem)]">
@@ -128,19 +148,21 @@ const CoachAdminView = () => {
                             <Loader className="h-8 w-8 animate-spin text-primary" />
                         </div>
                     ) : sortedThreads.length > 0 ? (
-                        sortedThreads.map(thread => {
+                        sortedThreads.map(([threadId, thread]) => {
                             if (thread.length === 0) return null;
                             const lastMessage = thread[thread.length - 1];
-                            const sender = thread.find(m => m.senderId !== user?.id) || thread[0];
+                            const participant = getParticipantForThread(thread);
+                            const participantName = participant ? getFullName(participant.firstName, participant.lastName) : "Неизвестный";
                             const isUnread = lastMessage.recipientId === user?.id && !lastMessage.isRead;
+                            
                             return (
                                 <div 
-                                    key={thread[0].threadId}
-                                    onClick={() => handleThreadSelect(thread[0].threadId)}
-                                    className={`p-3 border rounded-lg cursor-pointer hover:bg-muted/50 ${activeThreadId === thread[0].threadId ? 'bg-muted' : ''}`}
+                                    key={threadId}
+                                    onClick={() => handleThreadSelect(threadId)}
+                                    className={`p-3 border rounded-lg cursor-pointer hover:bg-muted/50 ${activeThreadId === threadId ? 'bg-muted' : ''}`}
                                 >
                                     <div className="flex justify-between items-start">
-                                        <p className={`font-semibold ${isUnread ? 'text-primary' : ''}`}>{sender.senderName}</p>
+                                        <p className={`font-semibold ${isUnread ? 'text-primary' : ''}`}>{participantName}</p>
                                         <time className="text-xs text-muted-foreground whitespace-nowrap">
                                             {format(new Date(lastMessage.date), 'd MMM HH:mm', { locale: ru })}
                                         </time>
@@ -167,27 +189,31 @@ const CoachAdminView = () => {
                                <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setActiveThreadId(null)}>
                                     <ArrowLeft />
                                </Button>
-                               <CardTitle>Диалог с {activeThreadSenderName}</CardTitle>
+                               <CardTitle>Диалог с {activeThreadParticipantName}</CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent className="flex-grow overflow-y-auto space-y-4 pr-2">
-                           {activeThread.map((msg, index) => (
+                           {activeThread.map((msg, index) => {
+                                const sender = msg.senderId === user?.id ? user : participants[msg.senderId];
+                                const senderName = sender ? getFullName(sender.firstName, sender.lastName) : '...';
+                                return (
                                 <div key={msg.id + index} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
-                                    {msg.senderId !== user?.id && (
+                                    {msg.senderId !== user?.id && sender && (
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={getAvatarUrl(msg.senderId, false)} />
-                                            <AvatarFallback>{getInitials(msg.senderName)}</AvatarFallback>
+                                            <AvatarImage src={getAvatarUrl(sender.id, sender.username)} />
+                                            <AvatarFallback>{getInitials(sender.firstName, sender.lastName)}</AvatarFallback>
                                         </Avatar>
                                     )}
                                     <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                        <p className="text-xs font-bold mb-1 text-primary">{msg.senderName}</p>
+                                        <p className="text-xs font-bold mb-1 text-primary">{senderName}</p>
                                         <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                         <time className={`text-xs opacity-70 mt-2 block ${msg.senderId === user?.id ? 'text-right' : 'text-left'}`}>
                                             {format(new Date(msg.date), 'HH:mm', { locale: ru })}
                                         </time>
                                     </div>
                                 </div>
-                            ))}
+                                )
+                            })}
                             <div ref={messagesEndRef} />
                         </CardContent>
                         <CardFooter className="flex-shrink-0 pt-4 border-t">
@@ -234,7 +260,7 @@ export default function RecommendationsPage() {
     const { user } = useAuth();
     const isManager = user?.role === 'admin' || user?.role === 'coach';
 
-    if (!user) return null; // Should be handled by layout, but as a safeguard.
+    if (!user) return null;
 
     return (
         <div className="grid gap-8">
@@ -248,17 +274,16 @@ export default function RecommendationsPage() {
                 </p>
             </div>
             {isManager ? <CoachAdminView /> : (
-                // This view is deprecated for athletes/parents, they use my-messages now.
                  <Card>
                     <CardHeader>
-                        <CardTitle>Страница сообщений</CardTitle>
+                        <CardTitle>Неверная страница</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">Чтобы отправить новое сообщение или просмотреть историю, пожалуйста, перейдите в раздел "Мои сообщения".</p>
+                        <p className="text-muted-foreground">Чтобы отправить новое сообщение или просмотреть историю, пожалуйста, перейдите в раздел "Мои сообщения" в меню слева.</p>
                     </CardContent>
                     <CardFooter>
                         <Button asChild>
-                            <a href="/dashboard/my-messages">Перейти в Мои сообщения</a>
+                            <Link href="/dashboard/my-messages">Перейти в Мои сообщения</Link>
                         </Button>
                     </CardFooter>
                 </Card>

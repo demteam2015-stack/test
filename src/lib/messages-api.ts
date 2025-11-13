@@ -1,5 +1,7 @@
 'use client';
 
+import { getFullName } from './utils';
+
 const MESSAGES_STORAGE_KEY = 'demyanenko_hub_messages_v2'; // Version bump for new structure
 
 export interface Message {
@@ -24,7 +26,9 @@ const getMessagesFromStorage = (): Message[] => {
     if (typeof window === 'undefined') return [];
     try {
         const storedData = localStorage.getItem(MESSAGES_STORAGE_KEY);
-        return storedData ? JSON.parse(storedData) : [];
+        // Ensure initial data is an array
+        const parsedData = storedData ? JSON.parse(storedData) : [];
+        return Array.isArray(parsedData) ? parsedData : [];
     } catch (e) {
         console.error("Failed to read messages:", e);
         return [];
@@ -48,18 +52,13 @@ const saveMessagesToStorage = (messages: Message[]) => {
 export const getCoachUser = async (): Promise<{id: string, name: string} | null> => {
     if (typeof window === 'undefined') return null;
 
-    // This is a heavy operation, but necessary for a fully client-side app
-    // without a central user directory.
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith('user_id_')) {
             try {
                 const storedUser = JSON.parse(localStorage.getItem(key) || '{}');
-                // The profile is encrypted, so we can't read the role directly.
-                // For this app, we will rely on a naming convention for the admin/coach.
-                if (storedUser.username?.includes('lexa') || storedUser.email?.includes('lexazver')) {
-                    // We can't decrypt the name here, so we'll use a placeholder.
-                    // This is a limitation of the current architecture.
+                if (storedUser.username === 'lexazver' || storedUser.email === 'lexazver@gmail.com') {
+                    // For this app, we hardcode the coach's display name as we can't decrypt it here.
                     return { id: storedUser.id, name: "Тренер" };
                 }
             } catch (e) {
@@ -67,13 +66,7 @@ export const getCoachUser = async (): Promise<{id: string, name: string} | null>
             }
         }
     }
-
-    // A better approach would be to decrypt, but that requires the password.
-    // A more realistic client-side approach might have a separate, unencrypted 'public_profiles' key
-    // with basic info like name and role. For now, this fallback is okay.
     
-    // Fallback if no specific coach is found, just find ANY admin or coach.
-    // This is a placeholder and has security implications.
     return null;
 }
 
@@ -85,25 +78,12 @@ export const getCoachUser = async (): Promise<{id: string, name: string} | null>
  * It will try to find an existing thread between the sender and recipient,
  * or create a new one if it doesn't exist.
  */
-export const createMessage = (messageData: Omit<Message, 'id' | 'isRead' | 'threadId'> & {threadId?: string}): Promise<Message> => {
+export const createMessage = (messageData: Omit<Message, 'id' | 'isRead'>): Promise<Message> => {
     return new Promise((resolve) => {
         const messages = getMessagesFromStorage();
-
-        let threadId = messageData.threadId;
-
-        // If no threadId is provided, try to find an existing one or create a new one.
-        // This is key for ensuring a single dialogue between two users.
-        if (!threadId) {
-            const existingThread = messages.find(m => 
-                (m.senderId === messageData.senderId && m.recipientId === messageData.recipientId) ||
-                (m.senderId === messageData.recipientId && m.recipientId === messageData.senderId)
-            );
-            threadId = existingThread ? existingThread.threadId : `${messageData.senderId}_${messageData.recipientId}`;
-        }
         
         const newMessage: Message = {
             ...messageData,
-            threadId: threadId,
             id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             isRead: false,
         };
