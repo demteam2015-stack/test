@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -79,12 +78,13 @@ export default function HallOfFamePage() {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {athletes.map((athlete) => (
             <Card key={athlete.id} className="flex flex-col overflow-hidden">
-                <div className="relative aspect-square">
+                <div className="relative">
                     <Image
                       src={athlete.imageUrl}
                       alt={athlete.name}
-                      fill
-                      className="object-cover"
+                      width={300}
+                      height={300}
+                      className="object-cover w-full h-auto"
                       data-ai-hint={athlete.imageHint}
                     />
                 </div>
