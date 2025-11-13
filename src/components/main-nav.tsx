@@ -45,7 +45,7 @@ export default function MainNav() {
   if (!user) return null;
 
   return (
-    <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+    <nav className="flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
       {mainNavLinks.map((item) => {
         if (item.roles && !item.roles.includes(user.role)) return null;
 
