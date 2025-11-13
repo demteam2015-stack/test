@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
-import Sidebar from '@/components/sidebar';
 import Header from '@/components/header';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MobileNav } from '@/components/mobile-nav';
@@ -34,7 +33,6 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen w-full">
-       {!isMobile && <Sidebar />}
         <div className="flex flex-col w-full">
             <Header />
             <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
