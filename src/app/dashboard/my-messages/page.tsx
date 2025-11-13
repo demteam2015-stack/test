@@ -46,11 +46,11 @@ export default function MyMessagesPage() {
 
     // If there is only one thread, open it automatically
     const threadIds = Object.keys(userThreads);
-    if (threadIds.length === 1) {
+    if (threadIds.length === 1 && !activeThreadId) {
         setActiveThreadId(threadIds[0]);
     }
 
-  }, [user]);
+  }, [user, activeThreadId]);
 
   useEffect(() => {
     fetchThreads();
@@ -64,8 +64,16 @@ export default function MyMessagesPage() {
     setActiveThreadId(threadId);
     if(user) {
         await markThreadAsRead(threadId, user.id);
-        // Refresh threads to update unread status visually
-        fetchThreads();
+        // Manually update the read status in the local state to avoid a full refetch
+        setThreads(prev => {
+            const newThreads = {...prev};
+            if (newThreads[threadId]) {
+                newThreads[threadId] = newThreads[threadId].map(msg => 
+                    msg.recipientId === user.id ? { ...msg, isRead: true } : msg
+                );
+            }
+            return newThreads;
+        });
     }
   };
 
