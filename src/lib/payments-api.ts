@@ -95,7 +95,7 @@ export const addPayment = (paymentData: Omit<Payment, 'id'>): Promise<Payment> =
 export const updatePayment = async (
     paymentId: string, 
     updatedData: Partial<Omit<Payment, 'id'>>,
-    updateBalanceFn: (userId: string, amount: number) => Promise<void>
+    updateBalanceFn: (userId: string, amount: number, operation: 'add' | 'subtract') => Promise<void>
 ): Promise<Payment | null> => {
     let payments = getPaymentsFromStorage();
     const paymentIndex = payments.findIndex(p => p.id === paymentId);
@@ -110,20 +110,22 @@ export const updatePayment = async (
     const wasPaid = originalPayment.status === 'Оплачено';
     const isNowPaid = updatedPayment.status === 'Оплачено';
 
-    if (isNowPaid && !wasPaid) {
-        const amount = parseFloat(updatedPayment.amount);
-        if (!isNaN(amount) && amount > 0) {
-            try {
-                await updateBalanceFn(updatedPayment.userId, amount);
-            } catch (error) {
-                console.error("Failed to update balance on payment confirmation:", error);
-                // Optionally, revert the status change or show an error to the admin
-                // For now, we'll proceed but log the error.
+    const amount = parseFloat(updatedPayment.amount);
+
+    if (!isNaN(amount) && amount > 0) {
+        try {
+            // If status changes from NOT PAID to PAID -> ADD balance
+            if (isNowPaid && !wasPaid) {
+                await updateBalanceFn(updatedPayment.userId, amount, 'add');
+            } 
+            // If status changes from PAID to NOT PAID -> SUBTRACT balance
+            else if (!isNowPaid && wasPaid) {
+                await updateBalanceFn(updatedPayment.userId, amount, 'subtract');
             }
+        } catch (error) {
+            console.error("Failed to update balance on payment confirmation:", error);
         }
     }
-    // Note: This logic doesn't handle reversal (changing from Paid to something else).
-    // A real system would need logic to reverse the transaction.
 
     payments[paymentIndex] = updatedPayment;
     savePaymentsToStorage(payments);

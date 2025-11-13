@@ -44,36 +44,9 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 const REQUISITES_KEY = 'payment_requisites';
-const DEFAULT_REQUISITES = '';
+const DEFAULT_REQUISITES = 'Номер карты: 1234 5678 1234 5678';
 const BASE_AMOUNT_KEY = 'payment_base_amount';
 const DEFAULT_BASE_AMOUNT = '1000';
-
-// --- Utility function to get all users ---
-const getAllStoredUsers = (): UserProfile[] => {
-    if (typeof window === 'undefined') return [];
-    const users: UserProfile[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('user_id_')) {
-            try {
-                const storedUser = JSON.parse(localStorage.getItem(key) || '');
-                // We only need basic info for the dropdown
-                users.push({
-                    id: storedUser.id,
-                    email: storedUser.email,
-                    username: storedUser.username,
-                    firstName: 'N/A',
-                    lastName: 'N/A',
-                    role: 'athlete'
-                });
-            } catch (e) {
-                console.error(`Failed to parse user data for key ${key}:`, e);
-            }
-        }
-    }
-    return users.sort((a,b) => a.username.localeCompare(b.username));
-};
-
 
 const RequisitesForm = ({ onUpdate, currentRequisites }: { onUpdate: (newRequisites: string) => void, currentRequisites: string }) => {
     const { toast } = useToast();
@@ -392,7 +365,6 @@ export default function PaymentsPage() {
 
   const fetchPayments = useCallback(async () => {
     setIsLoading(true);
-    // Pass user ID to seed initial data if needed
     const payments = await getPayments(user?.id); 
     setPaymentHistory(payments);
     setIsLoading(false);
@@ -626,10 +598,35 @@ export default function PaymentsPage() {
             <div className="lg:col-span-2">
                 {renderAdminOrCoachView()}
             </div>
-            <div className="lg:col-span-1">
-                {/* Manager can see the parent view for context */}
-                {renderParentAthleteView()}
-            </div>
+             {/* The payment component for users to see how it looks */}
+             <div className="hidden lg:block lg:col-span-1 sticky top-24">
+                <Card className="lg:col-span-1 border-primary ring-2 ring-primary">
+                    <CardHeader>
+                        <CardTitle>Оплата абонемента</CardTitle>
+                        <CardDescription>
+                           Чтобы оплатить или продлить абонемент, выполните перевод по указанным реквизитам.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <Label>Реквизиты для перевода</Label>
+                                <RequisitesForm onUpdate={setPaymentRequisites} currentRequisites={paymentRequisites} />
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                                <p className="text-lg font-semibold">{paymentRequisites}</p>
+                            </div>
+                        </div>
+                        <div>
+                             <div className="flex items-center gap-2">
+                                <Label>Базовая сумма</Label>
+                                <AmountForm onUpdate={handleConfigUpdate} currentAmount={baseAmount} />
+                            </div>
+                            <p className="text-2xl font-bold text-primary tabular-nums">{baseAmount} руб.</p>
+                        </div>
+                    </CardContent>
+                </Card>
+             </div>
         </div>
       ) : renderParentAthleteView()}
 
