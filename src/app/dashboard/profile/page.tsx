@@ -41,8 +41,8 @@ export default function ProfilePage() {
   const achievements = useMemo(() => {
       if (!user) return [];
       // This is a simplified logic. In a real app, you'd check against a user's specific participation records.
-      // Here, we just assume the user participated in all completed competitions.
-      return competitionsData.filter(c => c.status === 'Завершенный');
+      // Here, we filter for completed competitions where a result is present.
+      return competitionsData.filter(c => c.status === 'Завершенный' && c.result);
   }, [user]);
 
   if (!user) {
