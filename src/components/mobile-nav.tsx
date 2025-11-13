@@ -8,11 +8,9 @@ import {
   Home,
   Trophy,
   Users,
-  GraduationCap,
-  User,
-  ShieldCheck,
   CreditCard,
-  MessageSquare
+  MessageSquare,
+  User,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
@@ -24,7 +22,7 @@ const navLinks = [
   { href: '/dashboard/competitions', label: 'Сорев-я', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard, roles: ['parent', 'athlete']},
   { href: '/dashboard/my-messages', label: 'AI-Коуч', icon: MessageSquare, roles: ['parent', 'athlete']},
-  { href: '/dashboard/attestation', label: 'Аттестация', icon: ShieldCheck, roles: ['admin', 'coach']},
+  { href: '/dashboard/attestation', label: 'Аттестация', icon: Award, roles: ['admin', 'coach']},
   { href: '/dashboard/profile', label: 'Профиль', icon: User, roles: ['admin', 'coach', 'parent', 'athlete']},
 ];
 
