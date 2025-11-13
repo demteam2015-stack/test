@@ -124,7 +124,10 @@ export default function ProfilePage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Allow only Russian letters
+    if (/^[а-яА-ЯёЁ]*$/.test(value)) {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSave = (e: FormEvent) => {
@@ -190,7 +193,7 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2 font-headline">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <User className="size-8 text-primary"/>
             Мой путь чемпиона
         </h1>
@@ -204,7 +207,7 @@ export default function ProfilePage() {
         <form onSubmit={handleSave}>
             <Card>
             <CardHeader>
-                <CardTitle className="font-headline">Личная информация</CardTitle>
+                <CardTitle>Личная информация</CardTitle>
                 <CardDescription>
                 Эта информация отображается в вашем профиле.
                 </CardDescription>
@@ -278,7 +281,7 @@ export default function ProfilePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Опасная зона</CardTitle>
+            <CardTitle>Опасная зона</CardTitle>
             <CardDescription>
               Дополнительные действия с вашим аккаунтом.
             </CardDescription>
@@ -295,7 +298,7 @@ export default function ProfilePage() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Вы уверены, что хотите выйти?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Это действие завершит вашу текущую сессию. Вы сможете снова войти в систему, используя свой пароль. Все ваши данные останутся в безопасности.
+                    Это действие завершит вашу текущую сессию. Вы сможете снова войти в систему, используя свой пароль.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -317,7 +320,7 @@ export default function ProfilePage() {
         <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">Хроника достижений</CardTitle>
+                    <CardTitle>Хроника достижений</CardTitle>
                     <CardDescription>Ваш путь в команде от начала и до сегодняшнего дня.</CardDescription>
                 </CardHeader>
                 <CardContent>

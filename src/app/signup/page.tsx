@@ -36,6 +36,13 @@ export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
 
+  const handleNameChange = (setter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^[а-яА-ЯёЁ]*$/.test(value)) {
+        setter(value);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -69,7 +76,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40">
+    <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Регистрация</CardTitle>
@@ -82,11 +89,11 @@ export default function SignupPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="first-name">Имя</Label>
-                <Input id="first-name" placeholder="Иван" required value={firstName} onChange={(e) => setFirstName(e.target.value)} disabled={isLoading} />
+                <Input id="first-name" placeholder="Иван" required value={firstName} onChange={handleNameChange(setFirstName)} disabled={isLoading} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="last-name">Фамилия</Label>
-                <Input id="last-name" placeholder="Иванов" required value={lastName} onChange={(e) => setLastName(e.target.value)} disabled={isLoading} />
+                <Input id="last-name" placeholder="Иванов" required value={lastName} onChange={handleNameChange(setLastName)} disabled={isLoading} />
               </div>
             </div>
              <div className="grid gap-2">
