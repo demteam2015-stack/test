@@ -29,21 +29,16 @@ const getAllUsers = (): UserProfile[] => {
         if (key && key.startsWith('user_id_')) {
             try {
                 const storedUser = JSON.parse(localStorage.getItem(key) || '{}');
-                // Attempt to get name from unencrypted username, fallback
-                const nameParts = storedUser.username.split('_');
-                const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : 'User';
-                const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : '';
-
-                users.push({
+                // Create a temporary profile since we cannot decrypt full data here.
+                const profile: UserProfile = {
                     id: storedUser.id,
                     email: storedUser.email,
                     username: storedUser.username,
-                    // These will be encrypted and not useful here without the user's password.
-                    // We'll rely on the user object being mostly unencrypted for this view.
-                    firstName: firstName, 
-                    lastName: lastName,
+                    firstName: storedUser.username, // Fallback
+                    lastName: '',
                     role: 'athlete'
-                });
+                }
+                users.push(profile);
             } catch (e) {
                 // ignore
             }
@@ -54,7 +49,7 @@ const getAllUsers = (): UserProfile[] => {
 
 
 const CoachAdminView = () => {
-    const { user } = useAuth();
+    const { user, adminGetUserProfile } = useAuth();
     const [threads, setThreads] = useState<Record<string, Message[]>>({});
     const [participants, setParticipants] = useState<Record<string, UserProfile>>({});
     const [loading, setLoading] = useState(true);
@@ -73,9 +68,14 @@ const CoachAdminView = () => {
         const allUsers = getAllUsers();
         
         const participantsData: Record<string, UserProfile> = {};
-        allUsers.forEach(u => {
-            participantsData[u.id] = u;
-        });
+        
+        for (const u of allUsers) {
+             // We cannot decrypt user data here, so we get it via a special admin function
+             const fullProfile = await adminGetUserProfile(u.id);
+             if(fullProfile) {
+                 participantsData[u.id] = fullProfile;
+             }
+        }
 
         // The coach/admin themself
         if (user) {
@@ -85,7 +85,7 @@ const CoachAdminView = () => {
         setParticipants(participantsData);
         setThreads(coachThreads);
         setLoading(false);
-    }, [user]);
+    }, [user, adminGetUserProfile]);
     
     useEffect(() => {
         fetchThreadsAndParticipants();
@@ -136,7 +136,9 @@ const CoachAdminView = () => {
         setThreads(prev => {
             const newThreads = {...prev};
             const currentThread = newThreads[createdMessage.threadId] || [];
-            currentThread.push(createdMessage);
+            if (!currentThread.find(m => m.id === createdMessage.id)) {
+                 currentThread.push(createdMessage);
+            }
             newThreads[createdMessage.threadId] = currentThread;
             return newThreads;
         });
@@ -158,25 +160,21 @@ const CoachAdminView = () => {
     const getParticipantForThread = (thread: Message[]) => {
         if (!user || thread.length === 0) return null;
         
-        // Find the first message not sent by the current user (the coach)
         const otherUserMsg = thread.find(m => m.senderId !== user.id);
-        if (otherUserMsg) {
-          // The sender name is stored unencrypted in the message
-          return { name: otherUserMsg.senderName, id: otherUserMsg.senderId };
-        }
-        
-        // If coach started the conversation, the other participant is the recipient
         const firstMessage = thread[0];
-        if (firstMessage.recipientId && participants[firstMessage.recipientId]) {
-            const participant = participants[firstMessage.recipientId];
-            return participant ? { name: getFullName(participant.firstName, participant.lastName) || participant.username, id: participant.id } : { name: "Участник", id: firstMessage.recipientId };
+        let otherId: string | undefined;
+
+        if (otherUserMsg) {
+            otherId = otherUserMsg.senderId;
+        } else if(firstMessage.recipientId) {
+            otherId = firstMessage.recipientId;
         }
 
-        return null;
+        return otherId ? participants[otherId] : null;
     }
     
     const activeParticipant = activeThread ? getParticipantForThread(activeThread) : null;
-    const activeThreadParticipantName = activeParticipant ? activeParticipant.name : 'Участник';
+    const activeThreadParticipantName = activeParticipant ? getFullName(activeParticipant.firstName, activeParticipant.lastName) : 'Участник';
 
     return (
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-15rem)]">
@@ -195,7 +193,7 @@ const CoachAdminView = () => {
                             if (thread.length === 0) return null;
                             const lastMessage = thread[thread.length - 1];
                             const participant = getParticipantForThread(thread);
-                            const participantName = participant ? participant.name : "Неизвестный";
+                            const participantName = participant ? getFullName(participant.firstName, participant.lastName) : "Неизвестный";
                             const isUnread = user ? lastMessage.recipientId === user.id && !lastMessage.isRead : false;
                             
                             return (
@@ -238,18 +236,17 @@ const CoachAdminView = () => {
                         <CardContent className="flex-grow overflow-y-auto space-y-4 pr-2">
                            {activeThread.map((msg, index) => {
                                 const senderId = msg.senderId;
-                                const senderName = msg.senderName;
                                 const sender = participants[senderId];
                                 return (
                                 <div key={msg.id + index} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
                                     {msg.senderId !== user?.id && sender && (
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={getAvatarUrl(sender.id, senderName)} />
-                                            <AvatarFallback>{getInitials(senderName)}</AvatarFallback>
+                                            <AvatarImage src={getAvatarUrl(sender.id, sender.username)} />
+                                            <AvatarFallback>{getInitials(sender.firstName, sender.lastName)}</AvatarFallback>
                                         </Avatar>
                                     )}
                                     <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                        <p className="text-xs font-bold mb-1 text-primary">{senderName}</p>
+                                        <p className="text-xs font-bold mb-1 text-primary">{msg.senderName}</p>
                                         <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                         <time className={`text-xs opacity-70 mt-2 block ${msg.senderId === user?.id ? 'text-right' : 'text-left'}`}>
                                             {format(new Date(msg.date), 'HH:mm', { locale: ru })}

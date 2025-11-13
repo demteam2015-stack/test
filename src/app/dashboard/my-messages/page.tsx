@@ -21,14 +21,14 @@ import { getFullName, getInitials, getAvatarUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { getFullJournal } from '@/lib/journal-api';
 import { competitionsData } from '@/lib/data';
-import { getAthletes } from '@/lib/athletes-api';
+import { getAthletes, type Athlete } from '@/lib/athletes-api';
 
 
 // Mock AI analysis function
-const getAIAnalysis = async (userId: string): Promise<string> => {
+const getAIAnalysis = async (athleteId: string): Promise<string> => {
     const journal = await getFullJournal();
     const athletes = await getAthletes();
-    const currentUserAthlete = athletes.find(a => a.id === userId);
+    const currentUserAthlete = athletes.find(a => a.id === athleteId);
 
     const userCompetitions = competitionsData.filter(c => c.status === 'Завершенный');
 
@@ -38,9 +38,9 @@ const getAIAnalysis = async (userId: string): Promise<string> => {
 
     Object.values(journal).forEach(day => {
         Object.values(day).forEach(event => {
-            if (event[userId]) {
-                if (event[userId] === 'present') totalPresent++;
-                if (event[userId] === 'absent') totalAbsent++;
+            if (event[athleteId]) {
+                if (event[athleteId] === 'present') totalPresent++;
+                if (event[athleteId] === 'absent') totalAbsent++;
             }
         });
     });
@@ -101,12 +101,12 @@ export default function MyMessagesPage() {
   useEffect(() => {
     const findAthleteProfile = async () => {
         if (user) {
-            const athletes = await getAthletes();
+            const allAthletes = await getAthletes();
             if (user.role === 'athlete') {
-                const athleteProfile = athletes.find(a => getFullName(a.firstName, a.lastName) === getFullName(user.firstName, user.lastName));
+                const athleteProfile = allAthletes.find(a => getFullName(a.firstName, a.lastName) === getFullName(user.firstName, user.lastName));
                 if (athleteProfile) setAthleteId(athleteProfile.id);
             } else if (user.role === 'parent') {
-                const childProfile = athletes.find(a => a.parentId === user.email);
+                const childProfile = allAthletes.find(a => a.parentId === user.email);
                 if (childProfile) setAthleteId(childProfile.id);
             } else {
                  setAthleteId(user.id);
