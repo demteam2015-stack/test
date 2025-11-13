@@ -3,39 +3,45 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Award,
-  Calendar,
-  CreditCard,
-  Home,
-  Trophy,
-  BookUser,
-  Users,
   BarChart,
-  User,
-  GraduationCap,
-  Inbox,
   BrainCircuit,
-  MoreHorizontal,
+  CreditCard,
+  Inbox,
+  Users,
+  BookUser,
 } from 'lucide-react';
-import {
-  Menubar,
-  MenubarContent,
-  MenubarItem,
-  MenubarMenu,
-  MenubarSeparator,
-  MenubarTrigger,
-} from '@/components/ui/menubar';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/auth-context';
-import { useState, useEffect } from 'react';
-import { getUnreadMessagesCountForUser } from '@/lib/messages-api';
 import { cn } from '@/lib/utils';
+import { getUnreadMessagesCountForUser } from '@/lib/messages-api';
+import { useEffect, useState } from 'react';
+
+const subNavigation = {
+    team: [
+        { name: 'Состав команды', href: '/dashboard/team' },
+        { name: 'Журнал посещаемости', href: '/dashboard/journal', roles: ['admin', 'coach'] },
+    ],
+    reports: [
+        { name: 'Общая статистика', href: '/dashboard/reports', roles: ['admin', 'coach']},
+        { name: 'Моя посещаемость', href: '/dashboard/reports', roles: ['athlete']},
+        { name: 'Отчеты ребенка', href: '/dashboard/my-reports', roles: ['parent']},
+    ],
+    profile: [
+        { name: 'Мой путь', href: '/dashboard/profile' },
+        { name: 'Рекомендации', href: '/dashboard/my-messages', roles:['parent', 'athlete']},
+        { name: 'Входящие', href: '/dashboard/recommendations', roles: ['admin', 'coach']},
+    ],
+    admin: [
+        { name: 'Управление пользователями', href: '/dashboard/users' },
+        { name: 'Платежи', href: '/dashboard/payments' },
+    ]
+}
+
 
 export default function MainNav() {
   const pathname = usePathname();
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
-  
+
   useEffect(() => {
     if (user) {
         const fetchCount = async () => {
@@ -47,118 +53,43 @@ export default function MainNav() {
         return () => clearInterval(interval);
     }
   }, [user, pathname]);
+  
 
   if (!user) return null;
 
-  const mainLinks = [
-    { href: '/dashboard', label: 'Панель', icon: Home, roles: ['admin', 'coach', 'parent', 'athlete'] },
-    { href: '/dashboard/profile', label: 'Мой путь', icon: User, roles: ['admin', 'coach', 'parent', 'athlete'] },
-    { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar, roles: ['admin', 'coach', 'parent', 'athlete'] },
-    { href: '/dashboard/team', label: 'Команда', icon: Users, roles: ['admin', 'coach', 'parent', 'athlete'] },
-  ];
-  
-  const coachLinks = [
-    { href: '/dashboard/journal', label: 'Журнал', icon: BookUser, roles: ['admin', 'coach'] },
-    { 
-      href: '/dashboard/reports', 
-      label: 'Отчеты', 
-      icon: BarChart, 
-      roles: ['admin', 'coach'] 
-    },
-    { 
-      href: '/dashboard/recommendations', 
-      label: 'Сообщения', 
-      icon: Inbox, 
-      roles: ['admin', 'coach'],
-      badge: unreadCount,
-    },
-     { href: '/dashboard/users', label: 'Админ', icon: Users, roles: ['admin'] },
-  ];
-  
-  const athleteParentLinks = [
-      { 
-      href: '/dashboard/reports', 
-      label: 'Моя посещаемость', 
-      icon: BarChart, 
-      roles: ['athlete']
-    },
-    { 
-      href: '/dashboard/my-reports', 
-      label: 'Отчеты ребенка', 
-      icon: BarChart, 
-      roles: ['parent'] 
-    },
-      { 
-      href: '/dashboard/my-messages', 
-      label: 'Рекомендации', 
-      icon: BrainCircuit, 
-      roles: ['parent', 'athlete'],
-      badge: unreadCount,
-    },
-  ];
+  const getSubNav = () => {
+      if (pathname.startsWith('/dashboard/team') || pathname.startsWith('/dashboard/journal')) return subNavigation.team;
+      if (pathname.startsWith('/dashboard/reports') || pathname.startsWith('/dashboard/my-reports')) return subNavigation.reports;
+      if (pathname.startsWith('/dashboard/profile') || pathname.startsWith('/dashboard/my-messages') || pathname.startsWith('/dashboard/recommendations')) return subNavigation.profile;
+      if (pathname.startsWith('/dashboard/users') || pathname.startsWith('/dashboard/payments')) return subNavigation.admin;
+      return [];
+  }
 
-  const commonLinks = [
-    { href: '/dashboard/education', label: 'Обучение', icon: GraduationCap, roles: ['admin', 'coach', 'parent', 'athlete'] },
-    { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard, roles: ['admin', 'coach', 'parent', 'athlete'] },
-    { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete'] },
-    { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award, roles: ['admin', 'coach', 'parent', 'athlete'] },
-  ];
-
-  const NavLink = ({ href, label, isActive, className }: { href: string; label: string; isActive: boolean, className?: string }) => (
-    <Link href={href} className={cn(
-          "text-sm font-medium transition-colors hover:text-primary",
-          isActive ? "text-primary" : "text-muted-foreground",
-          className
-      )}>
-        {label}
-    </Link>
-  );
+  const currentSubNav = getSubNav();
 
   return (
-    <Menubar className="border-none bg-transparent shadow-none p-0 gap-6 hidden md:flex">
-      {mainLinks.filter(link => link.roles.includes(user.role)).map(link => (
-        <MenubarMenu key={link.href}>
-          <NavLink href={link.href} label={link.label} isActive={pathname === link.href}/>
-        </MenubarMenu>
-      ))}
-      
-       {user.role === 'admin' || user.role === 'coach' ? (
-         <MenubarMenu>
-            <MenubarTrigger className="p-0 text-sm font-medium transition-colors text-muted-foreground hover:text-primary data-[state=open]:text-primary cursor-pointer">Тренер</MenubarTrigger>
-             <MenubarContent>
-               {coachLinks.filter(link => link.roles.includes(user.role)).map(link => (
-                <MenubarItem key={link.href} asChild>
-                   <Link href={link.href} className="flex items-center justify-between w-full">
-                        {link.label}
-                        {link.badge && link.badge > 0 && <Badge variant="secondary">{link.badge}</Badge>}
-                   </Link>
-                </MenubarItem>
-               ))}
-            </MenubarContent>
-         </MenubarMenu>
-       ) : (
-          athleteParentLinks.filter(link => link.roles.includes(user.role)).map(link => (
-            <MenubarMenu key={link.href}>
-               <NavLink 
-                  href={link.href} 
-                  label={link.label} 
-                  isActive={pathname === link.href}
-                  className="relative"
-                >
-                  {link.badge && link.badge > 0 && <span className="absolute top-[-5px] right-[-10px] flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{link.badge}</span>}
-                </NavLink>
-            </MenubarMenu>
-          ))
-       )}
-      
-      <MenubarMenu>
-        <MenubarTrigger className="p-0 text-sm font-medium transition-colors text-muted-foreground hover:text-primary data-[state=open]:text-primary cursor-pointer">Еще</MenubarTrigger>
-        <MenubarContent>
-           {commonLinks.filter(link => link.roles.includes(user.role)).map(link => (
-                <MenubarItem key={link.href} asChild><Link href={link.href}>{link.label}</Link></MenubarItem>
-           ))}
-        </MenubarContent>
-      </MenubarMenu>
-    </Menubar>
+    <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+      {currentSubNav.map((item) => {
+        if (item.roles && !item.roles.includes(user.role)) return null;
+
+        const isUnread = (item.href === '/dashboard/my-messages' || item.href === '/dashboard/recommendations') && unreadCount > 0;
+
+        return (
+          <Link
+            key={item.name}
+            href={item.href}
+            className={cn(
+              'transition-colors hover:text-foreground relative',
+              pathname === item.href ? 'text-foreground' : 'text-muted-foreground'
+            )}
+          >
+            {item.name}
+             {isUnread && (
+                <span className="absolute top-[-2px] right-[-14px] flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{unreadCount}</span>
+             )}
+          </Link>
+        )
+      })}
+    </nav>
   );
 }

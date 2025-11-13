@@ -1,10 +1,13 @@
 'use client';
 
-import Header from '@/components/header';
-import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader } from 'lucide-react';
+import { useAuth } from '@/context/auth-context';
+import Sidebar from '@/components/sidebar';
+import Header from '@/components/header';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { MobileNav } from '@/components/mobile-nav';
 
 export default function DashboardLayout({
   children,
@@ -13,6 +16,7 @@ export default function DashboardLayout({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -20,27 +24,26 @@ export default function DashboardLayout({
     }
   }, [user, loading, router]);
 
-
-  if (loading) {
+  if (loading || !user) {
     return (
-        <div className="flex items-center justify-center min-h-screen bg-background">
-            <Loader className="h-8 w-8 animate-spin text-primary" />
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 
-  if (!user) {
-    // This case handles the final state where loading is false and user is still null.
-    // The useEffect above will trigger the redirect, but this is a safeguard.
-    return null;
-  }
-
   return (
-    <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="p-4 sm:p-6 lg:p-8 flex-1">
-            {children}
-        </main>
+    <div className="flex min-h-screen w-full">
+       {!isMobile && <Sidebar />}
+        <div className="flex flex-col w-full">
+            <Header />
+            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+              <div className="mx-auto max-w-7xl">
+                {children}
+              </div>
+            </main>
+        </div>
+        {isMobile && <MobileNav />}
     </div>
   );
 }
