@@ -320,7 +320,7 @@ export default function RecommendationsPage() {
                         <CardTitle className="font-headline">Неверная страница</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground">Чтобы отправить новое сообщение или просмотреть историю, пожалуйста, перейдите в раздел "Рекомендации" в меню слева.</p>
+                        <p className="text-muted-foreground">Чтобы отправить новое сообщение или просмотреть историю, пожалуйста, перейдите в раздел "Рекомендации" в меню.</p>
                     </CardContent>
                     <CardFooter>
                         <Button asChild>

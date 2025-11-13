@@ -66,7 +66,7 @@ export default function MainNav() {
       roles: ['admin', 'coach'] 
     },
     { 
-      href: '/dashboard/messages', 
+      href: '/dashboard/recommendations', 
       label: 'Сообщения', 
       icon: Inbox, 
       roles: ['admin', 'coach'],
@@ -104,14 +104,13 @@ export default function MainNav() {
     { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award, roles: ['admin', 'coach', 'parent', 'athlete'] },
   ];
 
-  const NavLink = ({ href, label, isActive }: { href: string; label: string; isActive: boolean }) => (
-    <Link href={href} legacyBehavior passHref>
-      <a className={cn(
+  const NavLink = ({ href, label, isActive, className }: { href: string; label: string; isActive: boolean, className?: string }) => (
+    <Link href={href} className={cn(
           "text-sm font-medium transition-colors hover:text-primary",
-          isActive ? "text-primary" : "text-muted-foreground"
+          isActive ? "text-primary" : "text-muted-foreground",
+          className
       )}>
         {label}
-      </a>
     </Link>
   );
 
@@ -140,15 +139,14 @@ export default function MainNav() {
        ) : (
           athleteParentLinks.filter(link => link.roles.includes(user.role)).map(link => (
             <MenubarMenu key={link.href}>
-              <Link href={link.href} legacyBehavior passHref>
-                <a className={cn(
-                    "relative text-sm font-medium transition-colors hover:text-primary",
-                    pathname === link.href ? "text-primary" : "text-muted-foreground"
-                )}>
-                  {link.label}
+               <NavLink 
+                  href={link.href} 
+                  label={link.label} 
+                  isActive={pathname === link.href}
+                  className="relative"
+                >
                   {link.badge && link.badge > 0 && <span className="absolute top-[-5px] right-[-10px] flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{link.badge}</span>}
-                </a>
-              </Link>
+                </NavLink>
             </MenubarMenu>
           ))
        )}
