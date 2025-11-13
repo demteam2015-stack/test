@@ -9,22 +9,27 @@ export function cn(...inputs: ClassValue[]) {
 
 // --- User display utility functions ---
 
-export const getInitials = (fullName?: string, fallback?: string) => {
-    if (!fullName) return fallback?.substring(0, 2).toUpperCase() || 'U';
-    
+export const getInitials = (fullNameOrFirstName?: string, lastName?: string) => {
     // Special case for AI-Trainer
-    if (fullName === "AI-Тренер") return "AI";
+    if (fullNameOrFirstName === "AI-Тренер") return "AI";
+    
+    const fullName = lastName ? `${fullNameOrFirstName} ${lastName}` : fullNameOrFirstName;
 
-    const parts = fullName.split(' ');
+    if (!fullName) return 'U';
+    
+    const parts = fullName.split(' ').filter(Boolean);
     if (parts.length > 1 && parts[0] && parts[1]) {
       return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
     }
-    return fullName.substring(0, 2).toUpperCase();
+    if (parts.length === 1 && parts[0]) {
+      return parts[0].substring(0, 2).toUpperCase();
+    }
+    return 'U';
 };
 
 export const getFullName = (firstName?: string, lastName?: string) => {
     if (!firstName && !lastName) return 'Атлет';
-    return `${firstName} ${lastName}`.trim();
+    return `${firstName || ''} ${lastName || ''}`.trim();
 }
 
 export const getAvatarUrl = (userId: string, username?: string) => {

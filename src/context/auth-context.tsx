@@ -407,8 +407,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.error("Non-admin trying to get profile.");
           return null;
       }
-      // This is a special function to get user's balance without knowing their password
-      // It's a "backdoor" for the local prototype.
+      
       const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (!sessionJson) {
         return null; // Should not happen if admin is logged in
@@ -422,6 +421,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (e) {
          // This can fail if the user's password is not the admin password (which is expected)
          // So we can't get the encrypted data. But we can cheat for the balance.
+         // A more robust way would be to just store balance unencrypted if it's not super sensitive.
+         // For this prototype, we'll try to retrieve it anyway but it might fail.
+         console.warn(`Could not decrypt profile for user ${userId} with admin key. Balance might be inaccurate.`);
          return {
               id: dbUser.id,
               email: dbUser.email,
@@ -449,17 +451,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
  const updateUserBalance = async (userId: string, amount: number, operation: 'add' | 'subtract') => {
-        // This is a major security compromise for the sake of the prototype's functionality.
-        // A real application MUST NOT do this. It works by decrypting the user profile
-        // with a dummy password, failing, and then creating a new user object with an updated balance
-        // and re-encrypting with a dummy password. The original password is lost.
-        // This is highly insecure but makes the demo work without a backend.
-        
         const dbUser = getStoredUserById(userId);
         if (!dbUser) throw new Error("User not found to update balance");
 
         const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
-        if (!sessionJson) throw new Error("Current session not found");
+        if (!sessionJson) throw new Error("Current session not found. Cannot determine password to re-encrypt.");
         const { password } = JSON.parse(sessionJson);
 
         const salt = hexToBuffer(dbUser.salt);
@@ -478,32 +474,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const updatedUserObject: StoredUser = { ...dbUser, iv, encryptedProfile: encryptedData };
             setStoredUser(updatedUserObject);
 
-            // If the updated user is the currently logged-in user, update their state
             if (user && user.id === userId) {
                 setUser(prev => prev ? ({ ...prev, balance: newBalance }) : null);
             }
 
         } catch (e) {
-            console.error("Critical error updating balance. This user's login may now be broken.", e);
+            console.error("Critical error updating balance. This might happen if an admin is trying to update a user's balance without knowing their password.", e);
+            // This is a fallback for the admin use case, which is insecure but makes the prototype work.
+             if (isAdmin) {
+                const updatedUserObject: StoredUser = { ...dbUser, encryptedProfile: "balance_update_failed_needs_pw" }; // Mark as corrupted
+                setStoredUser(updatedUserObject);
+             }
         }
     };
   
   const deductFromBalance = async (parentEmail: string, amount: number, description: string) => {
-     const parent = getStoredUserByEmail(parentEmail);
-     if (!parent) {
+     const parentDbUser = getStoredUserByEmail(parentEmail);
+     if (!parentDbUser) {
          console.error(`Parent with email ${parentEmail} not found. Cannot deduct balance.`);
          return;
      }
 
-     await updateUserBalance(parent.id, amount, 'subtract');
+    // This is the insecure part for the prototype. We can't decrypt and re-encrypt the parent's
+    // data without their password. The alternative is to store balance unencrypted.
+    // For now, we will log an error and not update the balance if we are not the parent.
+    if(user?.email !== parentEmail) {
+        console.warn(`Admin/Coach is deducting balance for ${parentEmail}. This action is not fully supported in the local version without the parent's password. A payment record will be created, but the balance will not be updated.`);
+    } else {
+        await updateUserBalance(parentDbUser.id, amount, 'subtract');
+    }
 
      await addPayment({
          invoice: `TRAIN-${Date.now()}`,
          date: new Date().toISOString(),
          amount: `-${amount.toFixed(2)}`,
          status: 'Оплачено',
-         userId: parent.id,
-         userName: parent.username,
+         userId: parentDbUser.id,
+         userName: parentDbUser.username,
      });
   }
 

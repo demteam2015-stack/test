@@ -21,11 +21,15 @@ import { getFullName, getInitials, getAvatarUrl } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { getFullJournal } from '@/lib/journal-api';
 import { competitionsData } from '@/lib/data';
+import { getAthletes } from '@/lib/athletes-api';
 
 
 // Mock AI analysis function
 const getAIAnalysis = async (userId: string): Promise<string> => {
     const journal = await getFullJournal();
+    const athletes = await getAthletes();
+    const currentUserAthlete = athletes.find(a => a.id === userId);
+
     const userCompetitions = competitionsData.filter(c => c.status === 'Завершенный');
 
     let attendanceSummary = '';
@@ -61,7 +65,9 @@ ${userCompetitions.map(c => `- "${c.name}": результат - ${c.result}`).j
 ${userCompetitions.some(c => c.result?.includes('1')) ? 'Поздравляю с призовыми местами! Это отличный результат.' : 'Каждое соревнование - это ценный опыт. Продолжай работать над собой.'}`
     }
 
-    return `Здравствуйте! Я ваш AI-тренер. Я проанализировал вашу активность в приложении.
+    const athleteName = currentUserAthlete ? getFullName(currentUserAthlete.firstName, currentUserAthlete.lastName) : "спортсмен";
+
+    return `Здравствуйте, ${athleteName}! Я ваш AI-тренер. Я проанализировал вашу активность в приложении.
 
 ${attendanceSummary}
 ${competitionSummary}
@@ -80,6 +86,35 @@ export default function MyMessagesPage() {
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [coach, setCoach] = useState<{ id: string; name: string } | null>(null);
+  const [athleteId, setAthleteId] = useState<string | null>(null);
+
+
+  const fetchThreads = useCallback(async () => {
+    if (!user || !athleteId) return;
+    setLoading(true);
+    const userThreads = await getMessageThreadsForUser(athleteId);
+    setThreads(userThreads);
+    setLoading(false);
+  }, [user, athleteId]);
+  
+  // Find athlete profile for current user
+  useEffect(() => {
+    const findAthleteProfile = async () => {
+        if (user) {
+            const athletes = await getAthletes();
+            if (user.role === 'athlete') {
+                const athleteProfile = athletes.find(a => getFullName(a.firstName, a.lastName) === getFullName(user.firstName, user.lastName));
+                if (athleteProfile) setAthleteId(athleteProfile.id);
+            } else if (user.role === 'parent') {
+                const childProfile = athletes.find(a => a.parentId === user.email);
+                if (childProfile) setAthleteId(childProfile.id);
+            } else {
+                 setAthleteId(user.id);
+            }
+        }
+    };
+    findAthleteProfile();
+  }, [user]);
 
   useEffect(() => {
     async function fetchCoach() {
@@ -89,17 +124,11 @@ export default function MyMessagesPage() {
     fetchCoach();
   }, []);
 
-  const fetchThreads = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    const userThreads = await getMessageThreadsForUser(user.id);
-    setThreads(userThreads);
-    setLoading(false);
-  }, [user]);
-
   useEffect(() => {
-    fetchThreads();
-  }, [fetchThreads]);
+    if(athleteId) {
+        fetchThreads();
+    }
+  }, [fetchThreads, athleteId]);
   
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -107,14 +136,14 @@ export default function MyMessagesPage() {
 
   const handleThreadSelect = async (threadId: string) => {
     setActiveThreadId(threadId);
-    if(user) {
-        await markThreadAsRead(threadId, user.id);
+    if(athleteId) {
+        await markThreadAsRead(threadId, athleteId);
         // Manually update the read status in the local state to avoid a full refetch
         setThreads(prev => {
             const newThreads = {...prev};
             if (newThreads[threadId]) {
                 newThreads[threadId] = newThreads[threadId].map(msg => 
-                    msg.recipientId === user.id ? { ...msg, isRead: true } : msg
+                    msg.recipientId === athleteId ? { ...msg, isRead: true } : msg
                 );
             }
             return newThreads;
@@ -123,10 +152,10 @@ export default function MyMessagesPage() {
   };
 
   const handleStartNewConversation = () => {
-      if (!user || !coach) return;
+      if (!athleteId || !coach) return;
       // Logic to find or create the main thread with the coach
-      const coachThreadId = `${user.id}_${coach.id}`;
-      const invertedCoachThreadId = `${coach.id}_${user.id}`;
+      const coachThreadId = `${athleteId}_${coach.id}`;
+      const invertedCoachThreadId = `${coach.id}_${athleteId}`;
 
       if (threads[coachThreadId] || threads[invertedCoachThreadId]) {
           setActiveThreadId(threads[coachThreadId] ? coachThreadId : invertedCoachThreadId);
@@ -139,19 +168,19 @@ export default function MyMessagesPage() {
   }
 
   const handleGetAIAnalysis = async () => {
-      if (!user || !coach) return;
+      if (!athleteId || !coach) return;
       setIsSending(true);
 
-      const analysisText = await getAIAnalysis(user.id);
+      const analysisText = await getAIAnalysis(athleteId);
 
-      const threadId = `${user.id}_${coach.id}`;
+      const threadId = `${athleteId}_ai_coach`;
       setActiveThreadId(threadId);
 
       const aiMessage: Omit<Message, 'id'|'isRead'> = {
-        senderId: coach.id,
+        senderId: 'ai_coach_id',
         senderName: "AI-Тренер",
         senderRole: 'coach',
-        recipientId: user.id,
+        recipientId: athleteId,
         text: analysisText,
         date: new Date().toISOString(),
         threadId: threadId,
@@ -162,7 +191,10 @@ export default function MyMessagesPage() {
       setThreads(prev => {
         const newThreads = {...prev};
         if (!newThreads[threadId]) newThreads[threadId] = [];
-        newThreads[threadId].push(createdMessage);
+        const thread = newThreads[threadId];
+        if (!thread.find(m => m.id === createdMessage.id)) {
+            thread.push(createdMessage);
+        }
         return newThreads;
       });
 
@@ -175,15 +207,15 @@ export default function MyMessagesPage() {
   }
   
   const handleReply = async () => {
-    if (!replyText || !user || !coach) return;
+    if (!replyText || !user || !coach || !athleteId) return;
 
     setIsSending(true);
     
     // In a new conversation, the threadId is determined for the first time.
-    const threadIdToSend = activeThreadId || `${user.id}_${coach.id}`;
+    const threadIdToSend = activeThreadId || `${athleteId}_${coach.id}`;
 
     const newMessage: Omit<Message, 'id'|'isRead'> = {
-        senderId: user.id,
+        senderId: athleteId,
         senderName: getFullName(user.firstName, user.lastName) || user.username,
         senderRole: user.role,
         recipientId: coach.id, // All messages go to the coach
@@ -197,11 +229,17 @@ export default function MyMessagesPage() {
     
     setThreads(prevThreads => {
         const newThreads = {...prevThreads};
-        const currentThread = newThreads[createdMessage.threadId] || [];
-        currentThread.push(createdMessage);
-        newThreads[createdMessage.threadId] = currentThread;
+        const threadKey = createdMessage.threadId;
+        if (!newThreads[threadKey]) {
+            newThreads[threadKey] = [];
+        }
+        const thread = newThreads[threadKey];
+        if (!thread.find(m => m.id === createdMessage.id)) {
+            thread.push(createdMessage);
+        }
+        
         // If it was a temporary thread, remove the old key
-        if(activeThreadId && activeThreadId !== createdMessage.threadId) {
+        if(activeThreadId && activeThreadId !== threadKey) {
             delete newThreads[activeThreadId];
         }
         return newThreads;
@@ -242,22 +280,27 @@ export default function MyMessagesPage() {
                     <CardDescription>Всего диалогов: {sortedThreads.length}</CardDescription>
                 </div>
                 {coach && (
-                  <Button size="sm" onClick={handleStartNewConversation}>
+                  <Button size="sm" onClick={handleStartNewConversation} disabled={!athleteId}>
                       <MessageSquarePlus className="mr-2"/>
                       Написать тренеру
                   </Button>
                 )}
             </CardHeader>
             <CardContent className="space-y-2 h-[calc(100%-8rem)] overflow-y-auto pr-2">
-                {loading ? (
+                {loading || !athleteId ? (
                     <div className="flex items-center justify-center h-full">
                         <Loader className="h-8 w-8 animate-spin text-primary" />
                     </div>
                 ) : sortedThreads.length > 0 ? (
                      sortedThreads.map(thread => {
                         const lastMessage = thread[thread.length - 1];
-                        const otherParticipantName = lastMessage.senderId === user?.id ? (lastMessage.recipientId === coach?.id ? "Тренер" : "AI-Тренер") : lastMessage.senderName;
-                        const isUnread = lastMessage.recipientId === user?.id && !lastMessage.isRead;
+                        if (!lastMessage) return null;
+                        
+                        const otherParticipantName = lastMessage.senderId === athleteId 
+                          ? (lastMessage.recipientId === coach?.id ? "Тренер" : "AI-Тренер") 
+                          : lastMessage.senderName;
+                        
+                        const isUnread = lastMessage.recipientId === athleteId && !lastMessage.isRead;
                         return (
                             <div 
                                 key={thread[0].threadId}
@@ -297,21 +340,21 @@ export default function MyMessagesPage() {
                     </CardHeader>
                     <CardContent className="flex-grow overflow-y-auto space-y-4 pr-2">
                        {activeThread.map((msg, index) => (
-                            <div key={msg.id + index} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
-                                {msg.senderId !== user?.id && (
+                            <div key={msg.id + index} className={`flex items-end gap-2 ${msg.senderId === athleteId ? 'justify-end' : ''}`}>
+                                {msg.senderId !== athleteId && (
                                      <Avatar className="h-8 w-8">
                                         <AvatarImage src={getAvatarUrl(msg.senderId, msg.senderName)} />
                                         <AvatarFallback>{getInitials(msg.senderName)}</AvatarFallback>
                                     </Avatar>
                                 )}
-                                <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : (msg.senderName === "AI-Тренер" ? 'bg-secondary' : 'bg-muted')}`}>
+                                <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === athleteId ? 'bg-primary text-primary-foreground' : (msg.senderName === "AI-Тренер" ? 'bg-secondary' : 'bg-muted')}`}>
                                     <p className="font-bold mb-1 text-xs">{msg.senderName}</p>
                                     <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-                                    <div className={`flex items-center gap-2 mt-2 ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`flex items-center gap-2 mt-2 ${msg.senderId === athleteId ? 'justify-end' : 'justify-start'}`}>
                                         <time className="text-xs opacity-70">
                                             {format(new Date(msg.date), 'HH:mm', { locale: ru })}
                                         </time>
-                                         {msg.senderId === user?.id && (
+                                         {msg.senderId === athleteId && (
                                             msg.isRead ? <CheckCheck size={16} className="text-blue-400" /> : <Check size={16} />
                                          )}
                                     </div>
@@ -321,7 +364,7 @@ export default function MyMessagesPage() {
                         <div ref={messagesEndRef} />
                     </CardContent>
                      <CardFooter className="flex-shrink-0 pt-4 border-t gap-2">
-                         <Button variant="outline" onClick={handleGetAIAnalysis} disabled={isSending}>
+                         <Button variant="outline" onClick={handleGetAIAnalysis} disabled={isSending || !athleteId}>
                              <BrainCircuit className="mr-2"/>
                              Запросить анализ у AI
                          </Button>
@@ -336,7 +379,7 @@ export default function MyMessagesPage() {
                                         handleReply();
                                     }
                                 }}
-                                disabled={isSending}
+                                disabled={isSending || !athleteId}
                                 className="pr-20"
                             />
                             <Button 
@@ -356,7 +399,7 @@ export default function MyMessagesPage() {
                     <Mail className="h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-semibold">Выберите или начните диалог</h3>
                     <p className="mt-2 text-sm text-muted-foreground">Выберите диалог из списка слева, напишите тренеру или запросите анализ своей активности у AI-тренера.</p>
-                     <Button className="mt-4" onClick={handleGetAIAnalysis} disabled={isSending}>
+                     <Button className="mt-4" onClick={handleGetAIAnalysis} disabled={isSending || !athleteId}>
                          <BrainCircuit className="mr-2"/>
                          Получить анализ от AI
                      </Button>
