@@ -190,82 +190,80 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8 items-start">
-        <div className="lg:col-span-1 space-y-8 sticky top-24">
-           <form onSubmit={handleSave}>
-                <Card>
-                <CardHeader>
-                    <CardTitle>Личная информация</CardTitle>
-                    <CardDescription>
-                    Эта информация отображается в вашем профиле.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <div className="flex flex-col items-center gap-4">
-                         <div className="relative group">
-                            <Avatar className="h-24 w-24">
-                                <AvatarImage
-                                    src={user.photoURL ?? getAvatarUrl(user.id, user.username)}
-                                    alt={getFullName(user.firstName, user.lastName)}
-                                />
-                                <AvatarFallback className="text-3xl">
-                                    {getInitials(user.firstName, user.lastName)}
-                                </AvatarFallback>
-                            </Avatar>
-                            <button
-                                type="button"
-                                onClick={handleAvatarClick}
-                                className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                            >
-                                <Camera className="h-8 w-8 text-white" />
-                            </button>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileChange}
-                                className="hidden"
-                                accept="image/png, image/jpeg, image/gif"
+        <form onSubmit={handleSave} className="lg:col-span-1 space-y-8 sticky top-24">
+            <Card>
+            <CardHeader>
+                <CardTitle>Личная информация</CardTitle>
+                <CardDescription>
+                Эта информация отображается в вашем профиле.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="relative group">
+                        <Avatar className="h-24 w-24">
+                            <AvatarImage
+                                src={user.photoURL ?? getAvatarUrl(user.id, user.username)}
+                                alt={getFullName(user.firstName, user.lastName)}
                             />
-                        </div>
-                        <div className="text-center">
-                            <p className="text-xl font-bold">{getFullName(user.firstName, user.lastName)}</p>
-                            <p className="text-sm text-muted-foreground">{user.username} ({user.email})</p>
-                            <Badge variant="outline" className="mt-2">{roleTranslations[user.role] || user.role}</Badge>
-                        </div>
+                            <AvatarFallback className="text-3xl">
+                                {getInitials(user.firstName, user.lastName)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <button
+                            type="button"
+                            onClick={handleAvatarClick}
+                            className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        >
+                            <Camera className="h-8 w-8 text-white" />
+                        </button>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            className="hidden"
+                            accept="image/png, image/jpeg, image/gif"
+                        />
                     </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="firstName">Имя</Label>
-                            <Input
-                            id="firstName"
-                            name="firstName"
-                            value={formData.firstName}
-                            onChange={handleInputChange}
-                            disabled={isSaving}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="lastName">Фамилия</Label>
-                            <Input
-                            id="lastName"
-                            name="lastName"
-                            value={formData.lastName}
-                            onChange={handleInputChange}
-                            disabled={isSaving}
-                            />
-                        </div>
+                    <div className="text-center">
+                        <p className="text-xl font-bold">{getFullName(user.firstName, user.lastName)}</p>
+                        <p className="text-sm text-muted-foreground">{user.username} ({user.email})</p>
+                        <Badge variant="outline" className="mt-2">{roleTranslations[user.role] || user.role}</Badge>
                     </div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="firstName">Имя</Label>
+                        <Input
+                        id="firstName"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        disabled={isSaving}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="lastName">Фамилия</Label>
+                        <Input
+                        id="lastName"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        disabled={isSaving}
+                        />
+                    </div>
+                </div>
 
-                </CardContent>
-                <CardFooter>
-                    <Button type="submit" disabled={isSaving} className="w-full">
-                    {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                    Сохранить изменения
-                    </Button>
-                </CardFooter>
-                </Card>
-            </form>
-        </div>
+            </CardContent>
+            <CardFooter>
+                <Button type="submit" disabled={isSaving} className="w-full">
+                {isSaving && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                Сохранить изменения
+                </Button>
+            </CardFooter>
+            </Card>
+        </form>
         
         <div className="lg:col-span-2">
             <Card>
