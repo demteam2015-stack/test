@@ -82,8 +82,7 @@ export default function CompetitionsPage() {
                 {upcoming.map((comp, i) => (
                     <div 
                       key={comp.id} 
-                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors gap-4 animate-in fade-in-0 slide-in-from-bottom-4"
-                      style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors gap-4"
                     >
                         <div className="flex-grow">
                             <p className="font-semibold">{comp.name}</p>
@@ -122,8 +121,7 @@ export default function CompetitionsPage() {
                  {results.map((comp, i) => (
                     <div 
                       key={comp.id} 
-                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors gap-4 animate-in fade-in-0 slide-in-from-bottom-4"
-                      style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-md border hover:bg-muted/50 transition-colors gap-4"
                     >
                         <div className="flex-grow">
                            <p className="font-semibold">{comp.name}</p>

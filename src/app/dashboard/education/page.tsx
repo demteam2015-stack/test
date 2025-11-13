@@ -67,8 +67,7 @@ export default function EducationPage() {
           return (
             <Card 
               key={material.id} 
-              className={`flex flex-col animate-in fade-in-0 slide-in-from-bottom-4 ${isCompleted ? 'bg-muted/50' : ''}`}
-              style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
+              className={`flex flex-col ${isCompleted ? 'bg-muted/50' : ''}`}
             >
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">

@@ -79,8 +79,7 @@ export default function HallOfFamePage() {
         {athletes.map((athlete, i) => (
             <Card 
               key={athlete.id} 
-              className="flex flex-col overflow-hidden animate-in fade-in-0 slide-in-from-bottom-4"
-              style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
+              className="flex flex-col overflow-hidden"
             >
                 <div className="relative">
                     <Image

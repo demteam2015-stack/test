@@ -28,7 +28,7 @@ export default function LandingPage() {
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
-                  <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none bg-clip-text text-transparent bg-gradient-to-r from-primary via-green-400 to-primary">
+                  <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none bg-clip-text text-transparent bg-gradient-to-r from-primary via-red-400 to-primary">
                     Достигайте вершин вместе
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
@@ -46,7 +46,7 @@ export default function LandingPage() {
               </div>
                <div className="hidden lg:flex items-center justify-center relative">
                  <div className="absolute w-72 h-72 bg-primary/20 rounded-full filter blur-3xl animate-blob"></div>
-                 <div className="absolute w-72 h-72 bg-green-400/20 rounded-full filter blur-3xl animate-blob animation-delay-2000 top-10 left-20"></div>
+                 <div className="absolute w-72 h-72 bg-red-400/20 rounded-full filter blur-3xl animate-blob animation-delay-2000 top-10 left-20"></div>
                  <div className="absolute w-72 h-72 bg-secondary/20 rounded-full filter blur-3xl animate-blob animation-delay-4000 bottom-10 right-20"></div>
                  <Logo className="w-48 h-48 text-primary drop-shadow-[0_0px_15px_hsl(var(--primary))]"/>
               </div>
