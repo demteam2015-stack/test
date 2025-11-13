@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { useState, type FormEvent, useEffect, useMemo, useRef } from 'react';
-import { Loader, User, Trophy, Share2, Camera, GraduationCap, Star, LogOut, BadgeCheck, ShieldCheck, Upload, FileClock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Loader, User, Trophy, Share2, Camera, GraduationCap, Star, LogOut, BadgeCheck, ShieldCheck, Upload, FileClock, CheckCircle, XCircle, AlertTriangle, Shield } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { competitionsData } from '@/lib/data';
 import type { Competition } from '@/lib/data';
@@ -263,6 +263,16 @@ export default function ProfilePage() {
       none: { text: "Нет заявки", icon: <></>, color: ""},
   }[athleteProfile?.attestationStatus || 'none'];
 
+  const RoleIcon = ({ role }: { role: string }) => {
+    switch (role) {
+        case 'admin': return <BadgeCheck className="h-5 w-5 text-primary" />;
+        case 'coach': return <ShieldCheck className="h-5 w-5 text-blue-500" />;
+        case 'parent': return <Shield className="h-5 w-5 text-green-500" />;
+        case 'athlete': return <User className="h-5 w-5 text-orange-500" />;
+        default: return null;
+    }
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -315,8 +325,7 @@ export default function ProfilePage() {
                     <div className="text-center">
                         <p className="text-xl font-bold flex items-center justify-center gap-2">
                            {getFullName(user.firstName, user.lastName)}
-                           {user.role === 'admin' && <BadgeCheck className="h-5 w-5 text-primary" />}
-                           {user.role === 'coach' && <ShieldCheck className="h-5 w-5 text-blue-500" />}
+                           <RoleIcon role={user.role} />
                         </p>
                         <p className="text-sm text-muted-foreground">{user.username} ({user.email})</p>
                         <Badge variant="outline" className="mt-2">{roleTranslations[user.role] || user.role}</Badge>
@@ -452,14 +461,14 @@ export default function ProfilePage() {
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="w-full">
                   <LogOut className="mr-2 h-4 w-4" />
-                  Выйти со всех устройств
+                  Выйти
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Вы уверены, что хотите выйти?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Это действие завершит вашу текущую сессию на этом устройстве. Вы сможете снова войти в систему, используя свой пароль. Это не удалит ваши данные.
+                    Это действие завершит вашу текущую сессию на этом устройстве. Вы сможете снова войти в систему, используя свой пароль.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

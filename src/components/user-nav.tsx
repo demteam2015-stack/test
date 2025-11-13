@@ -39,10 +39,18 @@ export function UserNav() {
     parent: 'Родитель',
     admin: 'Администратор',
   };
+
+  const RoleIcon = ({ role }: { role: string }) => {
+    switch (role) {
+        case 'admin': return <BadgeCheck className="h-4 w-4 text-primary" />;
+        case 'coach': return <ShieldCheck className="h-4 w-4 text-blue-500" />;
+        case 'parent': return <Shield className="h-4 w-4 text-green-500" />;
+        case 'athlete': return <UserIcon className="h-4 w-4 text-orange-500" />;
+        default: return null;
+    }
+  }
   
   const allRoles: (UserProfile['role'])[] = ['admin', 'athlete', 'coach', 'parent'];
-
-  const userRole = user.role ? roleTranslations[user.role] : 'Неизвестно';
 
   const handleRoleSwitch = (newRole: UserProfile['role']) => {
       // Only the permanent admin can switch roles
@@ -73,8 +81,7 @@ export function UserNav() {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none flex items-center gap-2">
                   {getFullName(user.firstName, user.lastName)}
-                  {user.role === 'admin' && <BadgeCheck className="h-4 w-4 text-primary" />}
-                  {user.role === 'coach' && <ShieldCheck className="h-4 w-4 text-blue-500" />}
+                  <RoleIcon role={user.role} />
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user.email}
@@ -83,8 +90,8 @@ export function UserNav() {
             </DropdownMenuLabel>
              <DropdownMenuSeparator />
               <div className="flex items-center px-2 py-1.5 text-xs text-muted-foreground">
-                <Shield className="mr-2 h-4 w-4" />
-                <span>{userRole}</span>
+                <RoleIcon role={user.role} />
+                <span className="ml-2">{roleTranslations[user.role]}</span>
               </div>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
@@ -117,8 +124,8 @@ export function UserNav() {
                                     onClick={() => handleRoleSwitch(role)}
                                     disabled={user.role === role}
                                 >
-                                    <Shield className={`mr-2 h-4 w-4 ${user.role === role ? 'text-primary' : ''}`} />
-                                    {roleTranslations[role]}
+                                    <RoleIcon role={role} />
+                                    <span className="ml-2">{roleTranslations[role]}</span>
                                 </DropdownMenuItem>
                             ))}
                         </DropdownMenuSubContent>
