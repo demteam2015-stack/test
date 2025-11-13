@@ -191,66 +191,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // This function now guarantees the admin user exists with the correct credentials.
-    const forceCreateAdminUser = async () => {
-        if (typeof window === 'undefined' || localStorage.getItem(INITIAL_ADMIN_CREATED) === 'true') {
-            return;
-        }
-
-        const adminEmail = 'lexazver@gmail.com';
-        const adminUsername = 'lexazver';
-        const adminPassword = '123123';
-        
-        // If the user exists, delete it to ensure we can recreate it with the correct password hash and role.
-        let existingUser = getStoredUserByEmail(adminEmail);
-        if (existingUser) {
-            deleteStoredUser(existingUser);
-        }
-
-        const salt = generateSalt();
-        const encryptionKey = await deriveKey(adminPassword, salt, ['encrypt']);
-
-        const profileToEncrypt = {
-            username: adminUsername,
-            firstName: 'Алексей',
-            lastName: 'Демьяненко',
-            dateOfBirth: new Date('1990-01-01').toISOString(),
-            role: 'admin',
-            photoURL: '', 
-            balance: 9999,
-        };
-
-        const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
-
-        const adminUser: StoredUser = {
-            id: 'initial_admin_id_placeholder',
-            email: adminEmail,
-            username: adminUsername,
-            salt: bufferToHex(salt),
-            iv: iv,
-            encryptedProfile: encryptedData,
-        };
-        
-        setStoredUser(adminUser);
-        // Mark as done so we don't do this on every page load.
-        localStorage.setItem(INITIAL_ADMIN_CREATED, 'true'); 
-        console.log('Admin user has been force-created or recreated successfully.');
-    };
-
-
   useEffect(() => {
     const setup = async () => {
-        // Check for a persisted session on initial load
         if (typeof window !== 'undefined') {
-            await forceCreateAdminUser();
-
-            const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
             const isAdminSession = localStorage.getItem(ADMIN_PERMAROLE_KEY) === 'true';
-
             if(isAdminSession) {
                 setIsAdmin(true);
             }
+            
+            // --- Force create admin user ---
+            const adminCreated = localStorage.getItem(INITIAL_ADMIN_CREATED) === 'true';
+            if (!adminCreated) {
+                const adminEmail = 'lexazver@gmail.com';
+                const adminUsername = 'lexazver';
+                const adminPassword = '123123';
+                
+                let existingUser = getStoredUserByEmail(adminEmail);
+                if (existingUser) {
+                    deleteStoredUser(existingUser);
+                }
 
+                const salt = generateSalt();
+                const encryptionKey = await deriveKey(adminPassword, salt, ['encrypt']);
+
+                const profileToEncrypt = {
+                    username: adminUsername,
+                    firstName: 'Алексей',
+                    lastName: 'Демьяненко',
+                    dateOfBirth: new Date('1990-01-01').toISOString(),
+                    role: 'admin',
+                    photoURL: '', 
+                    balance: 9999,
+                };
+
+                const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
+
+                const adminUser: StoredUser = {
+                    id: 'initial_admin_id_placeholder',
+                    email: adminEmail,
+                    username: adminUsername,
+                    salt: bufferToHex(salt),
+                    iv: iv,
+                    encryptedProfile: encryptedData,
+                };
+                
+                setStoredUser(adminUser);
+                localStorage.setItem(INITIAL_ADMIN_CREATED, 'true');
+                console.log('Admin user has been force-created or recreated successfully.');
+            }
+            // --- End force create admin ---
+
+
+            const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
             if (sessionJson) {
                 try {
                     const sessionData = JSON.parse(sessionJson);
@@ -268,10 +260,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         ...decryptedProfile
                     };
                     
-                    if (isAdminSession && userProfile.id === 'initial_admin_id_placeholder') {
-                       // This block is for ensuring the admin remains admin across sessions,
-                    }
-
                     setUser(userProfile);
                 } catch (e) {
                     console.error("Session restore failed:", e);
@@ -481,7 +469,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // This is where the logic is flawed in a real-world scenario. You can't just re-encrypt
     // another user's data with the admin's key. But for this local-only app, we will
-    // decrypt the admin's profile (to prove they are who they say they are), and then
     // perform a "backdoor" update on the other user's profile.
     
     // We can't decrypt user data. The only robust way is to delete and recreate the user
