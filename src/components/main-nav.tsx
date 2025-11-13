@@ -15,6 +15,7 @@ import {
   User,
   GraduationCap,
   BrainCircuit,
+  Inbox,
 } from 'lucide-react';
 import {
   SidebarHeader,
@@ -44,8 +45,8 @@ export default function MainNav() {
     { href: '/dashboard/education', label: 'Обучение', icon: GraduationCap, roles: ['admin', 'coach', 'parent', 'athlete'] },
     { 
       href: '/dashboard/recommendations', 
-      label: isManager ? 'Рекомендации AI' : 'Чат с тренером', 
-      icon: isManager ? BrainCircuit : MessageSquare, 
+      label: isManager ? 'Сообщения' : 'Чат с тренером', 
+      icon: isManager ? Inbox : MessageSquare, 
       roles: ['admin', 'coach', 'parent', 'athlete'] 
     },
     { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard, roles: ['admin', 'coach', 'parent', 'athlete'] },
