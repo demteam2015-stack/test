@@ -1,12 +1,6 @@
 'use client';
 
 import Header from '@/components/header';
-import MainNav from '@/components/main-nav';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarInset,
-} from '@/components/ui/sidebar';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -42,16 +36,11 @@ export default function DashboardLayout({
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <MainNav />
-      </Sidebar>
-      <SidebarInset>
+    <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="p-4 sm:p-6 lg:p-8 bg-muted/30 dark:bg-transparent min-h-[calc(100vh-3.5rem)]">
+        <main className="p-4 sm:p-6 lg:p-8 flex-1">
             {children}
         </main>
-      </SidebarInset>
-    </SidebarProvider>
+    </div>
   );
 }

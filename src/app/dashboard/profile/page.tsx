@@ -160,9 +160,6 @@ export default function ProfilePage() {
     try {
         await navigator.share(shareData);
     } catch (err) {
-        // This is not a critical error. It can happen if the user cancels the share dialog
-        // or if the browser does not fully support the API.
-        // We fall back to copying to the clipboard.
         navigator.clipboard.writeText(text);
         toast({
           title: 'Скопировано в буфер обмена!',
