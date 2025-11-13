@@ -10,6 +10,7 @@ const USERS_USERNAME_INDEX_PREFIX = 'user_username_';
 const USERS_ID_INDEX_PREFIX = 'user_id_';
 const SESSION_STORAGE_KEY = 'local_user_session_v2';
 const ADMIN_PERMAROLE_KEY = 'admin_permarole_v3';
+const INITIAL_ADMIN_CREATED = 'initial_admin_created_v2';
 
 
 export type UserProfile = BaseUserProfile & {
@@ -190,10 +191,59 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Function to create the initial admin user
+  const createInitialAdmin = async () => {
+    if (typeof window === 'undefined' || localStorage.getItem(INITIAL_ADMIN_CREATED) === 'true') {
+        return;
+    }
+
+    const adminEmail = 'lexazver@gmail.com';
+    const adminUsername = 'lexazver';
+    const adminPassword = '123123'; // Simple default password
+
+    if (getStoredUserByEmail(adminEmail) || getStoredUserByUsername(adminUsername)) {
+        localStorage.setItem(INITIAL_ADMIN_CREATED, 'true');
+        return; // Admin already exists
+    }
+
+    const salt = generateSalt();
+    const encryptionKey = await deriveKey(adminPassword, salt, ['encrypt']);
+
+    const profileToEncrypt = {
+        username: adminUsername,
+        firstName: 'Алексей',
+        lastName: 'Демьяненко',
+        dateOfBirth: new Date('1990-01-01').toISOString(),
+        role: 'admin',
+        photoURL: '', // Will be set from placeholder images
+        balance: 9999,
+    };
+
+    const newAdmin: StoredUser = {
+        id: 'initial_admin_id_placeholder',
+        email: adminEmail,
+        username: adminUsername,
+        salt: bufferToHex(salt),
+        iv: '',
+        encryptedProfile: '',
+    };
+
+    const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
+    newAdmin.iv = iv;
+    newAdmin.encryptedProfile = encryptedData;
+
+    setStoredUser(newAdmin);
+    localStorage.setItem(INITIAL_ADMIN_CREATED, 'true');
+    console.log('Initial admin user created.');
+  };
+
+
   useEffect(() => {
     const setup = async () => {
         // Check for a persisted session on initial load
         if (typeof window !== 'undefined') {
+            await createInitialAdmin();
+
             const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
             const isAdminSession = localStorage.getItem(ADMIN_PERMAROLE_KEY) === 'true';
 
@@ -218,11 +268,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         ...decryptedProfile
                     };
                     
-                    // The permanent admin flag is now stored separately in localStorage
-                    // and checked on initial load.
                     if (isAdminSession && userProfile.id === 'initial_admin_id_placeholder') {
                        // This block is for ensuring the admin remains admin across sessions,
-                       // even if they were emulating another role.
                     }
 
                     setUser(userProfile);
@@ -236,7 +283,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
     }
     setup();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
@@ -248,7 +294,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const key = await deriveKey(password, salt, ['decrypt']);
             let profile = await decryptData(key, hexToBuffer(foundUser.iv), hexToBuffer(foundUser.encryptedProfile)) as Omit<UserProfile, 'id' | 'email'>;
             
-            // Check if logging in user is an admin by role, and persist admin status
             if (profile.role === 'admin') {
                 setIsAdmin(true);
                 localStorage.setItem(ADMIN_PERMAROLE_KEY, 'true');
@@ -264,7 +309,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             
             sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
                 id: foundUser.id,
-                password: password, // Storing password in sessionStorage is a security risk, but necessary for this local-only setup to re-derive key for updates.
+                password: password, 
             }));
 
         } catch(e) {
@@ -342,8 +387,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     let newProfileData = { ...currentProfile, ...updatedProfile };
 
-    // When the permanent admin switches roles, we update the state and the encrypted data
-    // to persist the emulated role. The isAdmin flag ensures they can always switch back.
     if (isAdmin && updatedProfile.role) {
       setUser(prevUser => prevUser ? { ...prevUser, ...updatedProfile } : null);
     } else {
@@ -378,8 +421,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const sessionJson = sessionStorage.getItem(SESSION_STORAGE_KEY);
     if (!sessionJson) return null;
     
-    // For this simulation, the admin will use a special "override" password
-    // to decrypt and re-encrypt any user's data. This is NOT secure.
     const adminKeyPassword = "admin_override";
 
     try {
@@ -392,7 +433,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
     } catch (e) {
         console.error("Admin could not decrypt user profile with override", e);
-        // Return basic info if all decryption fails
         return { id: dbUser.id, email: dbUser.email, username: dbUser.username, firstName: 'Encrypted', lastName: 'Data', role: 'athlete' };
     }
   };
@@ -402,7 +442,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const dbUser = getStoredUserByEmail(email);
       if (!dbUser) return null;
       
-      // Public-facing, so we don't return encrypted data.
       return {
           id: dbUser.id,
           email: dbUser.email,
@@ -421,8 +460,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const dbUser = getStoredUserById(userId);
     if (!dbUser) throw new Error("User not found to update balance");
 
-    // For this simulation, the admin will use a special "override" password
-    // to decrypt and re-encrypt any user's data. This is NOT secure.
     const adminKeyPassword = "admin_override";
     const salt = hexToBuffer(dbUser.salt);
     
@@ -453,7 +490,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
         setStoredUser(updatedUserObject);
         
-        // If the updated user is the currently logged-in user, update their state
         if (user && user.id === userId) {
             setUser(prev => prev ? {...prev, balance: profile.balance} : null);
         }
@@ -470,8 +506,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
 
-    // Since this is a critical financial operation, only an admin can perform it.
-    // We use the same override mechanism as updating the balance.
     if (!isAdmin) {
         console.error("Deduction failed: Only admins can deduct from balance.");
         return;
@@ -497,18 +531,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const updatedUserObject: StoredUser = { ...parentUser, iv, encryptedProfile: encryptedData };
         setStoredUser(updatedUserObject);
 
-        // Add a corresponding payment record to log the transaction
         const paymentRecord: Omit<Payment, 'id'> = {
             invoice: `DEDUCT-${Date.now()}`,
             date: new Date().toISOString(),
             amount: `-${amount.toFixed(2)}`,
             userId: parentUser.id,
             userName: parentUser.username,
-            status: 'Оплачено', // 'Оплачено' here means the deduction was successfully processed
+            status: 'Оплачено', 
         };
         await addPayment(paymentRecord);
 
-        // If the parent is the currently logged-in user, update their state
         if (user && user.id === parentUser.id) {
             setUser(prev => prev ? {...prev, balance: newBalance} : null);
         }
@@ -524,31 +556,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("User to reset not found.");
     }
     
-    // Delete the old user account
     deleteStoredUser(oldUser);
 
-    // Create a new account with the same details but new password
     const salt = generateSalt();
     const encryptionKey = await deriveKey(newPassword, salt, ['encrypt']);
 
-    // We can't know the old first/last name, so we use placeholders.
-    // The user will have to update their profile.
     const profileToEncrypt = {
         username: oldUser.username,
         firstName: oldUser.username,
         lastName: '(сброшено)',
-        role: 'athlete', // Assume default role after reset
+        role: 'athlete', 
         photoURL: `https://i.pravatar.cc/150?u=${oldUser.username}`,
         balance: 1000,
     };
 
     const newUser: StoredUser = {
-      id: oldUser.id, // Keep the same ID
+      id: oldUser.id, 
       email: oldUser.email,
       username: oldUser.username,
       salt: bufferToHex(salt),
-      iv: '', // Will be set by encryption
-      encryptedProfile: '', // Will be set by encryption
+      iv: '', 
+      encryptedProfile: '', 
     };
     
     const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
@@ -557,7 +585,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     setStoredUser(newUser);
 
-    // Return a pre-formatted email text for the admin to send
     return `
 Здравствуйте, ${newUser.username}!
 

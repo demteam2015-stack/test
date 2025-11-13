@@ -58,16 +58,12 @@ export function UserNav() {
       // Only the permanent admin can switch roles
       if (isAdmin) {
           updateUser({ role: newRole });
-          // Force a refresh to ensure all components re-evaluate the role
-          // Note: a full reload might not be ideal in a complex app, but for this
-          // simulation, it's the simplest way to ensure all contexts and components
-          // get the new role. A more advanced solution might use a global state manager.
           setTimeout(() => window.location.reload(), 100);
       }
   }
 
   const getAvatarUrl = (userId: string, username?: string) => {
-      if (username === 'lexazver') {
+      if (username === 'lexazver' || userId === 'initial_admin_id_placeholder') {
         const adminImage = PlaceHolderImages.find(img => img.id === 'user-lexazver');
         if (adminImage) return adminImage.imageUrl;
       }
@@ -75,10 +71,8 @@ export function UserNav() {
       const userImage = PlaceHolderImages.find(img => img.id === `user-${userId.substring(0, 4)}`);
       if (userImage) return userImage.imageUrl;
 
-      // Fallback to a random athlete image if no specific user image is found
       const athleteImages = PlaceHolderImages.filter(img => img.id.startsWith('athlete-'));
       if(athleteImages.length > 0) {
-        // Simple hash function to pick a consistent image based on ID
         const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         return athleteImages[hash % athleteImages.length].imageUrl;
       }

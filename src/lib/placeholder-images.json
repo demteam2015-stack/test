@@ -39,8 +39,8 @@
     {
       "id": "user-lexazver",
       "description": "Admin user avatar",
-      "imageUrl": "lexazver@31536000.1794487021854.ctYUwZcSRqp5km8WalmorOTRcM_CrEMnKz35SXDpwCI.eQOiHC6rjDb783-4o0aET6mZcZTWNP6FOnkPhCgBJFQ.webp",
-      "imageHint": "user avatar"
+      "imageUrl": "https://images.unsplash.com/photo-1560250097-0b93528c311a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMG9mJTIwYSUyMGJ1c2luZXNzbWFufGVufDB8fHx8MTc2Mzk2MjQwMXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "businessman portrait"
     }
   ]
 }
