@@ -11,7 +11,7 @@ import {
   GraduationCap,
   User,
   Shield,
-  CheckBadge,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
@@ -21,7 +21,7 @@ const navLinks = [
   { href: '/dashboard/team', label: 'Команда', icon: Users, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/competitions', label: 'Сорев-я', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete']},
-  { href: '/dashboard/attestation', label: 'Аттестация', icon: CheckBadge, roles: ['admin', 'coach']},
+  { href: '/dashboard/attestation', label: 'Аттестация', icon: ShieldCheck, roles: ['admin', 'coach']},
   { href: '/dashboard/profile', label: 'Профиль', icon: User, roles: ['admin', 'coach', 'parent', 'athlete']},
 ];
 

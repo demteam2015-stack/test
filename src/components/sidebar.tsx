@@ -18,7 +18,7 @@ import {
   Settings,
   User,
   Shield,
-  CheckBadge,
+  ShieldCheck,
 } from 'lucide-react';
 import { Logo } from './icons';
 import { useAuth } from '@/context/auth-context';
@@ -33,7 +33,7 @@ const navLinks = [
   { href: '/dashboard/education', label: 'Обучение', icon: GraduationCap, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/reports', label: 'Отчеты', icon: Shield, roles: ['admin', 'coach', 'parent', 'athlete']},
-  { href: '/dashboard/attestation', label: 'Аттестация', icon: CheckBadge, roles: ['admin', 'coach']},
+  { href: '/dashboard/attestation', label: 'Аттестация', icon: ShieldCheck, roles: ['admin', 'coach']},
 ];
 
 
