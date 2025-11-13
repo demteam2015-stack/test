@@ -26,12 +26,19 @@ export default function DashboardLayout({
     }
   }, [user, loading, router]);
 
-  if (loading || !user) {
+
+  if (loading) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-background">
             <Loader className="h-8 w-8 animate-spin text-primary" />
         </div>
     );
+  }
+
+  if (!user) {
+    // This case handles the final state where loading is false and user is still null.
+    // The useEffect above will trigger the redirect, but this is a safeguard.
+    return null;
   }
 
   return (
