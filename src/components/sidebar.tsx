@@ -19,6 +19,7 @@ import {
   User,
   Shield,
   ShieldCheck,
+  BarChart,
 } from 'lucide-react';
 import { Logo } from './icons';
 import { useAuth } from '@/context/auth-context';
@@ -32,7 +33,8 @@ const navLinks = [
   { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/education', label: 'Обучение', icon: GraduationCap, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/hall-of-fame', label: 'Зал славы', icon: Award, roles: ['admin', 'coach', 'parent', 'athlete']},
-  { href: '/dashboard/reports', label: 'Отчеты', icon: Shield, roles: ['admin', 'coach', 'parent', 'athlete']},
+  { href: '/dashboard/reports', label: 'Отчеты', icon: BarChart, roles: ['admin', 'coach', 'athlete']},
+  { href: '/dashboard/my-reports', label: 'Мои Отчеты', icon: BarChart, roles: ['parent']},
   { href: '/dashboard/attestation', label: 'Аттестация', icon: ShieldCheck, roles: ['admin', 'coach']},
 ];
 
@@ -55,24 +57,18 @@ export default function Sidebar() {
         </Link>
         <TooltipProvider>
             {navLinks.map((link) => {
-                // Special routing for reports page based on role
-                let finalHref = link.href;
-                if (link.href === '/dashboard/reports' && user.role === 'parent') {
-                    finalHref = '/dashboard/my-reports';
-                }
-
                 if (!link.roles.includes(user.role)) {
                     return null;
                 }
 
                 // A bit of a hack to group related routes under one icon
-                const isActive = (pathname.startsWith(link.href) && link.href !== '/dashboard') || pathname === finalHref;
+                const isActive = (pathname.startsWith(link.href) && link.href !== '/dashboard') || pathname === link.href;
 
                 return (
-                    <Tooltip key={link.href}>
+                    <Tooltip key={link.label}>
                         <TooltipTrigger asChild>
                         <Link
-                            href={finalHref}
+                            href={link.href}
                             className={cn(
                             'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
                             isActive && 'bg-accent text-accent-foreground'
