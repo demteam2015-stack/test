@@ -17,6 +17,7 @@ import { useAuth } from '@/context/auth-context';
 import { getMessageThreadsForUser, markThreadAsRead, createMessage, type Message, getCoachUser } from '@/lib/messages-api';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function MyMessagesPage() {
   const { user } = useAuth();
@@ -127,6 +128,18 @@ export default function MyMessagesPage() {
     return name.substring(0, 2);
   };
   
+    const getAvatarUrl = (userId: string) => {
+        const adminImage = PlaceHolderImages.find(img => img.id === 'user-lexazver');
+        if (adminImage && coach && userId === coach.id) {
+            return adminImage.imageUrl;
+        }
+
+        const userImage = PlaceHolderImages.find(img => img.id === `user-${userId.substring(0, 4)}`);
+        if (userImage) return userImage.imageUrl;
+        
+        return `https://i.pravatar.cc/150?u=${userId}`;
+    }
+
   const sortedThreads = Object.values(threads)
     .filter(thread => thread.length > 0) // Don't show dummy 'new' threads in the list
     .sort((a,b) => {
@@ -214,7 +227,7 @@ export default function MyMessagesPage() {
                             <div key={msg.id + index} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
                                 {msg.senderId !== user?.id && (
                                      <Avatar className="h-8 w-8">
-                                        <AvatarImage src={`https://i.pravatar.cc/150?u=${msg.senderId}`} />
+                                        <AvatarImage src={getAvatarUrl(msg.senderId)} />
                                         <AvatarFallback>{getInitials(msg.senderName)}</AvatarFallback>
                                     </Avatar>
                                 )}

@@ -17,6 +17,7 @@ import { useAuth } from '@/context/auth-context';
 import { getMessageThreadsForUser, markThreadAsRead, createMessage, type Message } from '@/lib/messages-api';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const CoachAdminView = () => {
     const { user } = useAuth();
@@ -91,6 +92,18 @@ const CoachAdminView = () => {
         return name.substring(0, 2);
     };
 
+    const getAvatarUrl = (userId: string, isCoach: boolean) => {
+        const adminImage = PlaceHolderImages.find(img => img.id === 'user-lexazver');
+        if (adminImage && isCoach) {
+            return adminImage.imageUrl;
+        }
+
+        const userImage = PlaceHolderImages.find(img => img.id === `user-${userId.substring(0, 4)}`);
+        if (userImage) return userImage.imageUrl;
+        
+        return `https://i.pravatar.cc/150?u=${userId}`;
+    }
+
     const sortedThreads = Object.values(threads).sort((a,b) => {
       if (a.length === 0) return 1;
       if (b.length === 0) return -1;
@@ -162,7 +175,7 @@ const CoachAdminView = () => {
                                 <div key={msg.id + index} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
                                     {msg.senderId !== user?.id && (
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={`https://i.pravatar.cc/150?u=${msg.senderId}`} />
+                                            <AvatarImage src={getAvatarUrl(msg.senderId, false)} />
                                             <AvatarFallback>{getInitials(msg.senderName)}</AvatarFallback>
                                         </Avatar>
                                     )}
