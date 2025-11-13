@@ -11,9 +11,20 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { useState, type FormEvent, useEffect, useMemo, useRef } from 'react';
-import { Loader, User, Award, Trophy, Share2, Camera, GraduationCap, Calendar, Star } from 'lucide-react';
+import { Loader, User, Award, Trophy, Share2, Camera, GraduationCap, Calendar, Star, Trash2 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { competitionsData } from '@/lib/data';
 import type { Competition } from '@/lib/data';
@@ -51,7 +62,7 @@ const TimelineItem = ({ icon, date, title, description, children }: { icon: Reac
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, clearCacheAndLogout } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -179,7 +190,7 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+        <h1 className="text-3xl font-bold font-headline tracking-tight flex items-center gap-2">
             <User className="size-8 text-primary"/>
             Мой путь чемпиона
         </h1>
@@ -189,10 +200,11 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8 items-start">
-        <form onSubmit={handleSave} className="lg:col-span-1 space-y-8 sticky top-24">
+        <div className="lg:col-span-1 space-y-8 sticky top-24">
+        <form onSubmit={handleSave}>
             <Card>
             <CardHeader>
-                <CardTitle>Личная информация</CardTitle>
+                <CardTitle className="font-headline">Личная информация</CardTitle>
                 <CardDescription>
                 Эта информация отображается в вашем профиле.
                 </CardDescription>
@@ -263,11 +275,51 @@ export default function ProfilePage() {
             </CardFooter>
             </Card>
         </form>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline">Опасная зона</CardTitle>
+            <CardDescription>
+              Действия в этой зоне необратимы. Будьте осторожны.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Очистить локальное хранилище
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Вы абсолютно уверены?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Это действие необратимо. Все данные приложения, включая все
+                    аккаунты, расписания, историю платежей и другие записи, будут
+                    навсегда удалены из вашего браузера.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Отмена</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={clearCacheAndLogout}
+                    className="bg-destructive hover:bg-destructive/90"
+                  >
+                    Да, удалить все данные
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardContent>
+        </Card>
+
+        </div>
         
         <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
-                    <CardTitle>Хроника достижений</CardTitle>
+                    <CardTitle className="font-headline">Хроника достижений</CardTitle>
                     <CardDescription>Ваш путь в команде от начала и до сегодняшнего дня.</CardDescription>
                 </CardHeader>
                 <CardContent>

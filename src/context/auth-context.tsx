@@ -182,6 +182,7 @@ type AuthContextType = {
   updateUserBalance: (userId: string, amount: number, operation: 'add' | 'subtract') => Promise<void>;
   deductFromBalance: (parentEmail: string, amount: number, description: string) => Promise<void>;
   adminGetUserProfile: (userId: string) => Promise<UserProfile | null>;
+  clearCacheAndLogout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -224,16 +225,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     balance: 99999,
                 };
 
-                const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
-
                 const adminUser: StoredUser = {
                     id: 'initial_admin_id_placeholder',
                     email: adminEmail,
                     username: adminUsername,
                     salt: bufferToHex(salt),
-                    iv: iv,
-                    encryptedProfile: encryptedData,
+                    iv: '',
+                    encryptedProfile: '',
                 };
+                
+                const { iv, encryptedData } = await encryptData(encryptionKey, profileToEncrypt);
+                adminUser.iv = iv;
+                adminUser.encryptedProfile = encryptedData;
                 
                 setStoredUser(adminUser);
                 localStorage.setItem(INITIAL_ADMIN_CREATED, 'true');
@@ -565,9 +568,18 @@ Email: ${newUser.email}
 Администрация команды.
     `;
   }
+  
+  const clearCacheAndLogout = () => {
+    if(typeof window !== 'undefined'){
+      logout(); // ensures session is cleared
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = '/login';
+    }
+  }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, login, signup, logout, updateUser, checkUserExists, adminResetPassword, getUserByEmail, updateUserBalance, deductFromBalance, adminGetUserProfile }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, login, signup, logout, updateUser, checkUserExists, adminResetPassword, getUserByEmail, updateUserBalance, deductFromBalance, adminGetUserProfile, clearCacheAndLogout }}>
       {children}
     </AuthContext.Provider>
   );
