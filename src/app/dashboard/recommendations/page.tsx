@@ -28,18 +28,20 @@ const getAllUsers = (): UserProfile[] => {
         const key = localStorage.key(i);
         if (key && key.startsWith('user_id_')) {
             try {
-                const storedUser = JSON.parse(localStorage.getItem(key) || '');
-                // We need more data than the basic profile, but we can't decrypt it here.
-                // We'll rely on the user object being mostly unencrypted for this view.
-                // This is a limitation of the current client-side encryption model.
-                 users.push({
+                const storedUser = JSON.parse(localStorage.getItem(key) || '{}');
+                // Attempt to get name from unencrypted username, fallback
+                const nameParts = storedUser.username.split('_');
+                const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : 'User';
+                const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : '';
+
+                users.push({
                     id: storedUser.id,
                     email: storedUser.email,
                     username: storedUser.username,
                     // These will be encrypted and not useful here without the user's password.
-                    // The createMessage function should store senderName unencrypted.
-                    firstName: storedUser.username, 
-                    lastName: '',
+                    // We'll rely on the user object being mostly unencrypted for this view.
+                    firstName: firstName, 
+                    lastName: lastName,
                     role: 'athlete'
                 });
             } catch (e) {
@@ -76,7 +78,9 @@ const CoachAdminView = () => {
         });
 
         // The coach/admin themself
-        participantsData[user.id] = user;
+        if (user) {
+            participantsData[user.id] = user;
+        }
         
         setParticipants(participantsData);
         setThreads(coachThreads);
@@ -117,7 +121,7 @@ const CoachAdminView = () => {
         
         setIsSending(true);
 
-        const newMessage: Omit<Message, 'id'|'isRead'> = {
+        const newMessageData: Omit<Message, 'id'|'isRead'> = {
             senderId: user.id,
             senderName: "Тренер", // Coach always sends as "Тренер"
             senderRole: user.role,
@@ -127,10 +131,20 @@ const CoachAdminView = () => {
             date: new Date().toISOString(),
         };
 
-        await createMessage(newMessage);
+        const createdMessage = await createMessage(newMessageData);
+        
+        setThreads(prev => {
+            const newThreads = {...prev};
+            if(newThreads[activeThreadId]) {
+                 newThreads[activeThreadId] = [...newThreads[activeThreadId], createdMessage];
+            } else {
+                 newThreads[activeThreadId] = [createdMessage];
+            }
+            return newThreads;
+        });
+        
         setReplyText('');
         setIsSending(false);
-        fetchThreads();
     };
 
     const sortedThreads = Object.entries(threads)
@@ -154,9 +168,9 @@ const CoachAdminView = () => {
         
         // If coach started the conversation, the other participant is the recipient
         const firstMessage = thread[0];
-        if (firstMessage.recipientId) {
+        if (firstMessage.recipientId && participants[firstMessage.recipientId]) {
             const participant = participants[firstMessage.recipientId];
-            return participant ? { name: participant.username, id: participant.id } : { name: "Участник", id: firstMessage.recipientId };
+            return participant ? { name: getFullName(participant.firstName, participant.lastName) || participant.username, id: participant.id } : { name: "Участник", id: firstMessage.recipientId };
         }
 
         return null;
@@ -183,7 +197,7 @@ const CoachAdminView = () => {
                             const lastMessage = thread[thread.length - 1];
                             const participant = getParticipantForThread(thread);
                             const participantName = participant ? participant.name : "Неизвестный";
-                            const isUnread = lastMessage.recipientId === user?.id && !lastMessage.isRead;
+                            const isUnread = user ? lastMessage.recipientId === user.id && !lastMessage.isRead : false;
                             
                             return (
                                 <div 
