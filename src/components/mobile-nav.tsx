@@ -10,10 +10,9 @@ import {
   Users,
   GraduationCap,
   User,
-  Shield,
   ShieldCheck,
   CreditCard,
-  BrainCircuit,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
@@ -24,7 +23,7 @@ const navLinks = [
   { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/competitions', label: 'Сорев-я', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/payments', label: 'Платежи', icon: CreditCard, roles: ['parent', 'athlete']},
-  { href: '/dashboard/my-messages', label: 'AI-Коуч', icon: BrainCircuit, roles: ['parent', 'athlete']},
+  { href: '/dashboard/my-messages', label: 'AI-Коуч', icon: MessageSquare, roles: ['parent', 'athlete']},
   { href: '/dashboard/attestation', label: 'Аттестация', icon: ShieldCheck, roles: ['admin', 'coach']},
   { href: '/dashboard/profile', label: 'Профиль', icon: User, roles: ['admin', 'coach', 'parent', 'athlete']},
 ];
@@ -49,11 +48,11 @@ export function MobileNav() {
                         key={link.href}
                         href={link.href}
                         className={cn(
-                        'flex flex-col items-center gap-1 rounded-lg p-2 text-muted-foreground transition-colors hover:text-foreground',
+                        'flex flex-col items-center justify-center gap-1 rounded-lg p-2 text-muted-foreground transition-colors hover:text-foreground h-full',
                         isActive && 'text-primary'
                         )}
                     >
-                        <link.icon className="h-6 w-6" />
+                        <link.icon className="h-5 w-5" />
                         <span className="text-xs text-center">{link.label}</span>
                     </Link>
                 );

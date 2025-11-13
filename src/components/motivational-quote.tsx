@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { BrainCircuit } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 
 const quotes = [
   {
@@ -55,7 +55,7 @@ export function MotivationalQuote() {
         <CardTitle className="text-sm font-medium">
             Цитата дня
         </CardTitle>
-        <BrainCircuit className="h-4 w-4 text-muted-foreground" />
+        <MessageSquare className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
         <blockquote className="border-l-2 pl-4 italic">

@@ -8,7 +8,7 @@ import {
   CardTitle,
   CardFooter,
 } from '@/components/ui/card';
-import { CalendarDays, Trophy, Users, MailWarning, ArrowRight, BookUser, BrainCircuit, CreditCard, Banknote, Loader } from 'lucide-react';
+import { CalendarDays, Trophy, Users, MailWarning, ArrowRight, BookUser, MessageSquare, CreditCard, Banknote, Loader } from 'lucide-react';
 import { differenceInDays, endOfWeek, startOfWeek } from 'date-fns';
 import { useMemo, useEffect, useState } from 'react';
 import { competitionsData } from '@/lib/data';
@@ -336,8 +336,8 @@ function AthleteDashboard() {
             <CardContent className="flex flex-col sm:flex-row gap-4">
                  <Button asChild>
                     <Link href="/dashboard/my-messages">
-                       <BrainCircuit className="mr-2 h-4 w-4" />
-                        Рекомендации AI-тренера
+                       <MessageSquare className="mr-2 h-4 w-4" />
+                        Рекомендации и сообщения
                     </Link>
                 </Button>
                 <Button asChild variant="outline">

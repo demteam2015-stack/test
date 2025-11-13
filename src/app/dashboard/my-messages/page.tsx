@@ -265,7 +265,7 @@ export default function MyMessagesPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Mail className="h-8 w-8 text-primary"/>
-            Центр рекомендаций
+            Центр сообщений и рекомендаций
         </h1>
         <p className="text-muted-foreground">
             Ваш личный диалог с тренером и AI-помощником.
@@ -298,7 +298,7 @@ export default function MyMessagesPage() {
                         
                         const isFromCoach = lastMessage.senderId === coach?.id;
                         const otherParticipantName = lastMessage.senderId === athleteId 
-                          ? (isFromCoach ? coach?.name : "AI-Тренер") 
+                          ? (lastMessage.senderName === 'AI-Тренер' ? "AI-Тренер" : coach?.name)
                           : lastMessage.senderName;
                         
                         const isUnread = lastMessage.recipientId === athleteId && !lastMessage.isRead;
@@ -314,6 +314,7 @@ export default function MyMessagesPage() {
                                         {otherParticipantName}
                                         {isFromCoach && coach?.role === 'admin' && <BadgeCheck className="h-4 w-4 text-primary" />}
                                         {isFromCoach && coach?.role === 'coach' && <ShieldCheck className="h-4 w-4 text-blue-500" />}
+                                        {otherParticipantName === 'AI-Тренер' && <BrainCircuit className="h-4 w-4 text-purple-400" />}
                                     </p>
                                      <time className="text-xs text-muted-foreground whitespace-nowrap">
                                         {format(new Date(lastMessage.date), 'd MMM HH:mm', { locale: ru })}
@@ -358,6 +359,7 @@ export default function MyMessagesPage() {
                                         {msg.senderName}
                                         {msg.senderRole === 'admin' && <BadgeCheck className="h-3 w-3 text-primary" />}
                                         {msg.senderRole === 'coach' && <ShieldCheck className="h-3 w-3 text-blue-500" />}
+                                        {msg.senderName === "AI-Тренер" && <BrainCircuit className="h-3 w-3 text-purple-400" />}
                                     </p>
                                     <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                     <div className={`flex items-center gap-2 mt-2 ${msg.senderId === athleteId ? 'justify-end' : 'justify-start'}`}>
@@ -389,7 +391,7 @@ export default function MyMessagesPage() {
                                         handleReply();
                                     }
                                 }}
-                                disabled={isSending || !athleteId}
+                                disabled={isSending || !athleteId || activeThread?.some(m => m.senderName === 'AI-Тренер')}
                                 className="pr-20"
                             />
                             <Button 
@@ -397,7 +399,7 @@ export default function MyMessagesPage() {
                                 size="icon" 
                                 className="absolute top-1/2 right-2 -translate-y-1/2" 
                                 onClick={handleReply}
-                                disabled={isSending || !replyText}
+                                disabled={isSending || !replyText || activeThread?.some(m => m.senderName === 'AI-Тренер')}
                             >
                                 {isSending ? <Loader className="animate-spin" /> : <Send />}
                             </Button>

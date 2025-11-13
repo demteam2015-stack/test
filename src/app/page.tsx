@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/icons";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, BarChart, BrainCircuit } from "lucide-react";
+import { ArrowRight, CalendarDays, BarChart, MessageSquare } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -86,11 +86,11 @@ export default function LandingPage() {
               </div>
               <div className="flex flex-col justify-center space-y-4 text-center items-center">
                  <div className="rounded-full bg-primary/10 p-4 text-primary">
-                    <BrainCircuit className="h-8 w-8" />
+                    <MessageSquare className="h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-bold">AI-Тренер</h3>
+                <h3 className="text-xl font-bold">Центр общения</h3>
                 <p className="text-muted-foreground">
-                  Получайте персональные рекомендации и ответы на ваши вопросы от нашего виртуального помощника.
+                  Получайте персональные рекомендации и ответы на ваши вопросы от тренера и AI-помощника.
                 </p>
               </div>
             </div>
