@@ -9,9 +9,13 @@ export function cn(...inputs: ClassValue[]) {
 
 // --- User display utility functions ---
 
-export const getInitials = (firstName?: string, lastName?: string) => {
-    if (!firstName || !lastName) return 'U';
-    return `${firstName[0]}${lastName[0]}`;
+export const getInitials = (fullName?: string, fallback?: string) => {
+    if (!fullName) return fallback?.substring(0, 2).toUpperCase() || 'U';
+    const parts = fullName.split(' ');
+    if (parts.length > 1 && parts[0] && parts[1]) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return fullName.substring(0, 2).toUpperCase();
 };
 
 export const getFullName = (firstName?: string, lastName?: string) => {

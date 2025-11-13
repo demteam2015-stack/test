@@ -20,6 +20,37 @@ import { ru } from 'date-fns/locale';
 import { getFullName, getInitials, getAvatarUrl } from '@/lib/utils';
 import Link from 'next/link';
 
+// Helper function to get all users directly for the coach view
+const getAllUsers = (): UserProfile[] => {
+    if (typeof window === 'undefined') return [];
+    const users: UserProfile[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('user_id_')) {
+            try {
+                const storedUser = JSON.parse(localStorage.getItem(key) || '');
+                // We need more data than the basic profile, but we can't decrypt it here.
+                // We'll rely on the user object being mostly unencrypted for this view.
+                // This is a limitation of the current client-side encryption model.
+                 users.push({
+                    id: storedUser.id,
+                    email: storedUser.email,
+                    username: storedUser.username,
+                    // These will be encrypted and not useful here without the user's password.
+                    // The createMessage function should store senderName unencrypted.
+                    firstName: storedUser.username, 
+                    lastName: '',
+                    role: 'athlete'
+                });
+            } catch (e) {
+                // ignore
+            }
+        }
+    }
+    return users;
+};
+
+
 const CoachAdminView = () => {
     const { user, adminGetUserProfile } = useAuth();
     const [threads, setThreads] = useState<Record<string, Message[]>>({});
@@ -36,26 +67,21 @@ const CoachAdminView = () => {
 
         const coachThreads = await getMessageThreadsForUser(user.id);
         
-        const participantIds = new Set<string>();
-        Object.values(coachThreads).forEach(thread => {
-            thread.forEach(msg => {
-                if (msg.senderId !== user.id) participantIds.add(msg.senderId);
-                if (msg.recipientId && msg.recipientId !== user.id) participantIds.add(msg.recipientId);
-            });
+        // Get all users to find participant info
+        const allUsers = getAllUsers();
+        
+        const participantsData: Record<string, UserProfile> = {};
+        allUsers.forEach(u => {
+            participantsData[u.id] = u;
         });
 
-        const participantsData: Record<string, UserProfile> = {};
-        for (const pId of participantIds) {
-            const participantProfile = await adminGetUserProfile(pId);
-            if (participantProfile) {
-                participantsData[pId] = participantProfile;
-            }
-        }
+        // The coach/admin themself
+        participantsData[user.id] = user;
         
         setParticipants(participantsData);
         setThreads(coachThreads);
         setLoading(false);
-    }, [user, adminGetUserProfile]);
+    }, [user]);
     
     const fetchThreads = useCallback(async () => {
         if (!user) return;
@@ -85,22 +111,17 @@ const CoachAdminView = () => {
         if (!replyText || !user || !activeThreadId) return;
 
         const currentThread = threads[activeThreadId];
-        if (!currentThread || currentThread.length === 0) return;
+        if (!currentThread) return;
 
         const otherParticipantId = activeThreadId.replace(user.id, '').replace('_', '');
-        const otherParticipant = participants[otherParticipantId];
-        if (!otherParticipant) {
-            console.error("Could not find recipient for the reply.");
-            return;
-        }
-
+        
         setIsSending(true);
 
         const newMessage: Omit<Message, 'id'|'isRead'> = {
             senderId: user.id,
-            senderName: getFullName(user.firstName, user.lastName),
+            senderName: "Тренер", // Coach always sends as "Тренер"
             senderRole: user.role,
-            recipientId: otherParticipant.id,
+            recipientId: otherParticipantId,
             threadId: activeThreadId,
             text: replyText,
             date: new Date().toISOString(),
@@ -109,7 +130,6 @@ const CoachAdminView = () => {
         await createMessage(newMessage);
         setReplyText('');
         setIsSending(false);
-        // We only need to refresh the messages, not participants again
         fetchThreads();
     };
 
@@ -125,15 +145,25 @@ const CoachAdminView = () => {
 
     const getParticipantForThread = (thread: Message[]) => {
         if (!user || thread.length === 0) return null;
+        // Find the first message not sent by the current user (the coach)
         const otherUserMsg = thread.find(m => m.senderId !== user.id);
-        if (otherUserMsg) return participants[otherUserMsg.senderId];
-        // Case where coach started convo but other user hasn't replied
-        const otherUserId = thread[0].threadId.replace(user.id, '').replace('_', '');
-        return participants[otherUserId];
+        if (otherUserMsg) {
+          // The sender name is stored unencrypted in the message
+          return { name: otherUserMsg.senderName, id: otherUserMsg.senderId };
+        }
+        
+        // If coach started the conversation, the other participant is the recipient
+        const firstMessage = thread[0];
+        if (firstMessage.recipientId) {
+            const participant = participants[firstMessage.recipientId];
+            return participant ? { name: participant.username, id: participant.id } : { name: "Участник", id: firstMessage.recipientId };
+        }
+
+        return null;
     }
     
     const activeParticipant = activeThread ? getParticipantForThread(activeThread) : null;
-    const activeThreadParticipantName = activeParticipant ? getFullName(activeParticipant.firstName, activeParticipant.lastName) : 'Участник';
+    const activeThreadParticipantName = activeParticipant ? activeParticipant.name : 'Участник';
 
     return (
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-15rem)]">
@@ -152,7 +182,7 @@ const CoachAdminView = () => {
                             if (thread.length === 0) return null;
                             const lastMessage = thread[thread.length - 1];
                             const participant = getParticipantForThread(thread);
-                            const participantName = participant ? getFullName(participant.firstName, participant.lastName) : "Неизвестный";
+                            const participantName = participant ? participant.name : "Неизвестный";
                             const isUnread = lastMessage.recipientId === user?.id && !lastMessage.isRead;
                             
                             return (
@@ -194,14 +224,15 @@ const CoachAdminView = () => {
                         </CardHeader>
                         <CardContent className="flex-grow overflow-y-auto space-y-4 pr-2">
                            {activeThread.map((msg, index) => {
-                                const sender = msg.senderId === user?.id ? user : participants[msg.senderId];
-                                const senderName = sender ? getFullName(sender.firstName, sender.lastName) : '...';
+                                const senderId = msg.senderId;
+                                const senderName = msg.senderName;
+                                const sender = participants[senderId];
                                 return (
                                 <div key={msg.id + index} className={`flex items-end gap-2 ${msg.senderId === user?.id ? 'justify-end' : ''}`}>
                                     {msg.senderId !== user?.id && sender && (
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage src={getAvatarUrl(sender.id, sender.username)} />
-                                            <AvatarFallback>{getInitials(sender.firstName, sender.lastName)}</AvatarFallback>
+                                            <AvatarFallback>{getInitials(senderName)}</AvatarFallback>
                                         </Avatar>
                                     )}
                                     <div className={`max-w-xs md:max-w-md p-3 rounded-lg ${msg.senderId === user?.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
