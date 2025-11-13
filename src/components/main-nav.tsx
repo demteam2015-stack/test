@@ -10,7 +10,8 @@ import {
   Trophy,
   GraduationCap,
   Award,
-  ShieldCheck
+  ShieldCheck,
+  User,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
@@ -18,7 +19,7 @@ import { useEffect, useState } from 'react';
 
 const mainNavLinks = [
   { href: '/dashboard', label: 'Панель', icon: Home, roles: ['admin', 'coach', 'parent', 'athlete']},
-  { href: '/dashboard/profile', label: 'Профиль', icon: Award, roles: ['admin', 'coach', 'parent', 'athlete']},
+  { href: '/dashboard/profile', label: 'Профиль', icon: User, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/team', label: 'Команда', icon: Users, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/schedule', label: 'Расписание', icon: Calendar, roles: ['admin', 'coach', 'parent', 'athlete']},
   { href: '/dashboard/competitions', label: 'Соревнования', icon: Trophy, roles: ['admin', 'coach', 'parent', 'athlete']},
@@ -46,7 +47,7 @@ export default function MainNav() {
 
         return (
           <Link
-            key={item.label}
+            key={item.href}
             href={item.href}
             className={cn(
               'transition-colors hover:text-foreground relative flex items-center gap-2',
